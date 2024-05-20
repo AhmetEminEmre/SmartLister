@@ -1,0 +1,67 @@
+{
+  "project_info": {
+    "project_number": "313192936749",
+    "project_id": "smartlister",
+    "storage_bucket": "smartlister.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:313192936749:android:4214ee6756980dd8998fa4",
+        "android_client_info": {
+          "package_name": "com.example.flutter_application_1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCK_SgkDAVsBfnTNg1BsrkB_G7f3-7XTSg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:313192936749:android:47b3b2d2f4337252998fa4",
+        "android_client_info": {
+          "package_name": "com.example.smart"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCK_SgkDAVsBfnTNg1BsrkB_G7f3-7XTSg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:313192936749:android:ecbc774041a9bd89998fa4",
+        "android_client_info": {
+          "package_name": "com.example.smartlister01"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCK_SgkDAVsBfnTNg1BsrkB_G7f3-7XTSg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
