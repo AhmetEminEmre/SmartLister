@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:smart/firebase_login.dart';
 import 'firebase_auth.dart';
-import 'firebase_login.dart';  // Stellen Sie sicher, dass der LoginScreen importiert wird
+import 'nickname.dart';
 
 class RegisterScreen extends StatefulWidget {
   @override
@@ -36,14 +37,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
               onPressed: () async {
                 User? user = await _authService.registerWithEmailAndPassword(
                   _emailController.text,
-                  _passwordController.text,
+                  _passwordController.text
                 );
                 if (user != null) {
-                  // Registrierung erfolgreich, navigiere zurück zum Login-Screen
-                  Navigator.pop(context);  // Entfernt den RegisterScreen vom Stack
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => LoginScreen())
+                  );
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Registrierung erfolgreich! Bitte loggen Sie sich ein.')));
                 } else {
-                  // Registrierung fehlgeschlagen
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Registrierung fehlgeschlagen!')));
                 }
               },
@@ -55,3 +57,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 }
+
+
+
