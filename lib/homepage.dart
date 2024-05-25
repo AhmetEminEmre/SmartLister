@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'firebase_auth.dart';
 import 'firebase_login.dart';
+import 'einkaufsliste_screen.dart';
 
 class HomePage extends StatelessWidget {
   final String uid;
@@ -37,14 +38,22 @@ class HomePage extends StatelessWidget {
           ),
         ],
       ),
-      body: Center(
-        child: Text('Hier werden später Informationen angezeigt.'),
+       body: Center(
+        child: ElevatedButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => CreateListScreen()),
+            );
+          },
+          child: Text("Neue Einkaufsliste erstellen"),
+        ),
       ),
     );
   }
 
   Future<String> getUsername() async {
     var doc = await FirebaseFirestore.instance.collection('userinfos').doc(uid).get();
-    return doc.data()?['nickname'] ?? 'Nutzer';
+    return doc.data()?['nickname'] ?? 'not found';
   }
 }
