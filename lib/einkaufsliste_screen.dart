@@ -26,7 +26,8 @@ class _CreateListScreenState extends State<CreateListScreen> {
       'id': newListRef.id,
       'name': _listNameController.text.trim(),
       'userId': currentUser?.uid,
-      'items': []
+      'items': [],
+        'createdDate': FieldValue.serverTimestamp()
     });
 
     Navigator.push(
