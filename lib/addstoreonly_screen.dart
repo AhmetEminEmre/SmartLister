@@ -1,52 +1,43 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:smart/addstoreonly_screen.dart';
 import 'homepage.dart';
+import 'storeproductgroups_screen.dart';
 
-class AddStoreOnlyScreen extends StatefulWidget {
+class AddStoreScreen extends StatefulWidget {
   @override
-  _AddStoreOnlyScreenState createState() => _AddStoreOnlyScreenState();
+  _AddStoreScreenState createState() => _AddStoreScreenState();
 }
 
-class _AddStoreOnlyScreenState extends State<AddStoreOnlyScreen> {
+class _AddStoreScreenState extends State<AddStoreScreen> {
   final TextEditingController _storeNameController = TextEditingController();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   void _addStore() async {
-    if (_storeNameController.text.trim().length < 3) {
+    if (_storeNameController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Der Name des Einkaufsladens muss mindestens 3 Zeichen lang sein.'))
+        SnackBar(content: Text('Der Name des Einkaufsladens darf nicht leer sein.'))
       );
-      return; 
+      return;
     }
 
-    var newStoreRef = _firestore.collection('stores').doc();
-    await newStoreRef.set({
-      'id': newStoreRef.id,
-      'name': _storeNameController.text.trim()
+    var storeRef = _firestore.collection('stores').doc();  
+    await storeRef.set({
+      'name': _storeNameController.text.trim(),
+      'id': storeRef.id  
     });
 
-    _storeNameController.clear();
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => HomePage(uid: FirebaseAuth.instance.currentUser!.uid)),
-    );
+    Navigator.pushReplacement(context, MaterialPageRoute(
+      builder: (context) => EditStoreScreen(storeId: storeRef.id, storeName: _storeNameController.text.trim(), isNewStore: true)
+    ));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Neuen Einkaufsladen hinzufügen"),
-        leading: IconButton(
-          icon: Icon(Icons.home),
-          onPressed: () {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => HomePage(uid: FirebaseAuth.instance.currentUser!.uid)),
-            );
-          },
-        ),
+        title: Text("Neuen Laden hinzufügen"),
       ),
       body: Padding(
         padding: EdgeInsets.all(8.0),
@@ -62,7 +53,7 @@ class _AddStoreOnlyScreenState extends State<AddStoreOnlyScreen> {
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: _addStore,
-              child: Text('Einkaufsladen hinzufügen'),
+              child: Text('Laden hinzufügen'),
             ),
           ],
         ),

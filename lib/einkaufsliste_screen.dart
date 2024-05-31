@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'addstore_screen.dart';
+import 'itemslist_screen.dart';
 
 class CreateListScreen extends StatefulWidget {
   @override
@@ -11,12 +12,12 @@ class CreateListScreen extends StatefulWidget {
 class _CreateListScreenState extends State<CreateListScreen> {
   final _listNameController = TextEditingController();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final User? currentUser = FirebaseAuth.instance.currentUser; 
+  final User? currentUser = FirebaseAuth.instance.currentUser;
 
-  void _addList() async {
-    if (_listNameController.text.trim().length < 3) {
+  void _createList() async {
+    if (_listNameController.text.trim().isEmpty || _listNameController.text.trim().length < 3) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Der Name der Liste muss mindestens 3 Zeichen lang sein.'))
+        SnackBar(content: Text('Der Name der Einkaufsliste muss mindestens 3 Zeichen lang sein.'))
       );
       return;
     }
@@ -27,12 +28,12 @@ class _CreateListScreenState extends State<CreateListScreen> {
       'name': _listNameController.text.trim(),
       'userId': currentUser?.uid,
       'items': [],
-        'createdDate': FieldValue.serverTimestamp()
+      'createdDate': FieldValue.serverTimestamp()
     });
 
-    Navigator.push(
+    Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => AddStoreScreen(listId: newListRef.id, listName: _listNameController.text.trim())),
+      MaterialPageRoute(builder: (context) => StoreScreen(listId: newListRef.id, listName: _listNameController.text.trim())),
     );
   }
 
@@ -40,7 +41,7 @@ class _CreateListScreenState extends State<CreateListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Neue Einkaufsliste Erstellen"),
+        title: Text("Neue Einkaufsliste erstellen"),
       ),
       body: Padding(
         padding: EdgeInsets.all(8.0),
@@ -49,13 +50,14 @@ class _CreateListScreenState extends State<CreateListScreen> {
             TextField(
               controller: _listNameController,
               decoration: InputDecoration(
-                labelText: 'Name der Liste',
+                labelText: 'Name der Einkaufsliste',
                 border: OutlineInputBorder(),
               ),
             ),
+            SizedBox(height: 20),
             ElevatedButton(
-              onPressed: _addList,
-              child: Text('Einkaufsladen hinzufügen'),
+              onPressed: _createList,
+              child: Text('Einkaufsliste erstellen und Laden zuordnen'),
             ),
           ],
         ),
