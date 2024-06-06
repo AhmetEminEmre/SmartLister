@@ -14,25 +14,6 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
   final TextEditingController _storeNameController = TextEditingController();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  void _addStore() async {
-    if (_storeNameController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Der Name des Einkaufsladens darf nicht leer sein.'))
-      );
-      return;
-    }
-
-    var storeRef = _firestore.collection('stores').doc();  
-    await storeRef.set({
-      'name': _storeNameController.text.trim(),
-      'id': storeRef.id  
-    });
-
-    Navigator.pushReplacement(context, MaterialPageRoute(
-      builder: (context) => EditStoreScreen(storeId: storeRef.id, storeName: _storeNameController.text.trim(), isNewStore: true)
-    ));
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -52,12 +33,40 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
             ),
             SizedBox(height: 20),
             ElevatedButton(
-              onPressed: _addStore,
+              onPressed: _addStore, 
               child: Text('Laden hinzufügen'),
             ),
           ],
         ),
       ),
+    );
+  }
+
+
+  void _addStore() async {
+    if (_storeNameController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Der Name des Einkaufsladens darf nicht leer sein.'))
+      );
+      return;
+    }
+
+    var storeRef = _firestore.collection('stores').doc();
+    await storeRef.set({
+      'name': _storeNameController.text.trim(),
+      'id': storeRef.id,
+      'userId': FirebaseAuth.instance.currentUser?.uid, 
+    });
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditStoreScreen(
+          storeId: storeRef.id,
+          storeName: _storeNameController.text.trim(),
+          isNewStore: true
+        )
+      )
     );
   }
 }

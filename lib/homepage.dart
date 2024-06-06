@@ -69,27 +69,30 @@ class HomePage extends StatelessWidget {
             FutureBuilder<List<Map<String, dynamic>>>(
               future: getTopStores(),
               builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.done &&
-                    snapshot.hasData) {
-                  return Column(
-                    children: snapshot.data!
-                        .map((store) => ListTile(
-                              title: Text(store['name']),
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => EditStoreScreen(
-                                        storeId: store['id'],
-                                        storeName: store['name']),
-                                  ),
-                                );
-                              },
-                            ))
-                        .toList(),
-                  );
-                } else if (snapshot.hasError) {
-                  return Text("Fehler beim Laden der Läden");
+                if (snapshot.connectionState == ConnectionState.done) {
+                  if (snapshot.hasError) {
+                    return Text("Error: ${snapshot.error}");
+                  } else if (snapshot.data != null &&
+                      snapshot.data!.isNotEmpty) {
+                    return Column(
+                      children: snapshot.data!
+                          .map((store) => ListTile(
+                                title: Text(store['name']),
+                                subtitle: Text('Usage: ${store['usageCount']}'),
+                                onTap: () {
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) => EditStoreScreen(
+                                              storeId: store['id'],
+                                              storeName: store['name'])));
+                                },
+                              ))
+                          .toList(),
+                    );
+                  } else {
+                    return Text("No stores found.");
+                  }
                 } else {
                   return CircularProgressIndicator();
                 }
@@ -111,70 +114,74 @@ class HomePage extends StatelessWidget {
   }
 
   Stream<List<Widget>> _buildListTiles(BuildContext context) {
-  return _firestore
-      .collection('shopping_lists')
-      .where('userId', isEqualTo: uid)
-      .orderBy('createdDate', descending: true)
-      .limit(5)
-      .snapshots()
-      .map((snapshot) {
-    return snapshot.docs.map((doc) {
-      Map<String, dynamic>? data = doc.data() as Map<String, dynamic>?; 
-      if (data == null) {
-        return SizedBox(); 
-      }
-      Future<DocumentSnapshot> storeSnapshot = _firestore.collection('stores').doc(data['ladenId']).get();
-      return FutureBuilder<DocumentSnapshot>(
-        future: storeSnapshot,
-        builder: (context, storeSnapshot) {
-          if (storeSnapshot.connectionState == ConnectionState.done && storeSnapshot.hasData) {
-            Map<String, dynamic>? storeData = storeSnapshot.data?.data() as Map<String, dynamic>?;
-            if (storeData == null) {
-              return Text("Store data not found.");
-            }
-            return ListTile(
-              title: Text(data['name']),
-              subtitle: Text('Artikel: ${data['items'].length}, Laden: ${storeData['name']}'),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ItemListScreen(
-                      listName: data['name'],
-                      shoppingListsId: doc.id,
+    return _firestore
+        .collection('shopping_lists')
+        .where('userId', isEqualTo: uid)
+        .orderBy('createdDate', descending: true)
+        .limit(5)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) {
+        Map<String, dynamic>? data = doc.data() as Map<String, dynamic>?;
+        if (data == null) {
+          return SizedBox();
+        }
+        Future<DocumentSnapshot> storeSnapshot =
+            _firestore.collection('stores').doc(data['ladenId']).get();
+        return FutureBuilder<DocumentSnapshot>(
+          future: storeSnapshot,
+          builder: (context, storeSnapshot) {
+            if (storeSnapshot.connectionState == ConnectionState.done &&
+                storeSnapshot.hasData) {
+              Map<String, dynamic>? storeData =
+                  storeSnapshot.data?.data() as Map<String, dynamic>?;
+              if (storeData == null) {
+                return Text("Store data not found.");
+              }
+              return ListTile(
+                title: Text(data['name']),
+                subtitle: Text(
+                    'Artikel: ${data['items'].length}, Laden: ${storeData['name']}'),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ItemListScreen(
+                        listName: data['name'],
+                        shoppingListsId: doc.id,
+                      ),
                     ),
-                  ),
-                );
-              },
-              trailing: PopupMenuButton<String>(
-                onSelected: (value) {
-                  if (value == 'delete') {
-                    _deleteShoppingList(doc.id, context);
-                  } else if (value == 'rename') {
-                    _renameShoppingList(doc.id, data['name'], context);
-                  }
+                  );
                 },
-                itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                  const PopupMenuItem<String>(
-                    value: 'rename',
-                    child: Text('Liste umbenennen'),
-                  ),
-                  const PopupMenuItem<String>(
-                    value: 'delete',
-                    child: Text('Liste löschen'),
-                  ),
-                ],
-              ),
-            );
-          } else {
-            return SizedBox(); 
-          }
-        },
-      );
-    }).toList();
-  });
-}
-
+                trailing: PopupMenuButton<String>(
+                  onSelected: (value) {
+                    if (value == 'delete') {
+                      _deleteShoppingList(doc.id, context);
+                    } else if (value == 'rename') {
+                      _renameShoppingList(doc.id, data['name'], context);
+                    }
+                  },
+                  itemBuilder: (BuildContext context) =>
+                      <PopupMenuEntry<String>>[
+                    const PopupMenuItem<String>(
+                      value: 'rename',
+                      child: Text('Liste umbenennen'),
+                    ),
+                    const PopupMenuItem<String>(
+                      value: 'delete',
+                      child: Text('Liste löschen'),
+                    ),
+                  ],
+                ),
+              );
+            } else {
+              return SizedBox();
+            }
+          },
+        );
+      }).toList();
+    });
+  }
 
   void _deleteShoppingList(String listId, BuildContext context) async {
     try {
@@ -183,7 +190,6 @@ class HomePage extends StatelessWidget {
         content: Text('Einkaufsliste gelöscht'),
         backgroundColor: Colors.red,
       ));
-      
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text('Fehler beim Löschen der Liste'),
@@ -242,31 +248,31 @@ class HomePage extends StatelessWidget {
   }
 
   Future<List<Map<String, dynamic>>> getTopStores() async {
-    var stores = await _firestore.collection('stores').get();
-    var storeCounts = <String, int>{};
+    var uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) {
+      print("User ID is null, ensure the user is logged in.");
+      return [];
+    }
 
-    for (var store in stores.docs) {
-      var storeId = store.id;
-      var countSnapshot = await _firestore
-          .collection('shopping_lists')
-          .where('ladenId', isEqualTo: storeId)
-          .count()
+    print("Fetching top stores for user ID: $uid");
+    try {
+      var storesQuery = await _firestore
+          .collection('stores')
+          .where('userId', isEqualTo: uid)
+          .orderBy('usageCount', descending: true)
+          .limit(3)
           .get();
 
-      storeCounts[storeId] = countSnapshot.count!;
+      return storesQuery.docs
+          .map((doc) => {
+                'id': doc.id,
+                'name': doc.data()['name'],
+                'usageCount': doc.data()['usageCount']
+              })
+          .toList();
+    } catch (e) {
+      print("Error fetching top stores: $e");
+      return [];
     }
-
-    var sortedStores = storeCounts.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-
-    List<Map<String, dynamic>> topStores = [];
-    for (var i = 0; i < 3 && i < sortedStores.length; i++) {
-      var storeSnapshot =
-          await _firestore.collection('stores').doc(sortedStores[i].key).get();
-      var storeData = storeSnapshot.data() as Map<String, dynamic>;
-      topStores.add({'id': sortedStores[i].key, 'name': storeData['name']});
-    }
-
-    return topStores;
   }
 }

@@ -1,8 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'itemslist_screen.dart';
 import 'addstoreonly_screen.dart';
-
+import 'firebase_auth.dart';
 
 
 class StoreScreen extends StatefulWidget {
@@ -26,17 +27,19 @@ class _StoreScreenState extends State<StoreScreen> {
     _loadStores();
   }
 
-  void _loadStores() async {
-    var snapshot = await _firestore.collection('stores').get();
-    var stores = snapshot.docs.map((doc) => DropdownMenuItem<String>(
-      value: doc.id,
-      child: Text(doc.data()['name'] as String),
-    )).toList();
+void _loadStores() async {
+  var snapshot = await _firestore.collection('stores')
+    .where('userId', isEqualTo: FirebaseAuth.instance.currentUser?.uid)  // Filter stores by userId
+    .get();
+  var stores = snapshot.docs.map((doc) => DropdownMenuItem<String>(
+    value: doc.id,
+    child: Text(doc.data()['name'] as String),
+  )).toList();
 
-    setState(() {
-      _storeItems = stores;
-    });
-  }
+  setState(() {
+    _storeItems = stores;
+  });
+}
 
   @override
   Widget build(BuildContext context) {

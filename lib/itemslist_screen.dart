@@ -1,5 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'homepage.dart';
+import 'firebase_auth.dart';
 
 class ItemListScreen extends StatefulWidget {
   final String listName;
@@ -147,6 +150,17 @@ class _ItemListScreenState extends State<ItemListScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('${widget.listName}'),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () {
+            // Navigator.pop(context); // Change this to navigate to the HomePage
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => HomePage(uid: FirebaseAuth.instance.currentUser!.uid)),
+              (Route<dynamic> route) => false,
+            );
+          },
+        ),
       ),
       body: ListView.builder(
         itemCount: itemsByGroup.keys.length,
