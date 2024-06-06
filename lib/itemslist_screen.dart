@@ -22,26 +22,29 @@ class _ItemListScreenState extends State<ItemListScreen> {
   }
 
   void loadItems() async {
-  var groupsSnapshot = await _firestore.collection('product_groups').get();
-  Map<String, String> groupNames = {};
-  for (var doc in groupsSnapshot.docs) {
-    groupNames[doc.id] = doc.data()['name'] as String;
+    var groupsSnapshot = await _firestore.collection('product_groups').get();
+    Map<String, String> groupNames = {};
+    for (var doc in groupsSnapshot.docs) {
+      groupNames[doc.id] = doc.data()['name'] as String;
+    }
+
+    var listDoc = await _firestore
+        .collection('shopping_lists')
+        .doc(widget.shoppingListsId)
+        .get();
+    var items = List<Map<String, dynamic>>.from(listDoc.data()?['items'] ?? []);
+    Map<String, List<Map<String, dynamic>>> groupedItems = {};
+
+    for (var item in items) {
+      String groupId = item['groupId'];
+      String groupName = groupNames[groupId] ?? 'idk group';
+      groupedItems.putIfAbsent(groupName, () => []).add(item);
+    }
+
+    setState(() {
+      itemsByGroup = groupedItems;
+    });
   }
-
-  var listDoc = await _firestore.collection('shopping_lists').doc(widget.shoppingListsId).get();
-  var items = List<Map<String, dynamic>>.from(listDoc.data()?['items'] ?? []);
-  Map<String, List<Map<String, dynamic>>> groupedItems = {};
-
-  for (var item in items) {
-    String groupId = item['groupId'];
-    String groupName = groupNames[groupId] ?? 'idk group';
-    groupedItems.putIfAbsent(groupName, () => []).add(item);
-  }
-
-  setState(() {
-    itemsByGroup = groupedItems;
-  });
-}
 
   void toggleItemDone(String groupName, int index) {
     setState(() {
@@ -58,58 +61,74 @@ class _ItemListScreenState extends State<ItemListScreen> {
     TextEditingController itemNameController = TextEditingController();
     String? selectedGroupId;
 
-    var snapshot = await _firestore.collection('product_groups').get();
+    var listDoc = await _firestore.collection('shopping_lists').doc(widget.shoppingListsId).get();
+    var storeId = listDoc.data()?['ladenId'] as String?;
+
+    if (storeId == null) {
+        print("No store ID found for list: ${widget.shoppingListsId}");
+        return;
+    }
+
+    var snapshot = await _firestore.collection('product_groups')
+                                    .where('storeId', isEqualTo: storeId)
+                                    .get();
+
+    if (snapshot.docs.isEmpty) {
+        print("No product groups found for store ID: $storeId");
+        return;
+    }
+
     List<DropdownMenuItem<String>> groupItems = snapshot.docs.map((doc) {
-      var name = doc.data()['name'] as String?;
-      return DropdownMenuItem<String>(
-        value: doc.id,
-        child: Text(name ?? 'idk'),
-      );
+        var name = doc.data()['name'] as String?;
+        print("Product Group ID: ${doc.id}, Name: ${doc.data()['name']}");
+        return DropdownMenuItem<String>(
+            value: doc.id,
+            child: Text(name ?? 'idk'),
+        );
     }).toList();
 
     showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-            builder: (context, setState) {
-          return AlertDialog(
-            title: Text('Artikel hinzufügen'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                TextField(
-                  controller: itemNameController,
-                  decoration: InputDecoration(labelText: 'Artikelname'),
-                ),
-                DropdownButton<String>(
-                  value: selectedGroupId,
-                  onChanged: (newValue) {
-                    setState(() {
-                      selectedGroupId = newValue;
-                    });
-                  },
-                  items: groupItems,
-                  hint: Text('Warengruppe wählen'),
-                ),
-              ],
-            ),
-            actions: <Widget>[
-              ElevatedButton(
-                child: Text('Hinzufügen'),
-                onPressed: () {
-                  if (itemNameController.text.isNotEmpty &&
-                      selectedGroupId != null) {
-                    _addItemToList(itemNameController.text, selectedGroupId!);
-                    Navigator.of(context).pop();
-                  }
-                },
-              ),
-            ],
-          );
-        });
-      },
+        context: context,
+        builder: (BuildContext context) {
+            return StatefulBuilder(builder: (context, setState) {
+                return AlertDialog(
+                    title: Text('Artikel hinzufügen'),
+                    content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                            TextField(
+                                controller: itemNameController,
+                                decoration: InputDecoration(labelText: 'Artikelname'),
+                            ),
+                            DropdownButton<String>(
+                                value: selectedGroupId,
+                                onChanged: (newValue) {
+                                    setState(() {
+                                        selectedGroupId = newValue;
+                                    });
+                                },
+                                items: groupItems,
+                                hint: Text('Warengruppe wählen'),
+                            ),
+                        ],
+                    ),
+                    actions: <Widget>[
+                        ElevatedButton(
+                            child: Text('Hinzufügen'),
+                            onPressed: () {
+                                if (itemNameController.text.isNotEmpty &&
+                                    selectedGroupId != null) {
+                                    _addItemToList(itemNameController.text, selectedGroupId!);
+                                    Navigator.of(context).pop();
+                                }
+                            },
+                        ),
+                    ],
+                );
+            });
+        },
     );
-  }
+}
 
   void _addItemToList(String itemName, String groupId) async {
     await _firestore
