@@ -66,10 +66,10 @@ class HomePage extends StatelessWidget {
               },
               child: Text("Neue Einkaufsliste erstellen"),
             ),
-            FutureBuilder<List<Map<String, dynamic>>>(
-              future: getTopStores(),
+            StreamBuilder<List<Map<String, dynamic>>>(
+              stream: getTopStoresStream(),
               builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.done) {
+                if (snapshot.connectionState == ConnectionState.active) {
                   if (snapshot.hasError) {
                     return Text("Error: ${snapshot.error}");
                   } else if (snapshot.data != null &&
@@ -78,7 +78,6 @@ class HomePage extends StatelessWidget {
                       children: snapshot.data!
                           .map((store) => ListTile(
                                 title: Text(store['name']),
-                                subtitle: Text('Usage: ${store['usageCount']}'),
                                 onTap: () {
                                   Navigator.push(
                                       context,
@@ -247,32 +246,39 @@ class HomePage extends StatelessWidget {
     return doc.data()?['nickname'] ?? 'not found';
   }
 
-  Future<List<Map<String, dynamic>>> getTopStores() async {
-    var uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) {
-      print("User ID is null, ensure the user is logged in.");
-      return [];
-    }
+  Stream<List<Map<String, dynamic>>> getTopStoresStream() {
+    return _firestore
+        .collection('shopping_lists')
+        .where('userId', isEqualTo: uid)
+        .snapshots()
+        .map((snapshot) {
+      // Count store appearances
+      var storeCounts = <String, int>{};
+      for (var doc in snapshot.docs) {
+        var ladenId = doc.data()['ladenId'];
+        if (ladenId != null) {
+          storeCounts[ladenId] = (storeCounts[ladenId] ?? 0) + 1;
+        }
+      }
+      // Get top 3 most used store IDs
+      var sortedStores = storeCounts.entries.toList()
+        ..sort((a, b) => b.value.compareTo(a.value));
+      sortedStores = sortedStores.take(3).toList();
 
-    print("Fetching top stores for user ID: $uid");
-    try {
-      var storesQuery = await _firestore
-          .collection('stores')
-          .where('userId', isEqualTo: uid)
-          .orderBy('usageCount', descending: true)
-          .limit(3)
-          .get();
-
-      return storesQuery.docs
-          .map((doc) => {
-                'id': doc.id,
-                'name': doc.data()['name'],
-                'usageCount': doc.data()['usageCount']
-              })
-          .toList();
-    } catch (e) {
-      print("Error fetching top stores: $e");
-      return [];
-    }
+      return sortedStores;
+    }).asyncMap((sortedStores) async {
+      List<Map<String, dynamic>> topStores = [];
+      for (var entry in sortedStores) {
+        var storeDoc =
+            await _firestore.collection('stores').doc(entry.key).get();
+        if (storeDoc.exists) {
+          topStores.add({
+            'id': storeDoc.id,
+            'name': storeDoc.data()?['name'],
+          });
+        }
+      }
+      return topStores;
+    });
   }
 }
