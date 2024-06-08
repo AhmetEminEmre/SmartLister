@@ -6,6 +6,7 @@ import 'firebase_auth.dart';
 import 'package:printing/printing.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pdf_wd;
+import 'dart:collection';
 
 class ItemListScreen extends StatefulWidget {
   final String listName;
@@ -29,30 +30,37 @@ class _ItemListScreenState extends State<ItemListScreen> {
     loadItems();
   }
 
-  void loadItems() async {
-    var groupsSnapshot = await _firestore.collection('product_groups').get();
-    Map<String, String> groupNames = {};
-    for (var doc in groupsSnapshot.docs) {
-      groupNames[doc.id] = doc.data()['name'] as String;
-    }
+void loadItems() async {
+  var listDoc = await _firestore.collection('shopping_lists').doc(widget.shoppingListsId).get();
+  var items = List<Map<String, dynamic>>.from(listDoc.data()?['items'] ?? []);
+  String storeId = listDoc.data()?['ladenId'] as String; 
 
-    var listDoc = await _firestore
-        .collection('shopping_lists')
-        .doc(widget.shoppingListsId)
-        .get();
-    var items = List<Map<String, dynamic>>.from(listDoc.data()?['items'] ?? []);
-    Map<String, List<Map<String, dynamic>>> groupedItems = {};
+  var groupsSnapshot = await _firestore.collection('product_groups').where('storeId', isEqualTo: storeId).orderBy('order').get();
+  Map<String, String> groupNames = {};
+  Map<String, int> ordering = {};
+  Map<int, List<Map<String, dynamic>>> groupedItems = SplayTreeMap<int, List<Map<String, dynamic>>>();
 
-    for (var item in items) {
-      String groupId = item['groupId'];
-      String groupName = groupNames[groupId] ?? 'idk group';
-      groupedItems.putIfAbsent(groupName, () => []).add(item);
-    }
-
-    setState(() {
-      itemsByGroup = groupedItems;
-    });
+  for (var doc in groupsSnapshot.docs) {
+    groupNames[doc.id] = doc.data()['name'] as String;
+    ordering[doc.id] = doc.data()['order'] as int;
   }
+
+  for (var item in items) {
+    String groupId = item['groupId'];
+    int groupOrder = ordering[groupId] ?? 1000;  // hopefully no waregroups >1000
+    groupedItems.putIfAbsent(groupOrder, () => []).add(item);
+  }
+
+  Map<String, List<Map<String, dynamic>>> sortedGroupItems = {};
+  groupedItems.forEach((order, itemsList) {
+    String groupName = groupNames.entries.firstWhere((entry) => ordering[entry.key] == order).value;
+    sortedGroupItems[groupName] = itemsList;
+  });
+
+  setState(() {
+    itemsByGroup = sortedGroupItems;
+  });
+}
 
   void toggleItemDone(String groupName, int index) {
     setState(() {
@@ -83,6 +91,7 @@ class _ItemListScreenState extends State<ItemListScreen> {
     var snapshot = await _firestore
         .collection('product_groups')
         .where('storeId', isEqualTo: storeId)
+        .orderBy('order')
         .get();
 
     if (snapshot.docs.isEmpty) {
@@ -257,7 +266,8 @@ class _ItemListScreenState extends State<ItemListScreen> {
                     children: [
                       pdf_wd.Text(entry.key,
                           style: pdf_wd.TextStyle(
-                              fontWeight: pdf_wd.FontWeight.bold, fontSize: 16)),
+                              fontWeight: pdf_wd.FontWeight.bold,
+                              fontSize: 16)),
                       pdf_wd.Column(
                         children: entry.value
                             .map((item) => pdf_wd.Text(item['name']))
@@ -272,6 +282,6 @@ class _ItemListScreenState extends State<ItemListScreen> {
     );
     await Printing.layoutPdf(
         onLayout: (PdfPageFormat format) async => pdf.save());
-        //custom filename needs a lot more adjustments need to look into it //writing directly into directory
-    }
+    //custom filename needs a lot more adjustments need to look into it //writing directly into directory
+  }
 }
