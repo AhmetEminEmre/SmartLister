@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:smart/addstoreonly_screen.dart';
-import 'homepage.dart';
 
 class EditStoreScreen extends StatefulWidget {
   final String storeId;
   final String storeName;
   final bool isNewStore;
 
-  EditStoreScreen(
-      {required this.storeId,
-      required this.storeName,
-      this.isNewStore = false});
+  EditStoreScreen({
+    required this.storeId,
+    required this.storeName,
+    this.isNewStore = false,
+  });
 
   @override
   _EditStoreScreenState createState() => _EditStoreScreenState();
@@ -47,7 +46,8 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
       _isLoading = true;
     });
     try {
-      var querySnapshot = await _firestore.collection('product_groups')
+      var querySnapshot = await _firestore
+          .collection('product_groups')
           .where('storeId', isEqualTo: widget.storeId)
           .orderBy('order', descending: false)
           .get();
@@ -92,7 +92,8 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text('Warengruppe löschen'),
-          content: Text('Sind Sie sicher, dass Sie diese Warengruppe löschen möchten?'),
+          content: Text(
+              'Sind Sie sicher, dass Sie diese Warengruppe löschen möchten?'),
           actions: <Widget>[
             TextButton(
               child: Text('Abbrechen'),
@@ -101,7 +102,11 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
             TextButton(
               child: Text('Löschen'),
               onPressed: () {
-                _firestore.collection('product_groups').doc(docId).delete().then((_) {
+                _firestore
+                    .collection('product_groups')
+                    .doc(docId)
+                    .delete()
+                    .then((_) {
                   Navigator.of(context).pop();
                   _loadProductGroups();
                   _reorderProductGroupsAfterDeletion(docId);
@@ -137,13 +142,16 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
     return ListTile(
       key: ValueKey(doc.id),
       title: Text(doc['name']),
-      trailing: _isEditMode ? IconButton(
-        icon: Icon(Icons.delete, color: Colors.red),
-        onPressed: () => _deleteProductGroup(doc.id),
-      ) : ReorderableDragStartListener(
-        index: _productGroups.indexOf(doc),
-        child: Icon(Icons.reorder, color: Theme.of(context).colorScheme.secondary),
-      ),
+      trailing: _isEditMode
+          ? IconButton(
+              icon: Icon(Icons.delete, color: Colors.red),
+              onPressed: () => _deleteProductGroup(doc.id),
+            )
+          : ReorderableDragStartListener(
+              index: _productGroups.indexOf(doc),
+              child: Icon(Icons.reorder,
+                  color: Theme.of(context).colorScheme.secondary),
+            ),
     );
   }
 
@@ -154,18 +162,24 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
         title: Text(widget.storeName),
         actions: [
           IconButton(
+            icon: Icon(Icons.auto_awesome_motion),
+            onPressed: _promptAddDefaultProductGroups,
+          ),
+          IconButton(
             icon: Icon(_isEditMode ? Icons.check : Icons.edit),
             onPressed: _toggleEditMode,
           ),
         ],
       ),
       body: _isLoading
-          ? CircularProgressIndicator()
+          ? Center(child: CircularProgressIndicator())
           : _productGroups.isEmpty
-              ? Text("Keine Produktgruppen verfügbar.")
+              ? Center(child: Text("Keine Produktgruppen verfügbar."))
               : ReorderableListView(
                   onReorder: _onReorder,
-                  children: _productGroups.map((doc) => _buildReorderableTile(doc)).toList(),
+                  children: _productGroups
+                      .map((doc) => _buildReorderableTile(doc))
+                      .toList(),
                 ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddProductGroupDialog,
@@ -190,7 +204,7 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
             TextButton(
               onPressed: () {
                 if (groupNameController.text.isNotEmpty) {
-                  _addProductGroup(groupNameController.text);
+                  _addProductGroupIfNotExists(groupNameController.text);
                   Navigator.of(context).pop();
                 }
               },
@@ -202,75 +216,78 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
     );
   }
 
-  void _addProductGroup(String name) async {
+  Future<void> _addProductGroupIfNotExists(String name) async {
     try {
-      var maxOrderQuery = await _firestore.collection('product_groups')
+      var existingGroups = await _firestore
+          .collection('product_groups')
           .where('storeId', isEqualTo: widget.storeId)
-          .orderBy('order', descending: true)
-          .limit(1)
+          .where('name', isEqualTo: name)
           .get();
 
-      int maxOrder = 0;
-      if (maxOrderQuery.docs.isNotEmpty) {
-        maxOrder = maxOrderQuery.docs.first.data()['order'] + 1;
-      }
+      if (existingGroups.docs.isEmpty) {
+        var maxOrderQuery = await _firestore
+            .collection('product_groups')
+            .where('storeId', isEqualTo: widget.storeId)
+            .orderBy('order', descending: true)
+            .limit(1)
+            .get();
 
-      DocumentReference ref = _firestore.collection('product_groups').doc();
-      await ref.set({
-        'id': ref.id,
-        'name': name,
-        'storeId': widget.storeId,
-        'order': maxOrder
-      });
-      _loadProductGroups();
+        int maxOrder = 0;
+        if (maxOrderQuery.docs.isNotEmpty) {
+          maxOrder = maxOrderQuery.docs.first.data()['order'] + 1;
+        }
+
+        DocumentReference ref = _firestore.collection('product_groups').doc();
+        await ref.set({
+          'id': ref.id,
+          'name': name,
+          'storeId': widget.storeId,
+          'order': maxOrder
+        });
+        _loadProductGroups();
+      } else {
+        print("Warengruppe bereits vorhanden.");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Warengruppe "$name" ist bereits vorhanden.')),
+        );
+      }
     } catch (e) {
       print("Fehler beim Hinzufügen einer Produktgruppe: $e");
     }
   }
 
-  void _addDefaultProductGroups() {
-    for (int i = 0; i < defaultProductGroups.length; i++) {
-      var group = defaultProductGroups[i];
-      DocumentReference ref = _firestore.collection('product_groups').doc();
-      ref.set({
-        'id': ref.id,
-        'name': group['name'],
-        'storeId': widget.storeId,
-        'order': i
-      });
-      _loadProductGroups();
+  void _addDefaultProductGroups() async {
+    for (var group in defaultProductGroups) {
+      await _addProductGroupIfNotExists(group['name']!);
     }
   }
 
   void _promptAddDefaultProductGroups() {
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: Text("Standardwarengruppen"),
-        content: Text("Wollen Sie Standardwarengruppen zu diesem Laden hinzufügen?"),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              _addDefaultProductGroups();
-            },
-            child: Text('Ja'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: Text('Nein'),
-          ),
-        ],
-      );
-    },
-  );
-}
-
-  
-
-
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Standardwarengruppen"),
+          content: Text(
+              "Wollen Sie Standardwarengruppen zu diesem Laden hinzufügen?"),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _addDefaultProductGroups();
+              },
+              child: Text('Ja'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Nein'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 }
