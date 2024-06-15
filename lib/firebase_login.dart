@@ -4,8 +4,13 @@ import 'firebase_auth.dart';
 import 'homepage.dart';
 import 'nickname.dart';
 import 'firebase_register.dart';
+import 'readonlylist.dart';
 
 class LoginScreen extends StatefulWidget {
+  final Uri? redirectLink;
+
+  LoginScreen({Key? key, this.redirectLink}) : super(key: key);
+
   @override
   _LoginScreenState createState() => _LoginScreenState();
 }
@@ -13,14 +18,13 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final AuthService _authService = AuthService();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        automaticallyImplyLeading: false,
-        title: Text("Login"),
+        title: Text('Login'),
       ),
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -29,57 +33,18 @@ class _LoginScreenState extends State<LoginScreen> {
             controller: _emailController,
             decoration: InputDecoration(labelText: 'Email'),
           ),
-          SizedBox(height: 8),
           TextField(
             controller: _passwordController,
             obscureText: true,
             decoration: InputDecoration(labelText: 'Password'),
           ),
-          SizedBox(height: 20),
           ElevatedButton(
-            onPressed: () async {
-              User? user = await _authService.signInWithEmailAndPassword(
-                _emailController.text,
-                _passwordController.text,
-              );
-              if (user != null) {
-                bool hasNick = await _authService.hasNickname(user.uid);
-                if (!hasNick) {
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => NicknameEntryScreen()));
-                } else {
-                  Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => HomePage(uid: user.uid)));
-                }
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Login fehlgeschlagen!')));
-              }
-            },
+            onPressed: _login,
             child: Text('Login'),
           ),
           SizedBox(height: 12),
           ElevatedButton(
-            onPressed: () {
-              if (_emailController.text.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text('Bitte geben Sie eine E-Mail-Adresse ein.'),
-                  backgroundColor: Colors.red,
-                ));
-              } else {
-                _authService.resetPassword(_emailController.text).then((_) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Passwort-Reset Mail gesendet!')));
-                }).catchError((error) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                      content: Text('Fehler beim Senden der E-Mail.')));
-                });
-              }
-            },
+            onPressed: () => _resetPassword(),
             child: Text('Passwort vergessen?'),
           ),
           TextButton(
@@ -94,5 +59,43 @@ class _LoginScreenState extends State<LoginScreen> {
         ],
       ),
     );
+  }
+
+  void _login() async {
+    try {
+      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+        email: _emailController.text,
+        password: _passwordController.text,
+      );
+      if (userCredential.user != null) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => HomePage(uid: userCredential.user!.uid)),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Login fehlgeschlagen!')));
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Login Failed: $e')));
+    }
+  }
+
+  void _resetPassword() {
+    if (_emailController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Bitte geben Sie eine E-Mail-Adresse ein.'),
+        backgroundColor: Colors.red,
+      ));
+    } else {
+      _auth.sendPasswordResetEmail(email: _emailController.text).then((_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Passwort-Reset Mail gesendet!')));
+      }).catchError((error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Fehler beim Senden der E-Mail.')));
+      });
+    }
   }
 }

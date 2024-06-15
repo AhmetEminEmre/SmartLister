@@ -7,6 +7,9 @@ import 'package:printing/printing.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pdf_wd;
 import 'dart:collection';
+import 'package:share_plus/share_plus.dart'; 
+import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
+import 'readonlylist.dart';
 
 class ItemListScreen extends StatefulWidget {
   final String listName;
@@ -32,35 +35,39 @@ class _ItemListScreenState extends State<ItemListScreen> {
   }
 
   void loadItems() async {
-    var listDoc = await _firestore.collection('shopping_lists').doc(widget.shoppingListsId).get();
-    var items = List<Map<String, dynamic>>.from(listDoc.data()?['items'] ?? []);
-    String storeId = listDoc.data()?['ladenId'] as String;
+    try {
+      var listDoc = await _firestore.collection('shopping_lists').doc(widget.shoppingListsId).get();
+      var items = List<Map<String, dynamic>>.from(listDoc.data()?['items'] ?? []);
+      String storeId = listDoc.data()?['ladenId'] as String;
 
-    var groupsSnapshot = await _firestore.collection('product_groups').where('storeId', isEqualTo: storeId).orderBy('order').get();
-    Map<String, String> groupNames = {};
-    Map<String, int> ordering = {};
-    Map<int, List<Map<String, dynamic>>> groupedItems = SplayTreeMap<int, List<Map<String, dynamic>>>();
+      var groupsSnapshot = await _firestore.collection('product_groups').where('storeId', isEqualTo: storeId).orderBy('order').get();
+      Map<String, String> groupNames = {};
+      Map<String, int> ordering = {};
+      Map<int, List<Map<String, dynamic>>> groupedItems = SplayTreeMap<int, List<Map<String, dynamic>>>();
 
-    for (var doc in groupsSnapshot.docs) {
-      groupNames[doc.id] = doc.data()['name'] as String;
-      ordering[doc.id] = doc.data()['order'] as int;
+      for (var doc in groupsSnapshot.docs) {
+        groupNames[doc.id] = doc.data()['name'] as String;
+        ordering[doc.id] = doc.data()['order'] as int;
+      }
+
+      for (var item in items) {
+        String groupId = item['groupId'];
+        int groupOrder = ordering[groupId] ?? 1000;
+        groupedItems.putIfAbsent(groupOrder, () => []).add(item);
+      }
+
+      Map<String, List<Map<String, dynamic>>> sortedGroupItems = {};
+      groupedItems.forEach((order, itemsList) {
+        String groupName = groupNames.entries.firstWhere((entry) => ordering[entry.key] == order).value;
+        sortedGroupItems[groupName] = itemsList;
+      });
+
+      setState(() {
+        itemsByGroup = sortedGroupItems;
+      });
+    } catch (e) {
+      print('Error loading items: $e');
     }
-
-    for (var item in items) {
-      String groupId = item['groupId'];
-      int groupOrder = ordering[groupId] ?? 1000;
-      groupedItems.putIfAbsent(groupOrder, () => []).add(item);
-    }
-
-    Map<String, List<Map<String, dynamic>>> sortedGroupItems = {};
-    groupedItems.forEach((order, itemsList) {
-      String groupName = groupNames.entries.firstWhere((entry) => ordering[entry.key] == order).value;
-      sortedGroupItems[groupName] = itemsList;
-    });
-
-    setState(() {
-      itemsByGroup = sortedGroupItems;
-    });
   }
 
   void toggleItemDone(String groupName, int index) {
@@ -210,6 +217,37 @@ class _ItemListScreenState extends State<ItemListScreen> {
     loadItems();
   }
 
+  Future<String> createLink(String refCode) async {
+    final String url = "https://smartlister01.page.link/?id=$refCode";
+
+    final DynamicLinkParameters parameters = DynamicLinkParameters(
+      androidParameters: const AndroidParameters(
+        packageName: "com.example.smart",
+        minimumVersion: 0,
+      ),
+      iosParameters: const IOSParameters(
+        bundleId: "com.example.smart",
+        minimumVersion: "0",
+      ),
+      link: Uri.parse(url),
+      uriPrefix: "https://smartlister01.page.link",
+    );
+
+    final FirebaseDynamicLinks dynamicLinks = FirebaseDynamicLinks.instance;
+    final ShortDynamicLink shortLink = await dynamicLinks.buildShortLink(parameters);
+    return shortLink.shortUrl.toString();
+  }
+
+  void shareList() async {
+    try {
+      final shareableLink = await createLink(widget.shoppingListsId);
+      print('Generated short link: $shareableLink');
+      await Share.share(shareableLink);
+    } catch (e) {
+      print('Error generating dynamic link: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -222,10 +260,15 @@ class _ItemListScreenState extends State<ItemListScreen> {
         actions: <Widget>[
           if (!_isDeleteMode)
             IconButton(
-              icon: Icon(Icons.print),
-              onPressed: createPdf,
-              tooltip: 'Liste drucken',
+              icon: Icon(Icons.share),
+              onPressed: shareList,
+              tooltip: 'Liste sharen',
             ),
+          IconButton(
+            icon: Icon(Icons.print),
+            onPressed: createPdf,
+            tooltip: 'Liste drucken',
+          ),
           IconButton(
             icon: Icon(_isDeleteMode ? Icons.check : Icons.delete),
             onPressed: toggleDeleteMode,
