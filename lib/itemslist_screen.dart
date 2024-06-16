@@ -7,15 +7,22 @@ import 'package:printing/printing.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pdf_wd;
 import 'dart:collection';
-import 'package:share_plus/share_plus.dart'; 
+import 'package:share_plus/share_plus.dart';
 import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
-import 'readonlylist.dart';
+import 'readonlylist_screen.dart';
+import 'template.dart';
 
 class ItemListScreen extends StatefulWidget {
   final String listName;
   final String shoppingListsId;
+  final List<TemplateList>? items;
+  final String? initialStoreId;
 
-  ItemListScreen({required this.listName, required this.shoppingListsId});
+  ItemListScreen(
+      {required this.listName,
+      required this.shoppingListsId,
+      this.items,
+      this.initialStoreId});
 
   @override
   _ItemListScreenState createState() => _ItemListScreenState();
@@ -27,44 +34,81 @@ class _ItemListScreenState extends State<ItemListScreen> {
   bool _isDeleteMode = false;
   Set<String> selectedItems = Set();
   Set<String> selectedGroups = Set();
+  List<TemplateList> items = [];
+  String? currentStoreId;
 
   @override
   void initState() {
     super.initState();
-    loadItems();
+    // Check if there are items from the template
+    if (widget.items != null && widget.items!.isNotEmpty) {
+      setTemplateItems(widget.items!);
+    } else {
+      loadItems();
+    }
   }
+
+void setTemplateItems(List<TemplateList> items) {
+  var groupedItems = Map<String, List<Map<String, dynamic>>>();
+  for (var item in items) {
+    print("Setting group name: ${item.groupName} for item: ${item.name}");  
+    groupedItems.putIfAbsent(item.groupName, () => []).add({
+      'name': item.name,
+      'isDone': item.isDone,
+      'groupId': item.groupId,
+    });
+  }
+  setState(() {
+    itemsByGroup = groupedItems;
+  });
+}
+
 
   void loadItems() async {
     try {
-      var listDoc = await _firestore.collection('shopping_lists').doc(widget.shoppingListsId).get();
-      var items = List<Map<String, dynamic>>.from(listDoc.data()?['items'] ?? []);
-      String storeId = listDoc.data()?['ladenId'] as String;
+      var listDoc = await _firestore
+          .collection('shopping_lists')
+          .doc(widget.shoppingListsId)
+          .get();
+      print(
+          "Document Data: ${listDoc.data()}"); 
 
-      var groupsSnapshot = await _firestore.collection('product_groups').where('storeId', isEqualTo: storeId).orderBy('order').get();
-      Map<String, String> groupNames = {};
-      Map<String, int> ordering = {};
-      Map<int, List<Map<String, dynamic>>> groupedItems = SplayTreeMap<int, List<Map<String, dynamic>>>();
-
-      for (var doc in groupsSnapshot.docs) {
-        groupNames[doc.id] = doc.data()['name'] as String;
-        ordering[doc.id] = doc.data()['order'] as int;
+      currentStoreId = listDoc.data()?['ladenId'] as String?;
+      if (currentStoreId == null) {
+        print("No store ID found for list: ${widget.shoppingListsId}");
+        return;
       }
+      print("Store ID: $currentStoreId");
 
+      var items =
+          List<Map<String, dynamic>>.from(listDoc.data()?['items'] ?? []);
+      print("Items: $items");
+
+      var groupsSnapshot = await _firestore
+          .collection('product_groups')
+          .where('storeId', isEqualTo: currentStoreId)
+          .orderBy('order')
+          .get();
+
+      Map<String, String> groupNames = {};
+      for (var doc in groupsSnapshot.docs) {
+        groupNames[doc.id] = doc.data()?['name'] as String;
+      }
+      print("Group Names: $groupNames");
+
+      Map<String, List<Map<String, dynamic>>> groupedItems = {};
       for (var item in items) {
         String groupId = item['groupId'];
-        int groupOrder = ordering[groupId] ?? 1000;
-        groupedItems.putIfAbsent(groupOrder, () => []).add(item);
+        print("id ist: $groupId");
+        String groupName = groupNames[groupId] ?? 'Unbekannte Gruppe';
+        groupedItems.putIfAbsent(groupName, () => []).add(item);
+        print("name ist: $groupName");
       }
 
-      Map<String, List<Map<String, dynamic>>> sortedGroupItems = {};
-      groupedItems.forEach((order, itemsList) {
-        String groupName = groupNames.entries.firstWhere((entry) => ordering[entry.key] == order).value;
-        sortedGroupItems[groupName] = itemsList;
-      });
-
       setState(() {
-        itemsByGroup = sortedGroupItems;
+        itemsByGroup = groupedItems;
       });
+      print("Items by Group: $itemsByGroup");
     } catch (e) {
       print('Error loading items: $e');
     }
@@ -72,7 +116,8 @@ class _ItemListScreenState extends State<ItemListScreen> {
 
   void toggleItemDone(String groupName, int index) {
     setState(() {
-      itemsByGroup[groupName]![index]['isDone'] = !itemsByGroup[groupName]![index]['isDone'];
+      itemsByGroup[groupName]![index]['isDone'] =
+          !itemsByGroup[groupName]![index]['isDone'];
       _firestore
           .collection('shopping_lists')
           .doc(widget.shoppingListsId)
@@ -93,40 +138,45 @@ class _ItemListScreenState extends State<ItemListScreen> {
   void deleteSelectedItems() {
     if (selectedItems.isNotEmpty || selectedGroups.isNotEmpty) {
       showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text('Bestätigen'),
-            content: Text('Möchten Sie die ausgewählten Artikel und Gruppen wirklich löschen?'),
-            actions: <Widget>[
-              TextButton(
-                child: Text('Abbrechen'),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-              TextButton(
-                child: Text('Löschen'),
-                onPressed: () async {
-                  await _firestore.runTransaction((transaction) async {
-                    final listRef = _firestore.collection('shopping_lists').doc(widget.shoppingListsId);
-                    var snapshot = await transaction.get(listRef);
-                    var items = List<Map<String, dynamic>>.from(snapshot.data()?['items'] ?? []);
-                    
-                    items.removeWhere((item) => selectedItems.contains(item['name']));
-                    
-                    selectedGroups.forEach((groupId) {
-                      items.removeWhere((item) => item['groupId'] == groupId);
-                    });
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Bestätigen'),
+              content: Text(
+                  'Möchten Sie die ausgewählten Artikel und Gruppen wirklich löschen?'),
+              actions: <Widget>[
+                TextButton(
+                  child: Text('Abbrechen'),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+                TextButton(
+                  child: Text('Löschen'),
+                  onPressed: () async {
+                    await _firestore.runTransaction((transaction) async {
+                      final listRef = _firestore
+                          .collection('shopping_lists')
+                          .doc(widget.shoppingListsId);
+                      var snapshot = await transaction.get(listRef);
+                      var items = List<Map<String, dynamic>>.from(
+                          snapshot.data()?['items'] ?? []);
 
-                    transaction.update(listRef, {'items': items});
-                  });
-                  Navigator.of(context).pop();
-                  toggleDeleteMode();
-                  loadItems();
-                },
-              ),
-            ],
-          );
-        });
+                      items.removeWhere(
+                          (item) => selectedItems.contains(item['name']));
+
+                      selectedGroups.forEach((groupId) {
+                        items.removeWhere((item) => item['groupId'] == groupId);
+                      });
+
+                      transaction.update(listRef, {'items': items});
+                    });
+                    Navigator.of(context).pop();
+                    toggleDeleteMode();
+                    loadItems();
+                  },
+                ),
+              ],
+            );
+          });
     }
   }
 
@@ -234,7 +284,8 @@ class _ItemListScreenState extends State<ItemListScreen> {
     );
 
     final FirebaseDynamicLinks dynamicLinks = FirebaseDynamicLinks.instance;
-    final ShortDynamicLink shortLink = await dynamicLinks.buildShortLink(parameters);
+    final ShortDynamicLink shortLink =
+        await dynamicLinks.buildShortLink(parameters);
     return shortLink.shortUrl.toString();
   }
 
@@ -283,20 +334,23 @@ class _ItemListScreenState extends State<ItemListScreen> {
           return ExpansionTile(
             title: Row(
               children: [
-                if (_isDeleteMode) Checkbox(
-                  value: selectedGroups.contains(group),
-                  onChanged: (bool? value) {
-                    setState(() {
-                      if (value ?? false) {
-                        selectedGroups.add(group);
-                        selectedItems.addAll(itemsByGroup[group]!.map((item) => item['name'] as String));
-                      } else {
-                        selectedGroups.remove(group);
-                        selectedItems.removeAll(itemsByGroup[group]!.map((item) => item['name'] as String));
-                      }
-                    });
-                  },
-                ),
+                if (_isDeleteMode)
+                  Checkbox(
+                    value: selectedGroups.contains(group),
+                    onChanged: (bool? value) {
+                      setState(() {
+                        if (value ?? false) {
+                          selectedGroups.add(group);
+                          selectedItems.addAll(itemsByGroup[group]!
+                              .map((item) => item['name'] as String));
+                        } else {
+                          selectedGroups.remove(group);
+                          selectedItems.removeAll(itemsByGroup[group]!
+                              .map((item) => item['name'] as String));
+                        }
+                      });
+                    },
+                  ),
                 Text(group),
               ],
             ),
@@ -323,11 +377,12 @@ class _ItemListScreenState extends State<ItemListScreen> {
                       onChanged: !_isDeleteMode
                           ? (bool? value) {
                               if (value != null) {
-                                int itemIndex = itemsByGroup[group]!.indexOf(item);
+                                int itemIndex =
+                                    itemsByGroup[group]!.indexOf(item);
                                 toggleItemDone(group, itemIndex);
                               }
                             }
-                          : null, 
+                          : null,
                       controlAffinity: ListTileControlAffinity.trailing,
                     ),
                   ),

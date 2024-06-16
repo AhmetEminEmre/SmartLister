@@ -159,6 +159,10 @@ class HomePage extends StatelessWidget {
                     } else if (value == 'rename') {
                       _renameShoppingList(doc.id, data['name'], context);
                     }
+                    else if (value == 'saveAsTemplate') {
+                      _saveListAsTemplate(doc.id, data['name'], data['ladenId'],
+                          data['items'], context);
+                    }
                   },
                   itemBuilder: (BuildContext context) =>
                       <PopupMenuEntry<String>>[
@@ -169,6 +173,10 @@ class HomePage extends StatelessWidget {
                     const PopupMenuItem<String>(
                       value: 'delete',
                       child: Text('Liste löschen'),
+                    ),
+                    const PopupMenuItem<String>(
+                      value: 'saveAsTemplate',
+                      child: Text('Liste als Vorlage speichern'),
                     ),
                   ],
                 ),
@@ -187,7 +195,7 @@ class HomePage extends StatelessWidget {
       await _firestore.collection('shopping_lists').doc(listId).delete();
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text('Einkaufsliste gelöscht'),
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.green,
       ));
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -238,6 +246,21 @@ class HomePage extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+
+  void _saveListAsTemplate(String listId, String name, String storeId, List<dynamic> items, BuildContext context) async {
+    var templateRef = _firestore.collection('list_templates').doc();
+    await templateRef.set({
+      'id': templateRef.id,
+      'name': name,
+      'ladenId': storeId,
+      'items': items,
+      'userId': FirebaseAuth.instance.currentUser?.uid,
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Liste als Vorlage gespeichert!'), 
+      backgroundColor: Colors.green)
     );
   }
 

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'firebase_login.dart';
-import 'readonlylist.dart';
+import 'readonlylist_screen.dart';
 import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'homepage.dart';

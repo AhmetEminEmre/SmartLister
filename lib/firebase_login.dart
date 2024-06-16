@@ -4,7 +4,6 @@ import 'firebase_auth.dart';
 import 'homepage.dart';
 import 'nickname.dart';
 import 'firebase_register.dart';
-import 'readonlylist.dart';
 
 class LoginScreen extends StatefulWidget {
   final Uri? redirectLink;

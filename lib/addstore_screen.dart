@@ -1,16 +1,23 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'itemslist_screen.dart';
-import 'addstoreonly_screen.dart';
-import 'firebase_auth.dart';
-
+import 'template.dart';
 
 class StoreScreen extends StatefulWidget {
   final String listId;
   final String listName;
+  final String? selectedStoreId;
+  final List<TemplateList> items;
+  final Function(String storeId) onStoreSelected;
 
-  StoreScreen({required this.listId, required this.listName});
+  StoreScreen({
+    required this.listId,
+    required this.listName,
+    this.selectedStoreId,
+    required this.items,
+    required this.onStoreSelected,
+  });
 
   @override
   _StoreScreenState createState() => _StoreScreenState();
@@ -24,22 +31,23 @@ class _StoreScreenState extends State<StoreScreen> {
   @override
   void initState() {
     super.initState();
+    _selectedStoreId = widget.selectedStoreId;
     _loadStores();
   }
 
-void _loadStores() async {
-  var snapshot = await _firestore.collection('stores')
-    .where('userId', isEqualTo: FirebaseAuth.instance.currentUser?.uid)  // Filter stores by userId
-    .get();
-  var stores = snapshot.docs.map((doc) => DropdownMenuItem<String>(
-    value: doc.id,
-    child: Text(doc.data()['name'] as String),
-  )).toList();
+  void _loadStores() async {
+    var snapshot = await _firestore.collection('stores')
+        .where('userId', isEqualTo: FirebaseAuth.instance.currentUser?.uid)
+        .get();
+    var stores = snapshot.docs.map((doc) => DropdownMenuItem<String>(
+      value: doc.id,
+      child: Text(doc.data()?['name'] ?? 'idk laden'),
+    )).toList();
 
-  setState(() {
-    _storeItems = stores;
-  });
-}
+    setState(() {
+      _storeItems = stores;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,24 +70,20 @@ void _loadStores() async {
           ),
           ElevatedButton(
             onPressed: _selectedStoreId != null ? () {
-              _firestore.collection('shopping_lists').doc(widget.listId).update({
-                'ladenId': _selectedStoreId
-              });
-              Navigator.push(
+              widget.onStoreSelected(_selectedStoreId!);
+              Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => ItemListScreen(listName: widget.listName, shoppingListsId: widget.listId)),
+                MaterialPageRoute(
+                  builder: (context) => ItemListScreen(
+                    listName: widget.listName, 
+                    shoppingListsId: widget.listId,
+                    items: widget.items,
+                    initialStoreId: _selectedStoreId,
+                  ),
+                ),
               );
             } : null,
             child: Text('Laden zu Liste hinzufügen'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => AddStoreScreen()),
-              ).then((_) => _loadStores()); 
-            },
-            child: Text('Neuen Laden erstellen'),
           ),
         ],
       ),

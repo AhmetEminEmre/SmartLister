@@ -44,7 +44,6 @@ class _ReadOnlyListScreenState extends State<ReadOnlyListScreen> {
         var userDoc = await FirebaseFirestore.instance.collection('userinfos').doc(data['userId']).get();
         _userName = userDoc.data()?['nickname'] ?? 'Unknown User';
 
-        // Fetch group names
         var groupDocs = await FirebaseFirestore.instance.collection('product_groups').get();
         for (var doc in groupDocs.docs) {
           _groupNames[doc.id] = doc.data()['name'] as String;
@@ -117,7 +116,6 @@ class _ReadOnlyListScreenState extends State<ReadOnlyListScreen> {
             return Center(child: Text('Fehler beim Laden der Daten'));
           }
 
-          // Organize items by groups
           Map<String, List<Map<String, dynamic>>> groupedItems = {};
           for (var item in snapshot.data!['items']) {
             String groupName = _groupNames[item['groupId']] ?? 'Other';
