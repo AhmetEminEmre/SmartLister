@@ -36,17 +36,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ElevatedButton(
               onPressed: () async {
                 User? user = await _authService.registerWithEmailAndPassword(
-                  _emailController.text,
-                  _passwordController.text
-                );
+                    _emailController.text, _passwordController.text);
                 if (user != null) {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => LoginScreen())
-                  );
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Registrierung erfolgreich! Bitte loggen Sie sich ein.')));
+                  Navigator.pushReplacement(context,
+                      MaterialPageRoute(builder: (context) => LoginScreen()));
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text(
+                        'Registrierung erfolgreich! Bitte loggen Sie sich ein.'),
+                    backgroundColor: Colors.green,
+                  ));
                 } else {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Registrierung fehlgeschlagen!')));
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text('Registrierung fehlgeschlagen!'),
+                    backgroundColor: Colors.red,
+                  ));
                 }
               },
               child: Text('Registrieren'),
@@ -57,6 +60,3 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 }
-
-
-

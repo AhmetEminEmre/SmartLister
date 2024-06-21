@@ -24,14 +24,21 @@ class NicknameEntryScreen extends StatelessWidget {
             onPressed: () async {
               var user = FirebaseAuth.instance.currentUser;
               if (user != null && _nicknameController.text.isNotEmpty) {
-                await _authService.saveUserNickname(user.uid, _nicknameController.text);
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Nickname gespeichert!')));
+                await _authService.saveUserNickname(
+                    user.uid, _nicknameController.text);
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text('Nickname gespeichert!'),
+                  backgroundColor: Colors.green,
+                ));
                 Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => HomePage(uid: user.uid))
-                );
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => HomePage(uid: user.uid)));
               } else {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Bitte geben Sie einen Nickname ein.')));
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text('Bitte geben Sie einen Nickname ein.'),
+                  backgroundColor: Colors.red,
+                ));
               }
             },
             child: Text("Save Nickname"),

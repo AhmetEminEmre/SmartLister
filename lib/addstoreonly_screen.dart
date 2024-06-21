@@ -46,7 +46,8 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
   void _addStore() async {
     if (_storeNameController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Der Name des Einkaufsladens darf nicht leer sein.'))
+        SnackBar(content: Text('Der Name des Einkaufsladens darf nicht leer sein.'), 
+          backgroundColor: Colors.red,)
       );
       return;
     }

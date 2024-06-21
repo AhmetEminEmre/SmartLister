@@ -120,7 +120,8 @@ Future<Map<String, String>> _fetchGroupNames() async {
   void _createList() async {
     if (_listNameController.text.trim().isEmpty || _listNameController.text.trim().length < 3) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Der Name der Einkaufsliste muss mindestens 3 Zeichen lang sein.'))
+        SnackBar(content: Text('Der Name der Einkaufsliste muss mindestens 3 Zeichen lang sein.'),
+          backgroundColor: Colors.red,)
       );
       return;
     }

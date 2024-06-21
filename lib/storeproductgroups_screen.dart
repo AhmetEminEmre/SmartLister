@@ -86,33 +86,46 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
     }
   }
 
-  void _deleteProductGroup(String docId) {
+  void _deleteProductGroup(String docId) async {
+
+    var shoppingLists = await _firestore.collection('shopping_lists').get();
+    var count = 0;
+
+    for (var doc in shoppingLists.docs) {
+      var items = List.from(doc.data()['items']);
+      if (items.any((item) => item['groupId'] == docId)) {
+        count++;
+      }
+    }
+
+    print("count, listen die diese gruppe usen: $count");
+
+    if (count > 0) {
+      _showDeleteWarning(count, docId);
+    } else {
+      _deleteGroupAndItems(docId);
+      _loadProductGroups();
+    }
+  }
+
+  void _showDeleteWarning(int count, String docId) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text('Warengruppe löschen'),
           content: Text(
-              'Sind Sie sicher, dass Sie diese Warengruppe löschen möchten?'),
+              'Diese Gruppe wird $count mal verwendet. Wollen Sie sie trotzdem löschen?'),
           actions: <Widget>[
             TextButton(
-              child: Text('Abbrechen'),
+              child: Text('Nein'),
               onPressed: () => Navigator.of(context).pop(),
             ),
             TextButton(
-              child: Text('Löschen'),
+              child: Text('Ja'),
               onPressed: () {
-                _firestore
-                    .collection('product_groups')
-                    .doc(docId)
-                    .delete()
-                    .then((_) {
-                  Navigator.of(context).pop();
-                  _loadProductGroups();
-                  _reorderProductGroupsAfterDeletion(docId);
-                }).catchError((error) {
-                  print("Fehler beim Löschen der Warengruppe: $error");
-                });
+                Navigator.of(context).pop();
+                _deleteGroupAndItems(docId);
               },
             ),
           ],
@@ -121,20 +134,58 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
     );
   }
 
-  void _reorderProductGroupsAfterDeletion(String deletedDocId) {
-    int orderIndex = 0;
-    List<DocumentSnapshot> updatedProductGroups = [];
-    for (var doc in _productGroups) {
-      if (doc.id != deletedDocId) {
-        updatedProductGroups.add(doc);
+  Future<void> _deleteGroupAndItems(String docId) async {
+    await _firestore.collection('product_groups').doc(docId).delete();
+
+    var listsToUpdate = await _firestore.collection('shopping_lists').get();
+    List<Future<void>> updateTasks = [];
+
+    for (var doc in listsToUpdate.docs) {
+      var items = List<Map<String, dynamic>>.from(doc.data()['items'] ?? []);
+      int originalLength = items.length;
+      items.removeWhere((item) => item['groupId'] == docId);
+      int newLength = items.length;
+
+      if (originalLength != newLength) {
+        updateTasks
+            .add(doc.reference.update({'items': items}).catchError((error) {
+          print("error after updating: $error");
+        }));
       }
     }
-    _productGroups = updatedProductGroups;
-    for (var doc in _productGroups) {
-      doc.reference.update({'order': orderIndex++}).catchError((error) {
-        print("Fehler beim Aktualisieren der Order nach Löschung: $error");
-      });
+
+    try {
+      await Future.wait(updateTasks);
+    } catch (e) {
+      print("error bei update: $e");
     }
+
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('Warengruppe gelöscht.'),
+      backgroundColor: Colors.green,
+    ));
+
+    _loadProductGroups();
+    _reorderProductGroupsAfterDeletion();
+  }
+
+  void _reorderProductGroupsAfterDeletion() async {
+    int newOrder = 0;
+    List<Future<void>> updateTasks = [];
+
+    for (var doc in _productGroups) {
+      updateTasks
+          .add(doc.reference.update({'order': newOrder++}).catchError((error) {
+        print("error after adding: $error");
+      }));
+    }
+
+    try {
+      await Future.wait(updateTasks);
+    } catch (e) {
+      print("reorder error: $e");
+    }
+
     _loadProductGroups();
   }
 
@@ -247,9 +298,10 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
         _loadProductGroups();
       } else {
         print("Warengruppe bereits vorhanden.");
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Warengruppe "$name" ist bereits vorhanden.')),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Warengruppe "$name" ist bereits vorhanden.'),
+          backgroundColor: Colors.red,
+        ));
       }
     } catch (e) {
       print("Fehler beim Hinzufügen einer Produktgruppe: $e");

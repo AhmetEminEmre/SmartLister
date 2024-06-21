@@ -69,15 +69,20 @@ class _LoginScreenState extends State<LoginScreen> {
       if (userCredential.user != null) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => HomePage(uid: userCredential.user!.uid)),
+          MaterialPageRoute(
+              builder: (context) => HomePage(uid: userCredential.user!.uid)),
         );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Login fehlgeschlagen!')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Login fehlgeschlagen!'),
+          backgroundColor: Colors.red,
+        ));
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Login Failed: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Login Failed: $e'),
+        backgroundColor: Colors.red,
+      ));
     }
   }
 
@@ -90,10 +95,15 @@ class _LoginScreenState extends State<LoginScreen> {
     } else {
       _auth.sendPasswordResetEmail(email: _emailController.text).then((_) {
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Passwort-Reset Mail gesendet!')));
+            SnackBar(content: Text('Passwort-Reset Mail gesendet!'),
+             backgroundColor: Colors.green,
+        ));
+             
       }).catchError((error) {
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Fehler beim Senden der E-Mail.')));
+            SnackBar(content: Text('Fehler beim Senden der E-Mail.'),
+             backgroundColor: Colors.red,
+        ));
       });
     }
   }
