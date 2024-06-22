@@ -112,83 +112,83 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Stream<List<Widget>> _buildListTiles(BuildContext context) {
-    return _firestore
-        .collection('shopping_lists')
-        .where('userId', isEqualTo: uid)
-        .orderBy('createdDate', descending: true)
-        .limit(5)
-        .snapshots()
-        .map((snapshot) {
-      return snapshot.docs.map((doc) {
-        Map<String, dynamic>? data = doc.data() as Map<String, dynamic>?;
-        if (data == null) {
-          return SizedBox();
-        }
-        Future<DocumentSnapshot> storeSnapshot =
-            _firestore.collection('stores').doc(data['ladenId']).get();
-        return FutureBuilder<DocumentSnapshot>(
-          future: storeSnapshot,
-          builder: (context, storeSnapshot) {
-            if (storeSnapshot.connectionState == ConnectionState.done &&
-                storeSnapshot.hasData) {
-              Map<String, dynamic>? storeData =
-                  storeSnapshot.data?.data() as Map<String, dynamic>?;
-              if (storeData == null) {
-                return Text("Store data not found.");
-              }
-              return ListTile(
-                title: Text(data['name']),
-                subtitle: Text(
-                    'Artikel: ${data['items'].length}, Laden: ${storeData['name']}'),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ItemListScreen(
-                        listName: data['name'],
-                        shoppingListsId: doc.id,
-                      ),
+ Stream<List<Widget>> _buildListTiles(BuildContext context) {
+  return _firestore
+      .collection('shopping_lists')
+      .where('userId', isEqualTo: uid)
+      .orderBy('createdDate', descending: true)
+      .snapshots()
+      .map((snapshot) {
+    var useablelists = snapshot.docs.where((doc) {
+      return doc.data().containsKey('ladenId') && doc.data()['ladenId'] != null; //wenn user eine liste erstellt aber keinen laden hinzufügt und abbricht
+    }).toList();
+
+    useablelists = useablelists.length > 5 ? useablelists.sublist(0, 5) : useablelists;
+
+    return useablelists.map((doc) {
+      Map<String, dynamic>? data = doc.data() as Map<String, dynamic>;
+      Future<DocumentSnapshot> storeSnapshot =
+          _firestore.collection('stores').doc(data['ladenId']).get();
+      return FutureBuilder<DocumentSnapshot>(
+        future: storeSnapshot,
+        builder: (context, storeSnapshot) {
+          if (storeSnapshot.connectionState == ConnectionState.done &&
+              storeSnapshot.hasData && storeSnapshot.data!.exists) {
+            Map<String, dynamic>? storeData =
+                storeSnapshot.data?.data() as Map<String, dynamic>;
+            return ListTile(
+              title: Text(data['name']),
+              subtitle: Text(
+                  'Artikel: ${data['items'].length}, Laden: ${storeData['name']}'),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ItemListScreen(
+                      listName: data['name'],
+                      shoppingListsId: doc.id,
                     ),
-                  );
+                  ),
+                );
+              },
+              trailing: PopupMenuButton<String>(
+                onSelected: (value) {
+                  if (value == 'delete') {
+                    _deleteShoppingList(doc.id, context);
+                  } else if (value == 'rename') {
+                    _renameShoppingList(doc.id, data['name'], context);
+                  } else if (value == 'saveAsTemplate') {
+                    _saveListAsTemplate(doc.id, data['name'], data['ladenId'],
+                        data['items'], context);
+                  }
                 },
-                trailing: PopupMenuButton<String>(
-                  onSelected: (value) {
-                    if (value == 'delete') {
-                      _deleteShoppingList(doc.id, context);
-                    } else if (value == 'rename') {
-                      _renameShoppingList(doc.id, data['name'], context);
-                    }
-                    else if (value == 'saveAsTemplate') {
-                      _saveListAsTemplate(doc.id, data['name'], data['ladenId'],
-                          data['items'], context);
-                    }
-                  },
-                  itemBuilder: (BuildContext context) =>
-                      <PopupMenuEntry<String>>[
-                    const PopupMenuItem<String>(
-                      value: 'rename',
-                      child: Text('Liste umbenennen'),
-                    ),
-                    const PopupMenuItem<String>(
-                      value: 'delete',
-                      child: Text('Liste löschen'),
-                    ),
-                    const PopupMenuItem<String>(
-                      value: 'saveAsTemplate',
-                      child: Text('Liste als Vorlage speichern'),
-                    ),
-                  ],
-                ),
-              );
-            } else {
-              return SizedBox();
-            }
-          },
-        );
-      }).toList();
-    });
-  }
+                itemBuilder: (BuildContext context) =>
+                    <PopupMenuEntry<String>>[
+                  const PopupMenuItem<String>(
+                    value: 'rename',
+                    child: Text('Liste umbenennen'),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: 'delete',
+                    child: Text('Liste löschen'),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: 'saveAsTemplate',
+                    child: Text('Liste als Vorlage speichern'),
+                  ),
+                ],
+              ),
+            );
+          } else {
+            return SizedBox.shrink(); 
+          }
+        },
+      );
+    }).toList();
+  });
+}
+
+
 
   void _deleteShoppingList(String listId, BuildContext context) async {
     try {
@@ -275,7 +275,6 @@ class HomePage extends StatelessWidget {
         .where('userId', isEqualTo: uid)
         .snapshots()
         .map((snapshot) {
-      // Count store appearances
       var storeCounts = <String, int>{};
       for (var doc in snapshot.docs) {
         var ladenId = doc.data()['ladenId'];
@@ -283,7 +282,6 @@ class HomePage extends StatelessWidget {
           storeCounts[ladenId] = (storeCounts[ladenId] ?? 0) + 1;
         }
       }
-      // Get top 3 most used store IDs
       var sortedStores = storeCounts.entries.toList()
         ..sort((a, b) => b.value.compareTo(a.value));
       sortedStores = sortedStores.take(3).toList();

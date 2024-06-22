@@ -42,27 +42,27 @@ class _ItemListScreenState extends State<ItemListScreen> {
     super.initState();
     // Check if there are items from the template
     if (widget.items != null && widget.items!.isNotEmpty) {
+      loadItems();
       setTemplateItems(widget.items!);
     } else {
       loadItems();
     }
   }
 
-void setTemplateItems(List<TemplateList> items) {
-  var groupedItems = Map<String, List<Map<String, dynamic>>>();
-  for (var item in items) {
-    print("Setting group name: ${item.groupName} for item: ${item.name}");  
-    groupedItems.putIfAbsent(item.groupName, () => []).add({
-      'name': item.name,
-      'isDone': item.isDone,
-      'groupId': item.groupId,
+  void setTemplateItems(List<TemplateList> items) {
+    var groupedItems = Map<String, List<Map<String, dynamic>>>();
+    for (var item in items) {
+      print("Setting group name: ${item.groupName} for item: ${item.name}");
+      groupedItems.putIfAbsent(item.groupName, () => []).add({
+        'name': item.name,
+        'isDone': item.isDone,
+        'groupId': item.groupId,
+      });
+    }
+    setState(() {
+      itemsByGroup = groupedItems;
     });
   }
-  setState(() {
-    itemsByGroup = groupedItems;
-  });
-}
-
 
   void loadItems() async {
     try {
@@ -70,45 +70,46 @@ void setTemplateItems(List<TemplateList> items) {
           .collection('shopping_lists')
           .doc(widget.shoppingListsId)
           .get();
-      print(
-          "Document Data: ${listDoc.data()}"); 
-
       currentStoreId = listDoc.data()?['ladenId'] as String?;
+
       if (currentStoreId == null) {
         print("No store ID found for list: ${widget.shoppingListsId}");
         return;
       }
-      print("Store ID: $currentStoreId");
 
       var items =
           List<Map<String, dynamic>>.from(listDoc.data()?['items'] ?? []);
-      print("Items: $items");
-
       var groupsSnapshot = await _firestore
           .collection('product_groups')
           .where('storeId', isEqualTo: currentStoreId)
-          .orderBy('order')
           .get();
 
       Map<String, String> groupNames = {};
       for (var doc in groupsSnapshot.docs) {
-        groupNames[doc.id] = doc.data()?['name'] as String;
+        groupNames[doc.id] = doc.data()['name'] as String;
       }
-      print("Group Names: $groupNames");
+
+      List<Map<String, dynamic>> validItems = [];
+      for (var item in items) {
+        if (groupNames.containsKey(item['groupId'])) {
+          validItems.add(item);
+        }
+      }
+
+      await _firestore
+          .collection('shopping_lists')
+          .doc(widget.shoppingListsId)
+          .update({'items': validItems});
 
       Map<String, List<Map<String, dynamic>>> groupedItems = {};
-      for (var item in items) {
-        String groupId = item['groupId'];
-        print("id ist: $groupId");
-        String groupName = groupNames[groupId] ?? 'Unbekannte Gruppe';
+      for (var item in validItems) {
+        String groupName = groupNames[item['groupId']] ?? 'Unbekannte Gruppe';
         groupedItems.putIfAbsent(groupName, () => []).add(item);
-        print("name ist: $groupName");
       }
 
       setState(() {
         itemsByGroup = groupedItems;
       });
-      print("Items by Group: $itemsByGroup");
     } catch (e) {
       print('Error loading items: $e');
     }
@@ -418,18 +419,19 @@ void setTemplateItems(List<TemplateList> items) {
               pdf_wd.Divider(),
               ...itemsByGroup.entries.map((entry) {
                 return pdf_wd.Column(
-                    crossAxisAlignment: pdf_wd.CrossAxisAlignment.start,
-                    children: [
-                      pdf_wd.Text(entry.key,
-                          style: pdf_wd.TextStyle(
-                              fontWeight: pdf_wd.FontWeight.bold,
-                              fontSize: 16)),
-                      pdf_wd.Column(
-                        children: entry.value
-                            .map((item) => pdf_wd.Text(item['name']))
-                            .toList(),
-                      ),
-                    ]);
+                  crossAxisAlignment: pdf_wd.CrossAxisAlignment.start,
+                  children: [
+                    pdf_wd.Text(entry.key,
+                        style: pdf_wd.TextStyle(
+                            fontWeight: pdf_wd.FontWeight.bold, fontSize: 16)),
+                    ...entry.value
+                        .map((item) => pdf_wd.Text(
+                              item['name'],
+                              style: pdf_wd.TextStyle(fontSize: 14),
+                            ))
+                        .toList(),
+                  ],
+                );
               }).toList(),
             ],
           );

@@ -16,7 +16,6 @@ class TemplateList {
       name: json['name'] as String,
       groupId: json['groupId'] as String,
       groupName: json['groupName'] as String? ?? 'idk', 
-      isDone: json['isDone'] as bool? ?? false,
     );
   }
 }

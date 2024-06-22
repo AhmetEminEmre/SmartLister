@@ -42,7 +42,7 @@ class _ReadOnlyListScreenState extends State<ReadOnlyListScreen> {
         var data = listDoc.data() as Map<String, dynamic>;
         _listName = data['name'];
         var userDoc = await FirebaseFirestore.instance.collection('userinfos').doc(data['userId']).get();
-        _userName = userDoc.data()?['nickname'] ?? 'Unknown User';
+        _userName = userDoc.data()?['nickname'] ?? 'ka user';
 
         var groupDocs = await FirebaseFirestore.instance.collection('product_groups').get();
         for (var doc in groupDocs.docs) {
@@ -60,26 +60,38 @@ class _ReadOnlyListScreenState extends State<ReadOnlyListScreen> {
   }
 
   void printList(Map<String, dynamic> listData) async {
-    final pdf = pw.Document();
-    pdf.addPage(
-      pw.Page(
-        build: (context) {
-          return pw.Column(
-            children: [
-              pw.Text('Shared List: $_listName by $_userName', style: pw.TextStyle(fontSize: 18)),
-              pw.Padding(padding: const pw.EdgeInsets.all(10)),
-              ...listData['items'].map<pw.Widget>((item) {
-                return pw.Text('${_groupNames[item['groupId']] ?? 'Other'}: ${item['name']} - ${item['isDone'] ? "Yes" : "No"}');
-              }),
-            ],
-          );
-        },
-      ),
-    );
-    await Printing.layoutPdf(
-      onLayout: (PdfPageFormat format) => pdf.save(),
-    );
-  }
+  final pdf = pw.Document();
+  pdf.addPage(
+    pw.Page(
+      build: (context) {
+        return pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Text('Liste von: $_listName by $_userName',
+                style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 28)),
+            pw.Divider(),
+            ...listData['items'].map<pw.Widget>((item) {
+              String groupName = _groupNames[item['groupId']] ?? 'Unbekannte Gruppe';
+              return pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Text(groupName,
+                      style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 16)),
+                  pw.Text('${item['name']} - ${item['isDone'] ? "Ja" : "Nein"}',
+                      style: pw.TextStyle(fontSize: 14)),
+                ]
+              );
+            }).toList(),
+          ],
+        );
+      },
+    ),
+  );
+  await Printing.layoutPdf(
+    onLayout: (PdfPageFormat format) => pdf.save(),
+  );
+}
+
 
   @override
   Widget build(BuildContext context) {
