@@ -7,7 +7,7 @@ import 'einkaufsliste_screen.dart';
 import 'itemslist_screen.dart';
 import 'addstoreonly_screen.dart';
 import 'storeproductgroups_screen.dart';
-import 'currencyconverter.dart';  
+import 'currencyconverter.dart';
 
 class HomePage extends StatelessWidget {
   final String uid;
@@ -111,7 +111,8 @@ class HomePage extends StatelessWidget {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => CurrencyConverterScreen()), 
+                  MaterialPageRoute(
+                      builder: (context) => CurrencyConverterScreen()),
                 );
               },
               child: Text("Währungsrechner öffnen"),
@@ -130,10 +131,12 @@ class HomePage extends StatelessWidget {
         .snapshots()
         .map((snapshot) {
       var useablelists = snapshot.docs.where((doc) {
-        return doc.data().containsKey('ladenId') && doc.data()['ladenId'] != null; 
+        return doc.data().containsKey('ladenId') &&
+            doc.data()['ladenId'] != null;
       }).toList();
 
-      useablelists = useablelists.length > 5 ? useablelists.sublist(0, 5) : useablelists;
+      useablelists =
+          useablelists.length > 5 ? useablelists.sublist(0, 5) : useablelists;
 
       return useablelists.map((doc) {
         Map<String, dynamic>? data = doc.data() as Map<String, dynamic>;
@@ -143,9 +146,15 @@ class HomePage extends StatelessWidget {
           future: storeSnapshot,
           builder: (context, storeSnapshot) {
             if (storeSnapshot.connectionState == ConnectionState.done &&
-                storeSnapshot.hasData && storeSnapshot.data!.exists) {
+                storeSnapshot.hasData &&
+                storeSnapshot.data!.exists) {
               Map<String, dynamic>? storeData =
                   storeSnapshot.data?.data() as Map<String, dynamic>;
+
+              String imagePath =
+                  data['imagePath'] ?? 'lib/img/default_image.png';
+                  print(imagePath);
+
               return ListTile(
                 title: Text(data['name']),
                 subtitle: Text(
@@ -168,8 +177,8 @@ class HomePage extends StatelessWidget {
                     } else if (value == 'rename') {
                       _renameShoppingList(doc.id, data['name'], context);
                     } else if (value == 'saveAsTemplate') {
-                      _saveListAsTemplate(doc.id, data['name'], data['ladenId'],
-                          data['items'], context);
+                      _saveListAsTemplate(doc.id, data['name'], data['ladenId'], imagePath,
+                          data['items'],  context);
                     }
                   },
                   itemBuilder: (BuildContext context) =>
@@ -188,9 +197,21 @@ class HomePage extends StatelessWidget {
                     ),
                   ],
                 ),
+                tileColor: Colors.transparent,
+                leading: Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage(imagePath),
+                      fit: BoxFit.cover,
+                    ),
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                ),
               );
             } else {
-              return SizedBox.shrink(); 
+              return SizedBox.shrink();
             }
           },
         );
@@ -257,7 +278,8 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  void _saveListAsTemplate(String listId, String name, String storeId, List<dynamic> items, BuildContext context) async {
+  void _saveListAsTemplate(String listId, String name, String storeId, String imagePath,
+      List<dynamic> items, BuildContext context) async {
     var templateRef = _firestore.collection('list_templates').doc();
     await templateRef.set({
       'id': templateRef.id,
@@ -265,11 +287,11 @@ class HomePage extends StatelessWidget {
       'ladenId': storeId,
       'items': items,
       'userId': FirebaseAuth.instance.currentUser?.uid,
+      'imagePath': imagePath,
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Liste als Vorlage gespeichert!'), 
-      backgroundColor: Colors.green)
-    );
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Liste als Vorlage gespeichert!'),
+        backgroundColor: Colors.green));
   }
 
   Future<String> getUsername() async {

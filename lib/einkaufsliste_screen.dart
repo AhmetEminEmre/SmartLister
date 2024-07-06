@@ -17,6 +17,23 @@ class _CreateListScreenState extends State<CreateListScreen> {
   String? _selectedTemplateId;
   List<TemplateList> _items = [];
   String? _selectedStoreId;
+  String? _selectedImagePath;
+
+  final Map<String, String> imageNameToPath = {
+    'Apfel': 'lib/img/bild1.png',
+    'Birne': 'lib/img/bild2.png',
+    'Banane': 'lib/img/bild3.png',
+    'Kiwi': 'lib/img/bild4.png',
+    'Ananas': 'lib/img/bild5.png',
+  };
+
+  final Map<String, String> imagePathToName = {
+    'lib/img/bild1.png': 'Apfel',
+    'lib/img/bild2.png': 'Birne',
+    'lib/img/bild3.png': 'Banane',
+    'lib/img/bild4.png': 'Kiwi',
+    'lib/img/bild5.png': 'Ananas',
+  };
 
   @override
   void initState() {
@@ -25,80 +42,89 @@ class _CreateListScreenState extends State<CreateListScreen> {
   }
 
   void _loadTemplates() async {
-    var snapshot = await _firestore.collection('list_templates').where('userId', isEqualTo: currentUser?.uid).get();
-    var templates = snapshot.docs.map((doc) => DropdownMenuItem<String>(
-      value: doc.id,
-      child: GestureDetector(
-        onLongPress: () => _confirmDeleteTemplate(doc.id, doc.data()?['name'] ?? ''),
-        child: Text(doc.data()?['name'] ?? 'Unbenannte Vorlage'),
-      ),
-    )).toList();
+    var snapshot = await _firestore
+        .collection('list_templates')
+        .where('userId', isEqualTo: currentUser?.uid)
+        .get();
+    var templates = snapshot.docs
+        .map((doc) => DropdownMenuItem<String>(
+              value: doc.id,
+              child: GestureDetector(
+                onLongPress: () =>
+                    _confirmDeleteTemplate(doc.id, doc.data()?['name'] ?? ''),
+                child: Text(doc.data()?['name'] ?? 'Unbenannte Vorlage'),
+              ),
+            ))
+        .toList();
 
     setState(() {
       _templateItems = templates;
     });
   }
 
-void _applyTemplate(String templateId) async {
-  var doc = await _firestore.collection('list_templates').doc(templateId).get();
-  if (doc.exists) {
-    var data = doc.data()!;
-    _listNameController.text = data['name'];
-    _selectedStoreId = data['ladenId'];
-    
-    var groupNames = await _fetchGroupNames();
+  void _applyTemplate(String templateId) async {
+    var doc =
+        await _firestore.collection('list_templates').doc(templateId).get();
+    if (doc.exists) {
+      var data = doc.data()!;
+      _listNameController.text = data['name'];
+      _selectedStoreId = data['ladenId'];
+      _selectedImagePath = data['imagePath'];
 
-    var items = List.from(data['items'] as List).map((item) {
-      var groupId = item['groupId'];
-      var groupName = groupNames[groupId] ?? 'idk2';
-      return TemplateList.fromJson({
-        'name': item['name'],
-        'groupId': groupId,
-        'groupName': groupName,
-        'isDone': item['isDone'],
+      var groupNames = await _fetchGroupNames();
+
+      var items = List.from(data['items'] as List).map((item) {
+        var groupId = item['groupId'];
+        var groupName = groupNames[groupId] ?? 'idk2';
+        return TemplateList.fromJson({
+          'name': item['name'],
+          'groupId': groupId,
+          'groupName': groupName,
+          'isDone': item['isDone'],
+          'imagePath': data['imagePath'],
+        });
+      }).toList();
+
+      setState(() {
+        _selectedTemplateId = templateId;
+        _items = items;
+        _selectedImagePath = data['imagePath'];
       });
-    }).toList();
-
-    setState(() {
-      _selectedTemplateId = templateId;
-      _items = items;
-    });
+    }
   }
-}
 
 //?? gruppennamen krieg ich sonst irgendwie nicht hin
-Future<Map<String, String>> _fetchGroupNames() async {
-  var snapshot = await _firestore.collection('product_groups').get();
-  var names = <String, String>{};
-  for (var doc in snapshot.docs) {
-    names[doc.id] = doc.data()['name'] as String;
+  Future<Map<String, String>> _fetchGroupNames() async {
+    var snapshot = await _firestore.collection('product_groups').get();
+    var names = <String, String>{};
+    for (var doc in snapshot.docs) {
+      names[doc.id] = doc.data()['name'] as String;
+    }
+    return names;
   }
-  return names;
-}
 
   void _confirmDeleteTemplate(String templateId, String templateName) {
     showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text("Vorlage löschen"),
-          content: Text("Möchten Sie die Vorlage '$templateName' wirklich löschen?"),
-          actions: <Widget>[
-            TextButton(
-              child: Text('Abbrechen'),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            TextButton(
-              child: Text('Löschen'),
-              onPressed: () {
-                _deleteTemplate(templateId);
-                Navigator.of(context).pop();
-              }
-            )
-          ],
-        );
-      }
-    );
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text("Vorlage löschen"),
+            content: Text(
+                "Möchten Sie die Vorlage '$templateName' wirklich löschen?"),
+            actions: <Widget>[
+              TextButton(
+                child: Text('Abbrechen'),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+              TextButton(
+                  child: Text('Löschen'),
+                  onPressed: () {
+                    _deleteTemplate(templateId);
+                    Navigator.of(context).pop();
+                  })
+            ],
+          );
+        });
   }
 
   void _deleteTemplate(String templateId) async {
@@ -118,11 +144,13 @@ Future<Map<String, String>> _fetchGroupNames() async {
   }
 
   void _createList() async {
-    if (_listNameController.text.trim().isEmpty || _listNameController.text.trim().length < 3) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Der Name der Einkaufsliste muss mindestens 3 Zeichen lang sein.'),
-          backgroundColor: Colors.red,)
-      );
+    if (_listNameController.text.trim().isEmpty ||
+        _listNameController.text.trim().length < 3) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(
+            'Der Name der Einkaufsliste muss mindestens 3 Zeichen lang sein.'),
+        backgroundColor: Colors.red,
+      ));
       return;
     }
 
@@ -131,34 +159,39 @@ Future<Map<String, String>> _fetchGroupNames() async {
       'id': newListRef.id,
       'name': _listNameController.text.trim(),
       'userId': currentUser?.uid,
-      'items': _items.map((item) => {'name': item.name, 'groupId': item.groupId, 'isDone': item.isDone}).toList(),
-      'createdDate': FieldValue.serverTimestamp()
+      'items': _items
+          .map((item) => {
+                'name': item.name,
+                'groupId': item.groupId,
+                'isDone': item.isDone
+              })
+          .toList(),
+      'createdDate': FieldValue.serverTimestamp(),
+      'imagePath': _selectedImagePath
     });
 
     Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => StoreScreen(
-          listId: newListRef.id,
-          listName: _listNameController.text.trim(),
-          selectedStoreId: _selectedStoreId,
-          items: _items,
-          onStoreSelected: (selectedStoreId) {
-            _saveStoreIdToList(newListRef.id, selectedStoreId);
-          }
-        )
-      )
-    );
+        context,
+        MaterialPageRoute(
+            builder: (context) => StoreScreen(
+                listId: newListRef.id,
+                listName: _listNameController.text.trim(),
+                selectedStoreId: _selectedStoreId,
+                items: _items,
+                onStoreSelected: (selectedStoreId) {
+                  _saveStoreIdToList(newListRef.id, selectedStoreId);
+                })));
   }
 
   void _saveStoreIdToList(String listId, String storeId) async {
-    await _firestore.collection('shopping_lists').doc(listId).update({
-      'ladenId': storeId
-    });
+    await _firestore
+        .collection('shopping_lists')
+        .doc(listId)
+        .update({'ladenId': storeId});
     if (mounted) {
       Navigator.popUntil(context, ModalRoute.withName('/home'));
     }
-}
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -185,6 +218,26 @@ Future<Map<String, String>> _fetchGroupNames() async {
               hint: Text('Vorlage auswählen'),
               isExpanded: true,
             ),
+            SizedBox(height: 20),
+            DropdownButton<String>(
+              value: _selectedImagePath != null
+                  ? imagePathToName[_selectedImagePath]
+                  : null,
+              onChanged: (value) {
+                setState(() {
+                  _selectedImagePath = imageNameToPath[value!]!;
+                });
+              },
+              items: imageNameToPath.keys.map((String name) {
+                return DropdownMenuItem<String>(
+                  value: name,
+                  child: Text(name),
+                );
+              }).toList(),
+              hint: Text('Bild auswählen'),
+              isExpanded: true,
+            ),
+            SizedBox(height: 20),
             ElevatedButton(
               onPressed: _createList,
               child: Text('Weiter zum Laden zuordnen'),
