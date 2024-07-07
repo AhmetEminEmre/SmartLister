@@ -106,9 +106,9 @@ class HomePage extends StatelessWidget {
                 }
               },
             ),
-            SizedBox(height: 12),
+            SizedBox(height: 8),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 0),
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
@@ -435,14 +435,53 @@ class HomePage extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
+                        Align(
+                          child: PopupMenuButton<String>(
+                            onSelected: (value) {
+                              if (value == 'delete') {
+                                _deleteShoppingList(doc.id, context);
+                              } else if (value == 'rename') {
+                                _renameShoppingList(doc.id, data['name'], context);
+                              } else if (value == 'saveAsTemplate') {
+                                _saveListAsTemplate(
+                                    doc.id,
+                                    data['name'],
+                                    data['ladenId'],
+                                    imagePath,
+                                    data['items'],
+                                    context);
+                              }
+                            },
+                            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                              const PopupMenuItem<String>(
+                                value: 'rename',
+                                child: Text('Liste umbenennen'),
+                              ),
+                              const PopupMenuItem<String>(
+                                value: 'delete',
+                                child: Text('Liste löschen'),
+                              ),
+                              const PopupMenuItem<String>(
+                                value: 'saveAsTemplate',
+                                child: Text('Liste als Vorlage speichern'),
+                              ),
+                            ],
+                            padding: EdgeInsets.fromLTRB(340, 0, 0, 50),
+                            icon: Icon(
+                              Icons.more_vert,
+                              color: Colors.white, // Set the color of the icon
+                            ),
+                          ),
+                          
+                        ),
+                            Text(
                           data['name'],
                           style: TextStyle(
                             fontSize: 20,
                             color: Colors.black,
                           ),
                         ),
-                        Row(
+                          Row(
                           children: [
                             Container(
                               padding: EdgeInsets.symmetric(
@@ -471,42 +510,6 @@ class HomePage extends StatelessWidget {
                               ),
                             ),
                           ],
-                        ),
-                        Align(
-                          alignment: Alignment.topRight,
-                          child: PopupMenuButton<String>(
-                            onSelected: (value) {
-                              if (value == 'delete') {
-                                _deleteShoppingList(doc.id, context);
-                              } else if (value == 'rename') {
-                                _renameShoppingList(
-                                    doc.id, data['name'], context);
-                              } else if (value == 'saveAsTemplate') {
-                                _saveListAsTemplate(
-                                    doc.id,
-                                    data['name'],
-                                    data['ladenId'],
-                                    imagePath,
-                                    data['items'],
-                                    context);
-                              }
-                            },
-                            itemBuilder: (BuildContext context) =>
-                                <PopupMenuEntry<String>>[
-                              const PopupMenuItem<String>(
-                                value: 'rename',
-                                child: Text('Liste umbenennen'),
-                              ),
-                              const PopupMenuItem<String>(
-                                value: 'delete',
-                                child: Text('Liste löschen'),
-                              ),
-                              const PopupMenuItem<String>(
-                                value: 'saveAsTemplate',
-                                child: Text('Liste als Vorlage speichern'),
-                              ),
-                            ],
-                          ),
                         ),
                       ],
                     ),
