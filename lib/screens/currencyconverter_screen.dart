@@ -152,6 +152,7 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
                       ),
                     ),
                     Icon(Icons.swap_horiz, size: 40, color: Colors.white),
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
