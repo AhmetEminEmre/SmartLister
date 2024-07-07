@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'itemslist_screen.dart';
-import 'template.dart';
+import '../objects/template.dart';
 
 class StoreScreen extends StatefulWidget {
   final String listId;
@@ -41,7 +41,7 @@ class _StoreScreenState extends State<StoreScreen> {
         .get();
     var stores = snapshot.docs.map((doc) => DropdownMenuItem<String>(
       value: doc.id,
-      child: Text(doc.data()?['name'] ?? 'idk laden'),
+      child: Text(doc.data()['name'] ?? 'idk laden'),
     )).toList();
 
     setState(() {

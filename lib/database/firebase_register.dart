@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:smart/firebase_login.dart';
+import 'package:smart/database/firebase_login.dart';
 import 'firebase_auth.dart';
-import 'nickname.dart';
 
 class RegisterScreen extends StatefulWidget {
   @override

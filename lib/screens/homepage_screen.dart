@@ -1,20 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'firebase_auth.dart';
-import 'firebase_login.dart';
-import 'einkaufsliste_screen.dart';
+import '../database/firebase_auth.dart';
+import '../database/firebase_login.dart';
+import 'addlist_screen.dart';
 import 'itemslist_screen.dart';
-import 'addstoreonly_screen.dart';
-import 'storeproductgroups_screen.dart';
-import 'currencyconverter.dart';
+import 'addstore_screen.dart';
+import 'shop_screen.dart';
+import 'currencyconverter_screen.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/timezone.dart' as tz;
+import '../utilities/notificationmanager.dart';
 
 class HomePage extends StatelessWidget {
   final String uid;
   final AuthService _authService = AuthService();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final NotificationManager _notificationManager = NotificationManager();
+  final FlutterLocalNotificationsPlugin notificationsPlugin =
+      FlutterLocalNotificationsPlugin();
 
-  HomePage({required this.uid});
+  HomePage({required this.uid}) {
+    _notificationManager.initNotification();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,6 +40,20 @@ class HomePage extends StatelessWidget {
           },
         ),
         actions: <Widget>[
+          IconButton(
+            icon: Icon(Icons.add_alert),
+            onPressed: () => showNotificationDialog(context),
+          ),
+          IconButton(
+            icon: Icon(Icons.attach_money),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => CurrencyConverterScreen()),
+              );
+            },
+          ),
           IconButton(
             icon: Icon(Icons.logout),
             onPressed: () async {
@@ -107,19 +129,132 @@ class HomePage extends StatelessWidget {
               },
               child: Text("Neuen Laden erstellen"),
             ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => CurrencyConverterScreen()),
-                );
-              },
-              child: Text("Währungsrechner öffnen"),
-            ),
           ],
         ),
       ),
+    );
+  }
+
+  Future<void> showNotificationDialog(BuildContext context) async {
+    TextEditingController titleController = TextEditingController();
+
+    DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+
+    if (pickedDate != null) {
+      TimeOfDay? pickedTime = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.now(),
+      );
+
+      if (pickedTime != null) {
+        DateTime scheduledDateTime = DateTime(
+          pickedDate.year,
+          pickedDate.month,
+          pickedDate.day,
+          pickedTime.hour,
+          pickedTime.minute,
+        );
+
+        await showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: Text("Benachrichtigungstitel eingeben"),
+              content: TextField(
+                controller: titleController,
+                decoration: InputDecoration(hintText: "Titel"),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  child: Text("Abbrechen"),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+                TextButton(
+                  child: Text("Benachrichtigung planen"),
+                  onPressed: () async {
+                    Navigator.of(context).pop();
+                    await _notificationManager.scheduleNotification(
+                      0,
+                      titleController.text.isEmpty
+                          ? "Geplante Benachrichtigung"
+                          : titleController.text,
+                      "Dies ist eine geplante Benachrichtigung",
+                      scheduledDateTime,
+                    );
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      }
+    }
+  }
+
+  void _pickDateTime(
+      BuildContext dialogContext, TextEditingController titleController) async {
+    DateTime? pickedDate = await showDatePicker(
+      context: dialogContext,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+
+    if (pickedDate != null) {
+      TimeOfDay? pickedTime = await showTimePicker(
+        context: dialogContext,
+        initialTime: TimeOfDay.now(),
+      );
+
+      if (pickedTime != null) {
+        DateTime scheduledDateTime = DateTime(
+          pickedDate.year,
+          pickedDate.month,
+          pickedDate.day,
+          pickedTime.hour,
+          pickedTime.minute,
+        );
+
+        await _notificationManager.scheduleNotification(
+          0,
+          titleController.text.isEmpty
+              ? "Geplante Benachrichtigung"
+              : titleController.text,
+          "Dies ist eine geplante Benachrichtigung",
+          scheduledDateTime,
+        );
+        titleController.clear();
+      }
+    }
+  }
+
+  Future<void> scheduleNotification(
+      int id, String title, String body, DateTime scheduledTime) async {
+    var androidDetails = AndroidNotificationDetails(
+      'scheduled_channel_id',
+      'scheduled_channel_name',
+      importance: Importance.max,
+      priority: Priority.high,
+    );
+    var iOSDetails = DarwinNotificationDetails();
+    var platformDetails =
+        NotificationDetails(android: androidDetails, iOS: iOSDetails);
+
+    await notificationsPlugin.zonedSchedule(
+      id,
+      title,
+      body,
+      tz.TZDateTime.from(scheduledTime,
+          tz.local), 
+      platformDetails,
+      androidAllowWhileIdle: true,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
     );
   }
 
@@ -153,7 +288,7 @@ class HomePage extends StatelessWidget {
 
               String imagePath =
                   data['imagePath'] ?? 'lib/img/default_image.png';
-                  print(imagePath);
+              print(imagePath);
 
               return ListTile(
                 title: Text(data['name']),
@@ -177,8 +312,8 @@ class HomePage extends StatelessWidget {
                     } else if (value == 'rename') {
                       _renameShoppingList(doc.id, data['name'], context);
                     } else if (value == 'saveAsTemplate') {
-                      _saveListAsTemplate(doc.id, data['name'], data['ladenId'], imagePath,
-                          data['items'],  context);
+                      _saveListAsTemplate(doc.id, data['name'], data['ladenId'],
+                          imagePath, data['items'], context);
                     }
                   },
                   itemBuilder: (BuildContext context) =>
@@ -278,8 +413,8 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  void _saveListAsTemplate(String listId, String name, String storeId, String imagePath,
-      List<dynamic> items, BuildContext context) async {
+  void _saveListAsTemplate(String listId, String name, String storeId,
+      String imagePath, List<dynamic> items, BuildContext context) async {
     var templateRef = _firestore.collection('list_templates').doc();
     await templateRef.set({
       'id': templateRef.id,

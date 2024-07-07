@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'addstore_screen.dart';
-import 'template.dart';
+import 'choosestore_screen.dart';
+import '../objects/template.dart';
 
 class CreateListScreen extends StatefulWidget {
   @override

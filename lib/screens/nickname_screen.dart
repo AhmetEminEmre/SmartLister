@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'firebase_auth.dart';
-import 'homepage.dart';
+import '../database/firebase_auth.dart';
+import 'homepage_screen.dart';
 
 class NicknameEntryScreen extends StatelessWidget {
   final TextEditingController _nicknameController = TextEditingController();
@@ -12,13 +12,13 @@ class NicknameEntryScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: Text("Set Your Nickname"),
+        title: Text("Nicknameeingabe"),
       ),
       body: Column(
         children: <Widget>[
           TextField(
             controller: _nicknameController,
-            decoration: InputDecoration(labelText: "Enter your nickname"),
+            decoration: InputDecoration(labelText: "Nickname eingeben"),
           ),
           ElevatedButton(
             onPressed: () async {

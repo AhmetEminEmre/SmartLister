@@ -4,12 +4,6 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:pdf/pdf.dart';
 
-import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
-import 'package:pdf/pdf.dart';
-
 class ReadOnlyListScreen extends StatefulWidget {
   final String listId;
 
@@ -41,10 +35,14 @@ class _ReadOnlyListScreenState extends State<ReadOnlyListScreen> {
       if (listDoc.exists && listDoc.data() != null) {
         var data = listDoc.data() as Map<String, dynamic>;
         _listName = data['name'];
-        var userDoc = await FirebaseFirestore.instance.collection('userinfos').doc(data['userId']).get();
+        var userDoc = await FirebaseFirestore.instance
+            .collection('userinfos')
+            .doc(data['userId'])
+            .get();
         _userName = userDoc.data()?['nickname'] ?? 'ka user';
 
-        var groupDocs = await FirebaseFirestore.instance.collection('product_groups').get();
+        var groupDocs =
+            await FirebaseFirestore.instance.collection('product_groups').get();
         for (var doc in groupDocs.docs) {
           _groupNames[doc.id] = doc.data()['name'] as String;
         }
@@ -60,38 +58,40 @@ class _ReadOnlyListScreenState extends State<ReadOnlyListScreen> {
   }
 
   void printList(Map<String, dynamic> listData) async {
-  final pdf = pw.Document();
-  pdf.addPage(
-    pw.Page(
-      build: (context) {
-        return pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: [
-            pw.Text('Liste von: $_listName by $_userName',
-                style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 28)),
-            pw.Divider(),
-            ...listData['items'].map<pw.Widget>((item) {
-              String groupName = _groupNames[item['groupId']] ?? 'Unbekannte Gruppe';
-              return pw.Column(
-                crossAxisAlignment: pw.CrossAxisAlignment.start,
-                children: [
-                  pw.Text(groupName,
-                      style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 16)),
-                  pw.Text('${item['name']} - ${item['isDone'] ? "Ja" : "Nein"}',
-                      style: pw.TextStyle(fontSize: 14)),
-                ]
-              );
-            }).toList(),
-          ],
-        );
-      },
-    ),
-  );
-  await Printing.layoutPdf(
-    onLayout: (PdfPageFormat format) => pdf.save(),
-  );
-}
-
+    final pdf = pw.Document();
+    pdf.addPage(
+      pw.Page(
+        build: (context) {
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text('Liste von: $_listName by $_userName',
+                  style: pw.TextStyle(
+                      fontWeight: pw.FontWeight.bold, fontSize: 28)),
+              pw.Divider(),
+              ...listData['items'].map<pw.Widget>((item) {
+                String groupName =
+                    _groupNames[item['groupId']] ?? 'Unbekannte Gruppe';
+                return pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text(groupName,
+                          style: pw.TextStyle(
+                              fontWeight: pw.FontWeight.bold, fontSize: 16)),
+                      pw.Text(
+                          '${item['name']} - ${item['isDone'] ? "Ja" : "Nein"}',
+                          style: pw.TextStyle(fontSize: 14)),
+                    ]);
+              }).toList(),
+            ],
+          );
+        },
+      ),
+    );
+    await Printing.layoutPdf(
+      onLayout: (PdfPageFormat format) => pdf.save(),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -100,21 +100,21 @@ class _ReadOnlyListScreenState extends State<ReadOnlyListScreen> {
         title: FutureBuilder<Map<String, dynamic>>(
           future: _listDataFuture,
           builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
-              return Text('Shared List: $_listName by $_userName', style: TextStyle(fontSize: 16));
+            if (snapshot.connectionState == ConnectionState.done &&
+                snapshot.hasData) {
+              return Text('geteilte Liste: $_listName von $_userName',
+                  style: TextStyle(fontSize: 16));
             }
-            return Text('Loading...', style: TextStyle(fontSize: 16));
+            return Text('Laden..', style: TextStyle(fontSize: 16));
           },
         ),
         actions: [
           IconButton(
             icon: Icon(Icons.print),
             onPressed: () async {
-              if (_listDataFuture != null) {
-                Map<String, dynamic> listData = await _listDataFuture;
-                printList(listData);
-              }
-            },
+              Map<String, dynamic> listData = await _listDataFuture;
+              printList(listData);
+                        },
           ),
         ],
       ),
@@ -142,10 +142,14 @@ class _ReadOnlyListScreenState extends State<ReadOnlyListScreen> {
             groupWidgets.add(
               ExpansionTile(
                 title: Text(groupName),
-                children: items.map((item) => ListTile(
-                  title: Text(item['name']),
-                  trailing: Icon(item['isDone'] ? Icons.check_box : Icons.check_box_outline_blank),
-                )).toList(),
+                children: items
+                    .map((item) => ListTile(
+                          title: Text(item['name']),
+                          trailing: Icon(item['isDone']
+                              ? Icons.check_box
+                              : Icons.check_box_outline_blank),
+                        ))
+                    .toList(),
               ),
             );
           });
@@ -158,4 +162,3 @@ class _ReadOnlyListScreenState extends State<ReadOnlyListScreen> {
     );
   }
 }
-

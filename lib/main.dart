@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
-import 'firebase_login.dart';
-import 'readonlylist_screen.dart';
+import 'database/firebase_options.dart';
+import 'database/firebase_login.dart';
+import 'screens/readonlylist_screen.dart';
 import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'homepage.dart';
-import 'dart:async';
-import 'firebase_auth.dart';
+import 'screens/homepage_screen.dart';
+import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
+import 'utilities/notificationmanager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  tz.initializeTimeZones();
+  tz.setLocalLocation(tz.getLocation('Europe/Berlin'));
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  NotificationManager().initNotification();
   runApp(MyApp());
 }
 

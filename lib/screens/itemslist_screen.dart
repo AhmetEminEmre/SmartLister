@@ -1,16 +1,11 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'homepage.dart';
-import 'firebase_auth.dart';
 import 'package:printing/printing.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pdf_wd;
-import 'dart:collection';
 import 'package:share_plus/share_plus.dart';
 import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
-import 'readonlylist_screen.dart';
-import 'template.dart';
+import '../objects/template.dart';
 
 class ItemListScreen extends StatefulWidget {
   final String listName;
@@ -40,7 +35,6 @@ class _ItemListScreenState extends State<ItemListScreen> {
   @override
   void initState() {
     super.initState();
-    // Check if there are items from the template
     if (widget.items != null && widget.items!.isNotEmpty) {
       loadItems();
       setTemplateItems(widget.items!);

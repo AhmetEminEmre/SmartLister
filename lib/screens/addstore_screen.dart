@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:smart/addstoreonly_screen.dart';
-import 'homepage.dart';
-import 'storeproductgroups_screen.dart';
+import 'shop_screen.dart';
 
 class AddStoreScreen extends StatefulWidget {
   @override

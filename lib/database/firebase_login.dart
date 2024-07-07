@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'firebase_auth.dart';
-import 'homepage.dart';
-import 'nickname.dart';
+import '../screens/homepage_screen.dart';
 import 'firebase_register.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -23,7 +21,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Login'),
+        title: const Text('Login'),
       ),
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -72,15 +70,10 @@ class _LoginScreenState extends State<LoginScreen> {
           MaterialPageRoute(
               builder: (context) => HomePage(uid: userCredential.user!.uid)),
         );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Login fehlgeschlagen!'),
-          backgroundColor: Colors.red,
-        ));
-      }
+      } 
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Login Failed: $e'),
+        content: Text('Login fehlgeschlagen: $e'),
         backgroundColor: Colors.red,
       ));
     }
