@@ -51,8 +51,8 @@ class _CreateListScreenState extends State<CreateListScreen> {
               value: doc.id,
               child: GestureDetector(
                 onLongPress: () =>
-                    _confirmDeleteTemplate(doc.id, doc.data()?['name'] ?? ''),
-                child: Text(doc.data()?['name'] ?? 'Unbenannte Vorlage'),
+                    _confirmDeleteTemplate(doc.id, doc.data()['name'] ?? ''),
+                child: Text(doc.data()['name'] ?? 'Unbenannte Vorlage'),
               ),
             ))
         .toList();

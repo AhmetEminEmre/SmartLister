@@ -144,22 +144,25 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  void _login() async {
-    try {
-      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
-        email: _emailController.text,
-        password: _passwordController.text,
-      );
-      if (userCredential.user != null) {
-        bool hasNick = await _authService.hasNickname(userCredential.user!.uid);
-        if (!hasNick) {
+void _login() async {
+  try {
+    UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+      email: _emailController.text,
+      password: _passwordController.text,
+    );
+    if (userCredential.user != null) {
+      bool hasNick = await _authService.hasNickname(userCredential.user!.uid);
+      if (!hasNick) {
+        if (mounted) {
           Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => NicknameScreen(),
             ),
           );
-        } else {
+        }
+      } else {
+        if (mounted) {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -168,13 +171,16 @@ class _LoginScreenState extends State<LoginScreen> {
           );
         }
       }
-    } catch (e) {
+    }
+  } catch (e) {
+    if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text('Login fehlgeschlagen: $e'),
         backgroundColor: Colors.red,
       ));
     }
   }
+}
 
   void _resetPassword() {
     if (_emailController.text.isEmpty) {
