@@ -294,6 +294,12 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
                 if (groupNameController.text.isNotEmpty) {
                   _addProductGroupIfNotExists(groupNameController.text);
                   Navigator.of(context).pop();
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content:
+                        Text('Der Name der Warengruppe darf nicht leer sein.'),
+                    backgroundColor: Colors.red,
+                  ));
                 }
               },
               child: Text('Hinzufügen', style: TextStyle(color: Colors.white)),
@@ -347,11 +353,11 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
               style: TextStyle(color: Colors.white)),
           actions: <Widget>[
             TextButton(
-              child: Text('Nein', style: TextStyle(color: Colors.red)),
+              child: Text('Nein', style: TextStyle(color: Colors.white)),
               onPressed: () => Navigator.of(context).pop(),
             ),
             TextButton(
-              child: Text('Ja', style: TextStyle(color: Color(0xFF96b17c))),
+              child: Text('Ja', style: TextStyle(color: Colors.white)),
               onPressed: () {
                 Navigator.of(context).pop();
                 _addDefaultProductGroups();
