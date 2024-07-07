@@ -16,7 +16,9 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
   bool _isLoading = false;
   Timer? _debounce;
 
-  final List<String> _currencies = ['USD', 'EUR', 'GBP', 'JPY', 'INR', 'AUD', 'CAD', 'CHF', 'CNY', 'SEK', 'NZD'];
+  final List<String> _currencies = [
+    'USD', 'EUR', 'GBP', 'JPY', 'INR', 'AUD', 'CAD', 'CHF', 'CNY', 'SEK', 'NZD'
+  ];
 
   @override
   void initState() {
@@ -79,15 +81,25 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
   }
 
   Widget _buildCurrencyDropdown(String value, ValueChanged<String?> onChanged) {
-    return DropdownButton<String>(
-      value: value,
-      onChanged: onChanged,
-      items: _currencies.map((currency) {
-        return DropdownMenuItem(
-          child: Text(currency),
-          value: currency,
-        );
-      }).toList(),
+    return Container(
+      decoration: BoxDecoration(
+        color: Color(0xFF587A6F),
+        borderRadius: BorderRadius.circular(5),
+      ),
+      padding: EdgeInsets.symmetric(horizontal: 10),
+      child: DropdownButton<String>(
+        value: value,
+        onChanged: onChanged,
+        items: _currencies.map((currency) {
+          return DropdownMenuItem(
+            child: Text(currency, style: TextStyle(color: Colors.white)),
+            value: currency,
+          );
+        }).toList(),
+        dropdownColor: Color(0xFF587A6F),
+        iconEnabledColor: Colors.white,
+        underline: SizedBox(),
+      ),
     );
   }
 
@@ -95,8 +107,11 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Währungsrechner'),
+        title: Text('Währungsrechner', style: TextStyle(color: Colors.white)),
+        iconTheme: IconThemeData(color: Colors.white),
+        backgroundColor: Color(0xFF334B46),
       ),
+      backgroundColor: Color(0xFF334B46),
       body: Padding(
         padding: EdgeInsets.all(16.0),
         child: Column(
@@ -117,19 +132,26 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
                               _convertCurrency();
                             });
                           }),
+                          SizedBox(height: 10),
                           TextField(
                             controller: _fromAmountController,
                             decoration: InputDecoration(
                               labelText: 'Betrag',
+                              labelStyle: TextStyle(color: Colors.white),
                               border: OutlineInputBorder(),
+                              enabledBorder: OutlineInputBorder(
+                                borderSide: BorderSide(color: Color(0xFF587A6F)),
+                              ),
+                              fillColor: Color(0xFF587A6F),
+                              filled: true,
                             ),
+                            style: TextStyle(color: Colors.white),
                             keyboardType: TextInputType.numberWithOptions(decimal: true),
                           ),
                         ],
                       ),
                     ),
-                    Icon(Icons.swap_horiz, size: 40),
-                    Expanded(
+                    Icon(Icons.swap_horiz, size: 40, color: Colors.white),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -139,13 +161,21 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
                               _convertCurrency();
                             });
                           }),
+                          SizedBox(height: 10),
                           TextField(
                             controller: _toAmountController,
                             decoration: InputDecoration(
                               labelText: 'Betrag',
+                              labelStyle: TextStyle(color: Colors.white),
                               border: OutlineInputBorder(),
+                              enabledBorder: OutlineInputBorder(
+                                borderSide: BorderSide(color: Color(0xFF587A6F)),
+                              ),
+                              fillColor: Color(0xFF587A6F),
+                              filled: true,
                             ),
                             readOnly: true,
+                            style: TextStyle(color: Colors.white),
                           ),
                         ],
                       ),

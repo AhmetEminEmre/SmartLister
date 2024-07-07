@@ -86,7 +86,6 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
   }
 
   void _deleteProductGroup(String docId) async {
-
     var shoppingLists = await _firestore.collection('shopping_lists').get();
     var count = 0;
 
@@ -112,20 +111,23 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Warengruppe löschen'),
+          backgroundColor: Color(0xFF334B46),
+          title: Text('Warengruppe löschen',
+              style: TextStyle(color: Colors.white)),
           content: Text(
-              'Diese Gruppe wird $count mal verwendet. Wollen Sie sie trotzdem löschen?'),
+              'Diese Gruppe wird $count mal verwendet. Wollen Sie sie trotzdem löschen?',
+              style: TextStyle(color: Colors.white)),
           actions: <Widget>[
             TextButton(
-              child: Text('Nein'),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            TextButton(
-              child: Text('Ja'),
+              child: Text('Ja', style: TextStyle(color: Colors.white)),
               onPressed: () {
                 Navigator.of(context).pop();
                 _deleteGroupAndItems(docId);
               },
+            ),
+            TextButton(
+              child: Text('Nein', style: TextStyle(color: Colors.white)),
+              onPressed: () => Navigator.of(context).pop(),
             ),
           ],
         );
@@ -189,19 +191,26 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
   }
 
   Widget _buildReorderableTile(DocumentSnapshot doc) {
-    return ListTile(
+    return Container(
       key: ValueKey(doc.id),
-      title: Text(doc['name']),
-      trailing: _isEditMode
-          ? IconButton(
-              icon: Icon(Icons.delete, color: Colors.red),
-              onPressed: () => _deleteProductGroup(doc.id),
-            )
-          : ReorderableDragStartListener(
-              index: _productGroups.indexOf(doc),
-              child: Icon(Icons.reorder,
-                  color: Theme.of(context).colorScheme.secondary),
-            ),
+      decoration: BoxDecoration(
+        color: Color(0xFF334B46),
+        border: Border(
+          bottom: BorderSide(color: Colors.white24, width: 0.5),
+        ),
+      ),
+      child: ListTile(
+        title: Text(doc['name'], style: TextStyle(color: Colors.white)),
+        trailing: _isEditMode
+            ? IconButton(
+                icon: Icon(Icons.delete, color: Colors.red),
+                onPressed: () => _deleteProductGroup(doc.id),
+              )
+            : ReorderableDragStartListener(
+                index: _productGroups.indexOf(doc),
+                child: Icon(Icons.reorder, color: Color(0xFF96b17c)),
+              ),
+      ),
     );
   }
 
@@ -209,22 +218,37 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.storeName),
+        title: Text(widget.storeName, style: TextStyle(color: Colors.white)),
+        backgroundColor: Color(0xFF587A6F),
+        iconTheme: IconThemeData(color: Colors.white),
         actions: [
           IconButton(
-            icon: Icon(Icons.auto_awesome_motion),
+            icon: Icon(Icons.auto_awesome_motion, color: Colors.white),
             onPressed: _promptAddDefaultProductGroups,
           ),
           IconButton(
-            icon: Icon(_isEditMode ? Icons.check : Icons.edit),
+            icon: Icon(_isEditMode ? Icons.check : Icons.edit,
+                color: Colors.white),
             onPressed: _toggleEditMode,
           ),
         ],
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFFb0c69f), Color(0xFF96b17c)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
       ),
+      backgroundColor: Color(0xFF334B46),
       body: _isLoading
           ? Center(child: CircularProgressIndicator())
           : _productGroups.isEmpty
-              ? Center(child: Text("Keine Produktgruppen verfügbar."))
+              ? Center(
+                  child: Text("Keine Produktgruppen verfügbar.",
+                      style: TextStyle(color: Colors.white)))
               : ReorderableListView(
                   onReorder: _onReorder,
                   children: _productGroups
@@ -232,8 +256,9 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
                       .toList(),
                 ),
       floatingActionButton: FloatingActionButton(
+        backgroundColor: Color(0xFF96b17c),
         onPressed: _showAddProductGroupDialog,
-        child: Icon(Icons.add),
+        child: Icon(Icons.add, color: Colors.white),
         tooltip: 'Warengruppe hinzufügen',
       ),
     );
@@ -245,10 +270,23 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Warengruppe hinzufügen'),
+          backgroundColor: Color(0xFF334B46),
+          title: Text('Warengruppe hinzufügen',
+              style: TextStyle(color: Colors.white)),
           content: TextField(
             controller: groupNameController,
-            decoration: InputDecoration(hintText: 'Warengruppe Name'),
+            decoration: InputDecoration(
+              hintText: 'Warengruppe Name',
+              hintStyle: TextStyle(color: Colors.white54),
+              filled: true,
+              fillColor: Color(0xFF4A6963),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              contentPadding:
+                  EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+            ),
+            style: TextStyle(color: Colors.white),
           ),
           actions: <Widget>[
             TextButton(
@@ -258,7 +296,7 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
                   Navigator.of(context).pop();
                 }
               },
-              child: Text('Hinzufügen'),
+              child: Text('Hinzufügen', style: TextStyle(color: Colors.white)),
             ),
           ],
         );
@@ -273,72 +311,88 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
           .where('storeId', isEqualTo: widget.storeId)
           .where('name', isEqualTo: name)
           .get();
-
       if (existingGroups.docs.isEmpty) {
-        var maxOrderQuery = await _firestore
-            .collection('product_groups')
-            .where('storeId', isEqualTo: widget.storeId)
-            .orderBy('order', descending: true)
-            .limit(1)
-            .get();
-
-        int maxOrder = 0;
-        if (maxOrderQuery.docs.isNotEmpty) {
-          maxOrder = maxOrderQuery.docs.first.data()['order'] + 1;
-        }
-
-        DocumentReference ref = _firestore.collection('product_groups').doc();
-        await ref.set({
-          'id': ref.id,
+        var newOrder = _productGroups.length;
+        await _firestore.collection('product_groups').add({
           'name': name,
           'storeId': widget.storeId,
-          'order': maxOrder
+          'order': newOrder,
         });
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Warengruppe hinzugefügt.'),
+          backgroundColor: Colors.green,
+        ));
         _loadProductGroups();
       } else {
-        print("Warengruppe bereits vorhanden.");
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Warengruppe "$name" ist bereits vorhanden.'),
+          content: Text('Warengruppe existiert bereits.'),
           backgroundColor: Colors.red,
         ));
       }
     } catch (e) {
-      print("Fehler beim Hinzufügen einer Produktgruppe: $e");
-    }
-  }
-
-  void _addDefaultProductGroups() async {
-    for (var group in defaultProductGroups) {
-      await _addProductGroupIfNotExists(group['name']!);
+      print("Fehler beim Hinzufügen der Produktgruppe: $e");
     }
   }
 
   void _promptAddDefaultProductGroups() {
     showDialog(
       context: context,
-      barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text("Standardwarengruppen"),
+          backgroundColor: Color(0xFF334B46),
+          title: Text('Standard Warengruppen hinzufügen?',
+              style: TextStyle(color: Colors.white)),
           content: Text(
-              "Wollen Sie Standardwarengruppen zu diesem Laden hinzufügen?"),
+              'Möchten Sie die Standard Warengruppen zur neuen Filiale hinzufügen?',
+              style: TextStyle(color: Colors.white)),
           actions: <Widget>[
             TextButton(
+              child: Text('Nein', style: TextStyle(color: Colors.red)),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            TextButton(
+              child: Text('Ja', style: TextStyle(color: Color(0xFF96b17c))),
               onPressed: () {
                 Navigator.of(context).pop();
                 _addDefaultProductGroups();
               },
-              child: Text('Ja'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text('Nein'),
             ),
           ],
         );
       },
     );
+  }
+
+  void _addDefaultProductGroups() async {
+    try {
+      var existingGroups = await _firestore
+          .collection('product_groups')
+          .where('storeId', isEqualTo: widget.storeId)
+          .get();
+      var existingNames = existingGroups.docs.map((doc) => doc['name']).toSet();
+
+      List<Future<void>> tasks = [];
+
+      for (var group in defaultProductGroups) {
+        if (!existingNames.contains(group['name'])) {
+          var newOrder = existingGroups.size + tasks.length;
+          tasks.add(_firestore.collection('product_groups').add({
+            'name': group['name'],
+            'storeId': widget.storeId,
+            'order': newOrder,
+          }));
+        }
+      }
+
+      await Future.wait(tasks);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Standard Warengruppen hinzugefügt.'),
+        backgroundColor: Colors.green,
+      ));
+
+      _loadProductGroups();
+    } catch (e) {
+      print("Fehler beim Hinzufügen der Standard Warengruppen: $e");
+    }
   }
 }

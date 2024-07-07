@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../database/firebase_auth.dart';
-import '../database/firebase_login.dart';
+import 'login_screen.dart';
 import 'addlist_screen.dart';
 import 'itemslist_screen.dart';
 import 'addstore_screen.dart';
@@ -29,11 +29,18 @@ class HomePage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
+        backgroundColor: Color(0xFF334B46),
         title: FutureBuilder<String>(
           future: getUsername(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.done) {
-              return Text('Hallo ${snapshot.data}!');
+              return Text(
+                'Hallo ${snapshot.data}!',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              );
             } else {
               return CircularProgressIndicator();
             }
@@ -41,11 +48,11 @@ class HomePage extends StatelessWidget {
         ),
         actions: <Widget>[
           IconButton(
-            icon: Icon(Icons.add_alert),
+            icon: Icon(Icons.add_alert, color: Colors.white),
             onPressed: () => showNotificationDialog(context),
           ),
           IconButton(
-            icon: Icon(Icons.attach_money),
+            icon: Icon(Icons.attach_money, color: Colors.white),
             onPressed: () {
               Navigator.push(
                 context,
@@ -55,24 +62,43 @@ class HomePage extends StatelessWidget {
             },
           ),
           IconButton(
-            icon: Icon(Icons.logout),
+            icon: Icon(Icons.logout, color: Colors.white),
             onPressed: () async {
               await _authService.signOut();
-              Navigator.pushReplacement(context,
-                  MaterialPageRoute(builder: (context) => LoginScreen()));
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => LoginScreen()),
+              );
             },
           ),
         ],
       ),
+      backgroundColor: Color(0xFF334B46),
       body: SingleChildScrollView(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             StreamBuilder<List<Widget>>(
               stream: _buildListTiles(context),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.active &&
                     snapshot.hasData) {
-                  return Column(children: snapshot.data!);
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Text(
+                          "Meine Listen",
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      ...snapshot.data!
+                    ],
+                  );
                 } else if (snapshot.hasError) {
                   return Text("error");
                 } else {
@@ -80,14 +106,49 @@ class HomePage extends StatelessWidget {
                 }
               },
             ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => CreateListScreen()),
-                );
-              },
-              child: Text("Neue Einkaufsliste erstellen"),
+            SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => CreateListScreen()),
+                    );
+                  },
+                  icon: Container(
+                    decoration: BoxDecoration(
+                      color: Color(0xFF334B46),
+                      shape: BoxShape.circle,
+                    ),
+                    padding: EdgeInsets.all(6),
+                    child: Icon(Icons.add, size: 16, color: Colors.white),
+                  ),
+                  label: Text('Neue Einkaufsliste erstellen',
+                      style: TextStyle(fontSize: 20)),
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    backgroundColor: Color(0xFF587A6F),
+                    padding: EdgeInsets.symmetric(vertical: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              child: Text(
+                "Meine Lieblingseinkaufsläden",
+                style: TextStyle(
+                  fontSize: 18,
+                  color: Colors.white,
+                ),
+              ),
             ),
             StreamBuilder<List<Map<String, dynamic>>>(
               stream: getTopStoresStream(),
@@ -97,43 +158,135 @@ class HomePage extends StatelessWidget {
                     return Text("Error: ${snapshot.error}");
                   } else if (snapshot.data != null &&
                       snapshot.data!.isNotEmpty) {
-                    return Column(
-                      children: snapshot.data!
-                          .map((store) => ListTile(
-                                title: Text(store['name']),
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Column(
+                        children: [
+                          GridView.builder(
+                            shrinkWrap: true,
+                            physics: NeverScrollableScrollPhysics(),
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 11.0,
+                              mainAxisSpacing: 5.0,
+                              childAspectRatio: 3,
+                            ),
+                            itemCount: snapshot.data!.length,
+                            itemBuilder: (context, index) {
+                              var store = snapshot.data![index];
+                              return GestureDetector(
                                 onTap: () {
                                   Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) => EditStoreScreen(
-                                              storeId: store['id'],
-                                              storeName: store['name'])));
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => EditStoreScreen(
+                                        storeId: store['id'],
+                                        storeName: store['name'],
+                                      ),
+                                    ),
+                                  );
                                 },
-                              ))
-                          .toList(),
+                                child: Card(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: Container(
+                                    padding: EdgeInsets.all(2),
+                                    alignment: Alignment.centerLeft,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(16),
+                                      gradient: LinearGradient(
+                                        colors: [
+                                          Color(0xFF567760),
+                                          pastelColors[store.hashCode %
+                                                  pastelColors.length]
+                                              .withOpacity(0.8),
+                                        ],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      store['name'],
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.normal,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          SizedBox(height: 16),
+                        ],
+                      ),
                     );
                   } else {
-                    return Text("No stores found.");
+                    return Padding(
+                      padding: const EdgeInsets.only(left: 16.0, bottom: 8),
+                      child: Text(
+                        "derzeit keine Lieblingsläden",
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.white,
+                        ),
+                      ),
+                    );
                   }
                 } else {
                   return CircularProgressIndicator();
                 }
               },
             ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => AddStoreScreen()),
-                );
-              },
-              child: Text("Neuen Laden erstellen"),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => AddStoreScreen()),
+                    );
+                  },
+                  icon: Container(
+                    decoration: BoxDecoration(
+                      color: Color(0xFF334B46),
+                      shape: BoxShape.circle,
+                    ),
+                    padding: EdgeInsets.all(6),
+                    child: Icon(Icons.add, size: 16, color: Colors.white),
+                  ),
+                  label: Text('Neuen Laden erstellen',
+                      style: TextStyle(fontSize: 20)),
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    backgroundColor: Color(0xFF587A6F),
+                    padding: EdgeInsets.symmetric(vertical: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                ),
+              ),
             ),
           ],
         ),
       ),
     );
   }
+
+  // Liste von dunkleren Pastelfarben
+  final List<Color> pastelColors = [
+    Color(0xFFDFC7B5), // Dunkleres Pastellorange
+    Color(0xFFB2DCE1), // Dunkleres Pastellblau
+    Color(0xFFB2E7D1), // Dunkleres Pastellgrün
+    Color(0xFFDAC3E1), // Dunkleres Pastelllila
+    Color(0xFFF3C2C4), // Dunkleres Pastellrosa
+  ];
 
   Future<void> showNotificationDialog(BuildContext context) async {
     TextEditingController titleController = TextEditingController();
@@ -164,7 +317,7 @@ class HomePage extends StatelessWidget {
           context: context,
           builder: (context) {
             return AlertDialog(
-              title: Text("Benachrichtigungstitel eingeben"),
+              title: Text("Titel eingeben"),
               content: TextField(
                 controller: titleController,
                 decoration: InputDecoration(hintText: "Titel"),
@@ -179,11 +332,11 @@ class HomePage extends StatelessWidget {
                   onPressed: () async {
                     Navigator.of(context).pop();
                     await _notificationManager.scheduleNotification(
-                      0,
+                      0, //id
                       titleController.text.isEmpty
-                          ? "Geplante Benachrichtigung"
+                          ? "nothing entered notification"
                           : titleController.text,
-                      "Dies ist eine geplante Benachrichtigung",
+                      "notification", //body
                       scheduledDateTime,
                     );
                   },
@@ -192,43 +345,6 @@ class HomePage extends StatelessWidget {
             );
           },
         );
-      }
-    }
-  }
-
-  void _pickDateTime(
-      BuildContext dialogContext, TextEditingController titleController) async {
-    DateTime? pickedDate = await showDatePicker(
-      context: dialogContext,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
-    );
-
-    if (pickedDate != null) {
-      TimeOfDay? pickedTime = await showTimePicker(
-        context: dialogContext,
-        initialTime: TimeOfDay.now(),
-      );
-
-      if (pickedTime != null) {
-        DateTime scheduledDateTime = DateTime(
-          pickedDate.year,
-          pickedDate.month,
-          pickedDate.day,
-          pickedTime.hour,
-          pickedTime.minute,
-        );
-
-        await _notificationManager.scheduleNotification(
-          0,
-          titleController.text.isEmpty
-              ? "Geplante Benachrichtigung"
-              : titleController.text,
-          "Dies ist eine geplante Benachrichtigung",
-          scheduledDateTime,
-        );
-        titleController.clear();
       }
     }
   }
@@ -249,8 +365,7 @@ class HomePage extends StatelessWidget {
       id,
       title,
       body,
-      tz.TZDateTime.from(scheduledTime,
-          tz.local), 
+      tz.TZDateTime.from(scheduledTime, tz.local),
       platformDetails,
       androidAllowWhileIdle: true,
       uiLocalNotificationDateInterpretation:
@@ -265,18 +380,19 @@ class HomePage extends StatelessWidget {
         .orderBy('createdDate', descending: true)
         .snapshots()
         .map((snapshot) {
-      var useablelists = snapshot.docs.where((doc) {
+      var usableLists = snapshot.docs.where((doc) {
         return doc.data().containsKey('ladenId') &&
             doc.data()['ladenId'] != null;
       }).toList();
 
-      useablelists =
-          useablelists.length > 5 ? useablelists.sublist(0, 5) : useablelists;
+      usableLists =
+          usableLists.length > 5 ? usableLists.sublist(0, 5) : usableLists;
 
-      return useablelists.map((doc) {
+      return usableLists.map((doc) {
         Map<String, dynamic>? data = doc.data() as Map<String, dynamic>;
         Future<DocumentSnapshot> storeSnapshot =
             _firestore.collection('stores').doc(data['ladenId']).get();
+
         return FutureBuilder<DocumentSnapshot>(
           future: storeSnapshot,
           builder: (context, storeSnapshot) {
@@ -285,63 +401,115 @@ class HomePage extends StatelessWidget {
                 storeSnapshot.data!.exists) {
               Map<String, dynamic>? storeData =
                   storeSnapshot.data?.data() as Map<String, dynamic>;
+              String imagePath = data['imagePath'] ?? 'lib/img/default_image.png';
 
-              String imagePath =
-                  data['imagePath'] ?? 'lib/img/default_image.png';
-              print(imagePath);
-
-              return ListTile(
-                title: Text(data['name']),
-                subtitle: Text(
-                    'Artikel: ${data['items'].length}, Laden: ${storeData['name']}'),
+              return InkWell(
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => ItemListScreen(
                         listName: data['name'],
-                        shoppingListsId: doc.id,
+                        shoppingListId: doc.id,
                       ),
                     ),
                   );
                 },
-                trailing: PopupMenuButton<String>(
-                  onSelected: (value) {
-                    if (value == 'delete') {
-                      _deleteShoppingList(doc.id, context);
-                    } else if (value == 'rename') {
-                      _renameShoppingList(doc.id, data['name'], context);
-                    } else if (value == 'saveAsTemplate') {
-                      _saveListAsTemplate(doc.id, data['name'], data['ladenId'],
-                          imagePath, data['items'], context);
-                    }
-                  },
-                  itemBuilder: (BuildContext context) =>
-                      <PopupMenuEntry<String>>[
-                    const PopupMenuItem<String>(
-                      value: 'rename',
-                      child: Text('Liste umbenennen'),
+                child: Card(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Container(
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: pastelColors[doc.id.hashCode % pastelColors.length],
+                      borderRadius: BorderRadius.circular(16),
+                      image: DecorationImage(
+                        image: AssetImage(imagePath),
+                        fit: BoxFit.contain,
+                        alignment: Alignment.centerRight,
+                        colorFilter: ColorFilter.mode(
+                            Colors.black.withOpacity(0.2), BlendMode.darken),
+                      ),
                     ),
-                    const PopupMenuItem<String>(
-                      value: 'delete',
-                      child: Text('Liste löschen'),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          data['name'],
+                          style: TextStyle(
+                            fontSize: 20,
+                            color: Colors.black,
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.yellow,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                '${data['items'].length} Artikel',
+                                style: TextStyle(color: Colors.black),
+                              ),
+                            ),
+                            SizedBox(width: 2),
+                            Container(
+                              //margin: EdgeInsets.only(top: 8),
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.orange,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                storeData['name'],
+                                style: TextStyle(color: Colors.black),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Align(
+                          alignment: Alignment.topRight,
+                          child: PopupMenuButton<String>(
+                            onSelected: (value) {
+                              if (value == 'delete') {
+                                _deleteShoppingList(doc.id, context);
+                              } else if (value == 'rename') {
+                                _renameShoppingList(
+                                    doc.id, data['name'], context);
+                              } else if (value == 'saveAsTemplate') {
+                                _saveListAsTemplate(
+                                    doc.id,
+                                    data['name'],
+                                    data['ladenId'],
+                                    imagePath,
+                                    data['items'],
+                                    context);
+                              }
+                            },
+                            itemBuilder: (BuildContext context) =>
+                                <PopupMenuEntry<String>>[
+                              const PopupMenuItem<String>(
+                                value: 'rename',
+                                child: Text('Liste umbenennen'),
+                              ),
+                              const PopupMenuItem<String>(
+                                value: 'delete',
+                                child: Text('Liste löschen'),
+                              ),
+                              const PopupMenuItem<String>(
+                                value: 'saveAsTemplate',
+                                child: Text('Liste als Vorlage speichern'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                    const PopupMenuItem<String>(
-                      value: 'saveAsTemplate',
-                      child: Text('Liste als Vorlage speichern'),
-                    ),
-                  ],
-                ),
-                tileColor: Colors.transparent,
-                leading: Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: AssetImage(imagePath),
-                      fit: BoxFit.cover,
-                    ),
-                    borderRadius: BorderRadius.circular(8.0),
                   ),
                 ),
               );
@@ -468,3 +636,4 @@ class HomePage extends StatelessWidget {
     });
   }
 }
+//

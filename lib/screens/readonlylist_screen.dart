@@ -103,21 +103,24 @@ class _ReadOnlyListScreenState extends State<ReadOnlyListScreen> {
             if (snapshot.connectionState == ConnectionState.done &&
                 snapshot.hasData) {
               return Text('geteilte Liste: $_listName von $_userName',
-                  style: TextStyle(fontSize: 16));
+                  style: TextStyle(fontSize: 16, color: Colors.white));
             }
-            return Text('Laden..', style: TextStyle(fontSize: 16));
+            return Text('Laden..', style: TextStyle(fontSize: 16, color: Colors.white));
           },
         ),
+        backgroundColor: Color(0xFF334B46),
+        iconTheme: IconThemeData(color: Colors.white),
         actions: [
           IconButton(
-            icon: Icon(Icons.print),
+            icon: Icon(Icons.print, color: Colors.white),
             onPressed: () async {
               Map<String, dynamic> listData = await _listDataFuture;
               printList(listData);
-                        },
+            },
           ),
         ],
       ),
+      backgroundColor: Color(0xFF334B46),
       body: FutureBuilder<Map<String, dynamic>>(
         future: _listDataFuture,
         builder: (context, snapshot) {
@@ -125,7 +128,7 @@ class _ReadOnlyListScreenState extends State<ReadOnlyListScreen> {
             return Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError || !snapshot.hasData) {
-            return Center(child: Text('Fehler beim Laden der Daten'));
+            return Center(child: Text('Fehler beim Laden der Daten', style: TextStyle(color: Colors.white)));
           }
 
           Map<String, List<Map<String, dynamic>>> groupedItems = {};
@@ -140,16 +143,28 @@ class _ReadOnlyListScreenState extends State<ReadOnlyListScreen> {
           List<Widget> groupWidgets = [];
           groupedItems.forEach((groupName, items) {
             groupWidgets.add(
-              ExpansionTile(
-                title: Text(groupName),
-                children: items
-                    .map((item) => ListTile(
-                          title: Text(item['name']),
-                          trailing: Icon(item['isDone']
-                              ? Icons.check_box
-                              : Icons.check_box_outline_blank),
-                        ))
-                    .toList(),
+              Theme(
+                data: ThemeData.dark().copyWith(
+                  colorScheme: ColorScheme.dark(
+                    primary: Color(0xFF96b17c), 
+                    onPrimary: Colors.white,
+                    surface: Color(0xFF334B46),
+                  ),
+                  dividerColor: Colors.white24,
+                ),
+                child: ExpansionTile(
+                  title: Text(groupName, style: TextStyle(color: Colors.white)),
+                  children: items
+                      .map((item) => ListTile(
+                            title: Text(item['name'], style: TextStyle(color: Colors.white)),
+                            trailing: Icon(
+                                item['isDone']
+                                    ? Icons.check_box
+                                    : Icons.check_box_outline_blank,
+                                color: Colors.white),
+                          ))
+                      .toList(),
+                ),
               ),
             );
           });

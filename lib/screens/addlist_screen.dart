@@ -20,19 +20,19 @@ class _CreateListScreenState extends State<CreateListScreen> {
   String? _selectedImagePath;
 
   final Map<String, String> imageNameToPath = {
-    'Apfel': 'lib/img/bild1.png',
-    'Birne': 'lib/img/bild2.png',
-    'Banane': 'lib/img/bild3.png',
-    'Kiwi': 'lib/img/bild4.png',
-    'Ananas': 'lib/img/bild5.png',
+    'Fahrrad ': 'lib/img/bild1.png',
+    'Einkaufswagerl': 'lib/img/bild2.png',
+    'Fleisch/Fisch': 'lib/img/bild3.png',
+    'Euro': 'lib/img/bild4.png',
+    'Kaffee': 'lib/img/bild5.png',
   };
 
   final Map<String, String> imagePathToName = {
-    'lib/img/bild1.png': 'Apfel',
-    'lib/img/bild2.png': 'Birne',
-    'lib/img/bild3.png': 'Banane',
-    'lib/img/bild4.png': 'Kiwi',
-    'lib/img/bild5.png': 'Ananas',
+    'lib/img/bild1.png': 'Fahrrad',
+    'lib/img/bild2.png': 'Einkaufswagerl',
+    'lib/img/bild3.png': 'Fleisch/Fisch',
+    'lib/img/bild4.png': 'Euro',
+    'lib/img/bild5.png': 'Kaffee',
   };
 
   @override
@@ -93,7 +93,6 @@ class _CreateListScreenState extends State<CreateListScreen> {
     }
   }
 
-//?? gruppennamen krieg ich sonst irgendwie nicht hin
   Future<Map<String, String>> _fetchGroupNames() async {
     var snapshot = await _firestore.collection('product_groups').get();
     var names = <String, String>{};
@@ -193,36 +192,76 @@ class _CreateListScreenState extends State<CreateListScreen> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text("Neue Einkaufsliste erstellen")),
-      body: Padding(
-        padding: EdgeInsets.all(8.0),
-        child: Column(
-          children: <Widget>[
-            TextField(
-              controller: _listNameController,
-              decoration: InputDecoration(
-                labelText: 'Name der Einkaufsliste',
-                border: OutlineInputBorder(),
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    appBar: AppBar(
+      title: Text(
+        "Neue Einkaufsliste erstellen",
+        style: TextStyle(color: Colors.white),
+      ),
+      backgroundColor: Color(0xFF334B46),
+      iconTheme: IconThemeData(color: Colors.white),
+    ),
+    backgroundColor: Color(0xFF334B46),
+    body: Padding(
+      padding: EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
+        children: <Widget>[
+          TextField(
+            controller: _listNameController,
+            decoration: InputDecoration(
+              labelText: 'Name der Einkaufsliste',
+              labelStyle: TextStyle(color: Colors.white),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
               ),
+              filled: true,
+              fillColor:
+                  Color(0xFF4A6963),
+              contentPadding: EdgeInsets.symmetric(
+                  vertical: 16,
+                  horizontal: 16),
             ),
-            SizedBox(height: 20),
-            DropdownButton<String>(
+            style:
+                TextStyle(color: Colors.white),
+          ),
+          SizedBox(height: 20),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: Color(0xFF4A6963),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: DropdownButton<String>(
               value: _selectedTemplateId,
+              dropdownColor: Color(0xFF4A6963),
               onChanged: (value) {
                 if (value != null) _applyTemplate(value);
               },
               items: _templateItems,
-              hint: Text('Vorlage auswählen'),
+              hint: Text('Vorlage auswählen',
+                  style: TextStyle(color: Colors.white)),
               isExpanded: true,
+              underline: SizedBox(),
+              iconEnabledColor: Colors.white,
+              style: TextStyle(color: Colors.white),
             ),
-            SizedBox(height: 20),
-            DropdownButton<String>(
+          ),
+          SizedBox(height: 20),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: Color(0xFF4A6963),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: DropdownButton<String>(
               value: _selectedImagePath != null
                   ? imagePathToName[_selectedImagePath]
                   : null,
+              dropdownColor: Color(0xFF4A6963),
               onChanged: (value) {
                 setState(() {
                   _selectedImagePath = imageNameToPath[value!]!;
@@ -231,20 +270,50 @@ class _CreateListScreenState extends State<CreateListScreen> {
               items: imageNameToPath.keys.map((String name) {
                 return DropdownMenuItem<String>(
                   value: name,
-                  child: Text(name),
+                  child: Text(name, style: TextStyle(color: Colors.white)),
                 );
               }).toList(),
-              hint: Text('Bild auswählen'),
+              hint: Text('Bild auswählen', style: TextStyle(color: Colors.white)),
               isExpanded: true,
+              underline: SizedBox(),
+              iconEnabledColor: Colors.white,
+              style: TextStyle(color: Colors.white),
             ),
-            SizedBox(height: 20),
-            ElevatedButton(
+          ),
+          SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
               onPressed: _createList,
-              child: Text('Weiter zum Laden zuordnen'),
+              icon: Container(
+                decoration: BoxDecoration(
+                  color: Color(0xFF334B46),
+                  shape: BoxShape.circle,
+                ),
+                padding: EdgeInsets.all(6),
+                child: Icon(Icons.add,
+                    size: 16,
+                    color: Colors.white),
+              ),
+              label: Text('Neue Einkaufsliste erstellen',
+                  style: TextStyle(fontSize: 20)
+                  ),
+              style: ElevatedButton.styleFrom(
+                foregroundColor: Colors.white,
+                backgroundColor:
+                    Color(0xFF587A6F),
+                padding: EdgeInsets.symmetric(
+                    vertical: 10),
+                shape: RoundedRectangleBorder(
+                  borderRadius:
+                      BorderRadius.circular(16),
+                ),
+              ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
 }
