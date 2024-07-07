@@ -1,17 +1,37 @@
-# smart
+## SmartLister for MAD/WPF1
+SmartLister is a comprehensive shopping list application developed with Flutter, designed to streamline the process of managing and sharing shopping lists. This application allows users to create, manage, and share their shopping lists directly from their mobile devices.
 
-A new Flutter project.
+# Getting Started
+To get started with SmartLister, you need to set up your development environment and ensure that all necessary tools and dependencies are correctly installed.
 
-## Getting Started
+# Prerequisites
+Flutter SDK: Install the latest version of Flutter. You can download it from Flutter's official website.
+Android Studio or Visual Studio Code: You will need an IDE to write your code. Android Studio or VS Code with the Flutter plugin installed is recommended.
+Android Emulator or Physical Device: The application is best tested on an Android emulator (API level 34 or higher) or a physical device with at least Android OS version 14.
 
-This project is a starting point for a Flutter application.
+# Installation
+Clone the Repository:
 
-A few resources to get you started if this is your first Flutter project:
+git clone https://github.com/ahmeteminemre/smartlister.git
+cd smartlister
+Install Dependencies:
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+flutter pub get
+Run the Application:
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
-# SmartLister MAD
+flutter run
+Make sure your emulator or physical device is running and connected before executing the command above.
+
+# Important Notes
+Internet Connection: SmartLister requires a stable internet connection as it interacts with Firebase for authentication, database storage, and other cloud services.
+Firebase Setup: Ensure you have set up Firebase and added your configuration files (google-services.json for Android) to the project.
+
+# Features
+Create, edit, and delete shopping lists.
+Share lists across devices using Firebase Dynamic Links.
+Manage user authentication with Firebase Auth.
+Store and retrieve data from Firebase Firestore.
+
+# Documentation
+For a comprehensive guide and API reference, visit the Flutter online documentation.
+
