@@ -5,7 +5,7 @@ import '../database/firebase_auth.dart';
 import 'login_screen.dart';
 import 'addlist_screen.dart';
 import 'itemslist_screen.dart';
-import 'addstore_screen.dart';
+import 'addshop_screen.dart';
 import 'shop_screen.dart';
 import 'currencyconverter_screen.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -649,4 +649,3 @@ class HomePage extends StatelessWidget {
     });
   }
 }
-//

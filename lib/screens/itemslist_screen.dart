@@ -35,6 +35,7 @@ class _ItemListScreenState extends State<ItemListScreen> {
   @override
   void initState() {
     super.initState();
+    loadItems();
     if (widget.items != null && widget.items!.isNotEmpty) {
       loadItems();
       setTemplateItems(widget.items!);
@@ -58,12 +59,9 @@ class _ItemListScreenState extends State<ItemListScreen> {
     });
   }
 
-  void loadItems() async {
+void loadItems() async {
     try {
-      var listDoc = await _firestore
-          .collection('shopping_lists')
-          .doc(widget.shoppingListId)
-          .get();
+      var listDoc = await _firestore.collection('shopping_lists').doc(widget.shoppingListId).get();
       currentStoreId = listDoc.data()?['ladenId'] as String?;
 
       if (currentStoreId == null) {
@@ -71,16 +69,18 @@ class _ItemListScreenState extends State<ItemListScreen> {
         return;
       }
 
-      var items =
-          List<Map<String, dynamic>>.from(listDoc.data()?['items'] ?? []);
+      var items = List<Map<String, dynamic>>.from(listDoc.data()?['items'] ?? []);
       var groupsSnapshot = await _firestore
           .collection('product_groups')
           .where('storeId', isEqualTo: currentStoreId)
+          .orderBy('order')
           .get();
 
       Map<String, String> groupNames = {};
+      Map<String, int> groupOrder = {};
       for (var doc in groupsSnapshot.docs) {
         groupNames[doc.id] = doc.data()['name'] as String;
+        groupOrder[doc.id] = doc.data()['order'] as int;
       }
 
       List<Map<String, dynamic>> validItems = [];
@@ -90,14 +90,17 @@ class _ItemListScreenState extends State<ItemListScreen> {
         }
       }
 
-      await _firestore
-          .collection('shopping_lists')
-          .doc(widget.shoppingListId)
-          .update({'items': validItems});
+      validItems.sort((a, b) {
+        int orderA = groupOrder[a['groupId']] ?? 1000;
+        int orderB = groupOrder[b['groupId']] ?? 1000;
+        return orderA.compareTo(orderB);
+      });
+
+      await _firestore.collection('shopping_lists').doc(widget.shoppingListId).update({'items': validItems});
 
       Map<String, List<Map<String, dynamic>>> groupedItems = {};
       for (var item in validItems) {
-        String groupName = groupNames[item['groupId']] ?? 'Unbekannte Gruppe';
+        String groupName = groupNames[item['groupId']] ?? 'idk';
         groupedItems.putIfAbsent(groupName, () => []).add(item);
       }
 
