@@ -1,25 +1,26 @@
-class Einkaufsliste {
-  String id;
-  String name;
-  String ladenId;
-  String items;
-  String userId;
+import 'package:isar/isar.dart';
 
-  Einkaufsliste({required this.id, required this.name, required this.ladenId, required this.items, required this.userId});
+part 'itemlist.g.dart';
+
+@Collection()
+class Itemlist {
+  Id id = Isar.autoIncrement;
+  late String name;
+  late bool isDone;
+  late String groupId;
 
   Map<String, dynamic> toJson() => {
     'id': id,
     'name': name,
-    'ladenId': ladenId,
-    'items': items,
-    'userId': userId
+    'isDone': isDone,
+    'groupId': groupId,
   };
 
-  static Einkaufsliste fromJson(Map<String, dynamic> json) => Einkaufsliste(
-    id: json['id'],
+  static Itemlist fromJson(Map<String, dynamic> json) => Itemlist(
     name: json['name'],
-    ladenId: json['ladenId'],
-    items: json['items'],
-    userId: json['userId']
+    isDone: json['isDone'],
+    groupId: json['groupId'],
   );
+
+  Itemlist({required this.name, required this.isDone, required this.groupId});
 }

@@ -1,9 +1,11 @@
-class Einkaufsladen {
-  String id;
-  String name;
-  String userId;  
+import 'package:isar/isar.dart';
+part 'shop.g.dart';
 
-  Einkaufsladen({required this.id, required this.name, required this.userId});
+@Collection()
+class Einkaufsladen {
+  Id id = Isar.autoIncrement; 
+  late String name;
+  late String userId;
 
   Map<String, dynamic> toJson() => {
     'id': id,
@@ -12,8 +14,12 @@ class Einkaufsladen {
   };
 
   static Einkaufsladen fromJson(Map<String, dynamic> json) => Einkaufsladen(
-    id: json['id'],
     name: json['name'],
     userId: json['userId']  
   );
+     Einkaufsladen({
+    required this.name,
+    required this.userId,
+  });
+
 }
