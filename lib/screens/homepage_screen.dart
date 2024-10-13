@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:isar/isar.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:smart/objects/shop.dart';
+import 'package:smart/objects/template.dart';
+import 'package:smart/screens/shop_screen.dart';
+import '../objects/itemlist.dart'; // Your Isar model for Itemlist
+import 'addlist_screen.dart'; // For creating the new list
+import 'choosestore_screen.dart'; // Screen to choose stores
+import 'currencyconverter_screen.dart'; // Currency converter screen
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../utilities/notificationmanager.dart';
-import '../objects/itemlist.dart';
-import '../objects/shop.dart';
+import 'itemslist_screen.dart'; // Import the ItemListScreen
+import 'addshop_screen.dart'; // Screen to create a new shop
 
 class HomePage extends StatefulWidget {
   final Isar isar;
@@ -27,13 +33,87 @@ class _HomePageState extends State<HomePage> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    setState(() {
+      // Refresh the screen when navigating back
+    });
+  }
+
+  Future<String> getShopName(String groupId) async {
+    print("Fetching shop name for Group ID: $groupId");
+
+    if (groupId.isEmpty) {
+      print("Group ID is empty, returning 'Unbekannt'");
+      return "Unbekannt";
+    }
+
+    // Parse groupId safely and ensure it's numeric
+    final parsedGroupId = int.tryParse(groupId);
+    print("Parsed Group ID: $parsedGroupId");
+
+    if (parsedGroupId != null) {
+      final shop = await widget.isar.einkaufsladens
+          .filter()
+          .idEqualTo(parsedGroupId) // Use parsed int
+          .findFirst();
+
+      if (shop != null) {
+        print("Found Shop: ${shop.name}");
+        return shop.name;
+      } else {
+        print("No shop found for Group ID: $parsedGroupId");
+      }
+    } else {
+      print("Invalid Group ID, returning 'Unbekannt'");
+    }
+
+    return "Unbekannt"; // Return "Unbekannt" for invalid groupIds
+  }
+
+  Future<List<Einkaufsladen>> getMostUsedShops() async {
+    final allItemLists = await widget.isar.itemlists.where().findAll();
+    Map<String, int> shopUsage = {};
+
+    for (var list in allItemLists) {
+      final groupId = list.groupId;
+      if (groupId != null) {
+        shopUsage[groupId] = (shopUsage[groupId] ?? 0) + 1;
+        // Print the shop usage count for debugging
+        print("Group ID: $groupId, Usage Count: ${shopUsage[groupId]}");
+      }
+    }
+
+    final sortedGroupIds = shopUsage.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final topGroupIds = sortedGroupIds.take(5).map((e) => e.key).toList();
+
+    List<Einkaufsladen> topShops = [];
+    for (var groupId in topGroupIds) {
+      final shop = await widget.isar.einkaufsladens
+          .filter()
+          .idEqualTo(int.parse(groupId))
+          .findFirst();
+
+      if (shop != null) {
+        print("Top Shop: ${shop.name}, Group ID: $groupId");
+        topShops.add(shop);
+      } else {
+        print("No shop found for Group ID: $groupId");
+      }
+    }
+
+    return topShops;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
         backgroundColor: Color(0xFF334B46),
         title: Text(
-          'Hallo!',
+          'Hallo xxxx!',
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
@@ -47,7 +127,18 @@ class _HomePageState extends State<HomePage> {
           IconButton(
             icon: Icon(Icons.attach_money, color: Colors.white),
             onPressed: () {
-              // Andere Screens hier öffnen, z.B. Währungsrechner
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => CurrencyConverterScreen(),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            icon: Icon(Icons.settings, color: Colors.white),
+            onPressed: () {
+              // Add your settings functionality
             },
           ),
         ],
@@ -57,51 +148,26 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                'Meine Listen',
+                style: TextStyle(fontSize: 18, color: Colors.white),
+              ),
+            ),
             FutureBuilder<List<Itemlist>>(
-              future:
-                  widget.isar.itemlists.where().findAll(), 
+              future: widget.isar.itemlists
+                  .where()
+                  .findAll(), // Fetch all Itemlists
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.done &&
                     snapshot.hasData) {
+                  // Only display lists, not the individual items
                   return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                        child: Text(
-                          "Meine Listen",
-                          style: TextStyle(fontSize: 18, color: Colors.white),
-                        ),
-                      ),
-                      ...snapshot.data!.map((itemlist) {
-                        return ListTile(
-                          title: Text(itemlist.name),
-                          subtitle:
-                              Text(itemlist.isDone ? "Erledigt" : "Offen"),
-                          trailing: PopupMenuButton<String>(
-                            onSelected: (value) {
-                              if (value == 'delete') {
-                                _deleteItemlist(itemlist);
-                              } else if (value == 'rename') {
-                                _renameItemlist(itemlist, context);
-                              }
-                            },
-                            itemBuilder: (BuildContext context) =>
-                                <PopupMenuEntry<String>>[
-                              const PopupMenuItem<String>(
-                                value: 'rename',
-                                child: Text('Liste umbenennen'),
-                              ),
-                              const PopupMenuItem<String>(
-                                value: 'delete',
-                                child: Text('Liste löschen'),
-                              ),
-                            ],
-                            icon: Icon(Icons.more_vert),
-                          ),
-                        );
-                      }).toList(),
-                    ],
+                    children: snapshot.data!
+                        .map((itemlist) => _buildListCard(
+                            itemlist)) // Build cards for each list
+                        .toList(),
                   );
                 } else if (snapshot.hasError) {
                   return Text("Error: ${snapshot.error}");
@@ -110,99 +176,82 @@ class _HomePageState extends State<HomePage> {
                 }
               },
             ),
-            SizedBox(height: 8),
+
+            // Most-used shops
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              child: Text(
+                'Meine Lieblingseinkaufsläden',
+                style: TextStyle(fontSize: 18, color: Colors.white),
+              ),
+            ),
+            FutureBuilder<List<Einkaufsladen>>(
+              future: getMostUsedShops(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.done &&
+                    snapshot.hasData) {
+                  return Wrap(
+                    spacing: 8.0,
+                    runSpacing: 4.0,
+                    children: snapshot.data!.map((store) {
+                      return InkWell(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => EditStoreScreen(
+                                storeId: store.id.toString(),
+                                storeName: store.name,
+                                isar: widget.isar,
+                                isNewStore: false,
+                              ),
+                            ),
+                          );
+                        },
+                        child: Chip(
+                          label: Text(store.name),
+                          backgroundColor: Colors.orange,
+                        ),
+                      );
+                    }).toList(),
+                  );
+                } else if (snapshot.hasError) {
+                  return Text("Error: ${snapshot.error}");
+                } else {
+                  return CircularProgressIndicator();
+                }
+              },
+            ),
+            // Add new shopping list
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               child: ElevatedButton.icon(
                 onPressed: () => _createListDialog(context),
                 icon: Icon(Icons.add),
                 label: Text("Neue Einkaufsliste erstellen"),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF587A6F), 
-                  foregroundColor: Colors.white, //
+                  backgroundColor: Color(0xFF587A6F),
+                  foregroundColor: Colors.white,
                 ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              child: Text(
-                "Meine Lieblingseinkaufsläden",
-                style: TextStyle(
-                  fontSize: 18,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-            FutureBuilder<List<Einkaufsladen>>(
-              future: widget.isar.einkaufsladens
-                  .where()
-                  .findAll(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.done &&
-                    snapshot.hasData) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: GridView.builder(
-                      shrinkWrap: true,
-                      physics: NeverScrollableScrollPhysics(),
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 11.0,
-                        mainAxisSpacing: 5.0,
-                        childAspectRatio: 3,
-                      ),
-                      itemCount: snapshot.data!.length,
-                      itemBuilder: (context, index) {
-                        var store = snapshot.data![index];
-                        return GestureDetector(
-                          onTap: () {
-                            // Navigiere zum edit
-                          },
-                          child: Card(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Container(
-                              padding: EdgeInsets.all(2),
-                              alignment: Alignment.centerLeft,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(16),
-                                gradient: LinearGradient(
-                                  colors: [
-                                    Color(0xFF567760),
-                                    Color(0xFFB2DCE1)
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                              ),
-                              child: Text(
-                                store.name,
-                                style: TextStyle(
-                                    fontSize: 20, color: Colors.white),
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  );
-                } else if (snapshot.hasError) {
-                  return Text("Error: ${snapshot.error}");
-                } else {
-                  return CircularProgressIndicator();
-                }
-              },
-            ),
+            // Add new shop
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: ElevatedButton.icon(
-                onPressed: () => _addShopDialog(context),
-                icon: Icon(Icons.add),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => AddStoreScreen(isar: widget.isar),
+                    ),
+                  );
+                },
+                icon: Icon(Icons.add_business),
                 label: Text("Neuen Laden erstellen"),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Color(0xFF587A6F),
-                  foregroundColor: Colors.white, 
+                  foregroundColor: Colors.white,
                 ),
               ),
             ),
@@ -212,93 +261,145 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Future<void> _createListDialog(BuildContext context) async {
-    TextEditingController listNameController = TextEditingController();
-    final TextEditingController groupIdController =
-        TextEditingController(); 
+  Widget _buildListCard(Itemlist itemlist) {
+    String imagePath = itemlist.imagePath ?? 'lib/img/default_image.png';
 
-    await showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text("Neue Liste erstellen"),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: listNameController,
-                decoration: InputDecoration(hintText: "Listenname"),
-              ),
-              TextField(
-                controller: groupIdController,
-                decoration: InputDecoration(hintText: "Gruppen-ID"),
-              ),
-            ],
+    // Extract items from the itemsJson field of the Itemlist
+    List<Map<String, dynamic>> items = itemlist.getItems();
+
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ItemListScreen(
+              listName: itemlist.name,
+              shoppingListId: itemlist.id.toString(),
+              items: [itemlist], // Pass the list itself
+              initialStoreId: itemlist.groupId,
+              isar: widget.isar,
+            ),
           ),
-          actions: <Widget>[
-            TextButton(
-              child: Text("Abbrechen"),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: Text("Erstellen"),
-              onPressed: () async {
-                if (listNameController.text.isNotEmpty &&
-                    groupIdController.text.isNotEmpty) {
-                  final newList = Itemlist(
-                    name: listNameController.text,
-                    isDone: false,
-                    groupId: groupIdController.text,
-                  );
-
-                  await widget.isar.writeTxn(() async {
-                    await widget.isar.itemlists.put(newList);
-                  });
-                  setState(() {});
-                  Navigator.of(context).pop();
-                }
-              },
-            ),
-          ],
         );
       },
+      child: Card(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            image: DecorationImage(
+              image: AssetImage(imagePath),
+              fit: BoxFit.cover,
+              colorFilter: ColorFilter.mode(
+                  Colors.black.withOpacity(0.4), BlendMode.darken),
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  itemlist.name,
+                  style: TextStyle(fontSize: 20, color: Colors.white),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                SizedBox(height: 8),
+                Row(
+                  children: [
+                    // Display the number of items in the list
+                    _buildTag('${items.length} Artikel'),
+                    SizedBox(width: 5),
+                    FutureBuilder<String>(
+                      future: getShopName(itemlist.groupId), // Fetch shop name
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.done &&
+                            snapshot.hasData) {
+                          return _buildTag(snapshot.data!);
+                        } else {
+                          return _buildTag("Unbekannt");
+                        }
+                      },
+                    ),
+
+                    Spacer(),
+                    _buildOptionsMenu(
+                        itemlist), // Options menu for renaming, deleting, etc.
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
-  Future<void> _addShopDialog(BuildContext context) async {
-    TextEditingController shopNameController = TextEditingController();
-    await showDialog(
+// Method to build the options menu on the list card
+  Widget _buildOptionsMenu(Itemlist itemlist) {
+    return PopupMenuButton<String>(
+      onSelected: (value) {
+        switch (value) {
+          case 'rename':
+            _renameList(itemlist);
+            break;
+          case 'delete':
+            _deleteList(itemlist);
+            break;
+          case 'saveAsTemplate':
+            _saveListAsTemplate(itemlist);
+            break;
+        }
+      },
+      itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+        const PopupMenuItem<String>(
+          value: 'rename',
+          child: Text('Liste umbenennen'),
+        ),
+        const PopupMenuItem<String>(
+          value: 'delete',
+          child: Text('Liste löschen'),
+        ),
+        const PopupMenuItem<String>(
+          value: 'saveAsTemplate',
+          child: Text('Liste als Vorlage speichern'),
+        ),
+      ],
+      icon: Icon(Icons.more_vert, color: Colors.white),
+    );
+  }
+
+// Method to rename a list
+  void _renameList(Itemlist itemlist) {
+    TextEditingController _nameController =
+        TextEditingController(text: itemlist.name);
+    showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text("Neuen Laden hinzufügen"),
+          title: Text('Listennamen ändern'),
           content: TextField(
-            controller: shopNameController,
-            decoration: InputDecoration(hintText: "Ladenname"),
+            controller: _nameController,
+            decoration: InputDecoration(hintText: 'Neuer Listennamen eingeben'),
           ),
           actions: <Widget>[
             TextButton(
-              child: Text("Abbrechen"),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+              child: Text('Abbrechen'),
+              onPressed: () => Navigator.of(context).pop(),
             ),
             TextButton(
-              child: Text("Hinzufügen"),
+              child: Text('Speichern'),
               onPressed: () async {
-                if (shopNameController.text.isNotEmpty) {
-                  final newShop = Einkaufsladen(
-                    name: shopNameController.text, 
-                    userId: 'someUserId',
-                  );
-
+                if (_nameController.text.isNotEmpty) {
+                  itemlist.name = _nameController.text.trim();
                   await widget.isar.writeTxn(() async {
-                    await widget.isar.einkaufsladens.put(newShop);
+                    await widget.isar.itemlists.put(itemlist);
                   });
-                  setState(() {});
                   Navigator.of(context).pop();
+                  setState(() {});
                 }
               },
             ),
@@ -308,48 +409,55 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Future<void> _deleteItemlist(Itemlist itemlist) async {
+// Method to delete a list
+  void _deleteList(Itemlist itemlist) async {
     await widget.isar.writeTxn(() async {
       await widget.isar.itemlists.delete(itemlist.id);
     });
     setState(() {});
   }
 
-  Future<void> _renameItemlist(Itemlist itemlist, BuildContext context) async {
-    TextEditingController nameController =
-        TextEditingController(text: itemlist.name);
-    await showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text("Liste umbenennen"),
-          content: TextField(
-            controller: nameController,
-            decoration: InputDecoration(hintText: "Neuer Name"),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text("Abbrechen"),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: Text("Speichern"),
-              onPressed: () async {
-                if (nameController.text.isNotEmpty) {
-                  await widget.isar.writeTxn(() async {
-                    itemlist.name = nameController.text;
-                    await widget.isar.itemlists.put(itemlist);
-                  });
-                  setState(() {});
-                  Navigator.of(context).pop();
-                }
-              },
-            ),
-          ],
-        );
-      },
+// Method to save a list as a template// Method to save a list as a template
+  void _saveListAsTemplate(Itemlist itemlist) async {
+    final newTemplate = Template(
+      name: itemlist.name,
+      items: itemlist.getItems(),
+      imagePath: itemlist.imagePath!,
+      storeId: itemlist.groupId!, // Pass storeId (groupId) here
+    );
+
+    await widget.isar.writeTxn(() async {
+      await widget.isar.templates.put(newTemplate);
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('Liste als Vorlage gespeichert!'),
+    ));
+  }
+
+  // Method to build a small "tag" widget
+  Widget _buildTag(String label) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.orange,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(color: Colors.white),
+      ),
+    );
+  }
+
+  // Create List Dialog that navigates to CreateListScreen
+  void _createListDialog(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            CreateListScreen(isar: widget.isar), // Navigate to CreateListScreen
+      ),
     );
   }
 
@@ -397,11 +505,11 @@ class _HomePageState extends State<HomePage> {
                   onPressed: () async {
                     Navigator.of(context).pop();
                     await _notificationManager.scheduleNotification(
-                      0,
+                      0, //id
                       titleController.text.isEmpty
-                          ? "Standardtitel"
+                          ? "nothing entered notification"
                           : titleController.text,
-                      "Benachrichtigungstext",
+                      "notification", //body
                       scheduledDateTime,
                     );
                   },

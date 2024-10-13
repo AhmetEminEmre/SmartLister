@@ -27,9 +27,14 @@ const ProductgroupSchema = CollectionSchema(
       name: r'name',
       type: IsarType.string,
     ),
-    r'userId': PropertySchema(
+    r'order': PropertySchema(
       id: 2,
-      name: r'userId',
+      name: r'order',
+      type: IsarType.long,
+    ),
+    r'storeId': PropertySchema(
+      id: 3,
+      name: r'storeId',
       type: IsarType.string,
     )
   },
@@ -54,7 +59,7 @@ int _productgroupEstimateSize(
 ) {
   var bytesCount = offsets.last;
   bytesCount += 3 + object.name.length * 3;
-  bytesCount += 3 + object.userId.length * 3;
+  bytesCount += 3 + object.storeId.length * 3;
   return bytesCount;
 }
 
@@ -66,7 +71,8 @@ void _productgroupSerialize(
 ) {
   writer.writeLong(offsets[0], object.itemCount);
   writer.writeString(offsets[1], object.name);
-  writer.writeString(offsets[2], object.userId);
+  writer.writeLong(offsets[2], object.order);
+  writer.writeString(offsets[3], object.storeId);
 }
 
 Productgroup _productgroupDeserialize(
@@ -78,7 +84,8 @@ Productgroup _productgroupDeserialize(
   final object = Productgroup(
     itemCount: reader.readLong(offsets[0]),
     name: reader.readString(offsets[1]),
-    userId: reader.readString(offsets[2]),
+    order: reader.readLong(offsets[2]),
+    storeId: reader.readString(offsets[3]),
   );
   object.id = id;
   return object;
@@ -96,6 +103,8 @@ P _productgroupDeserializeProp<P>(
     case 1:
       return (reader.readString(offset)) as P;
     case 2:
+      return (reader.readLong(offset)) as P;
+    case 3:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -439,13 +448,68 @@ extension ProductgroupQueryFilter
     });
   }
 
-  QueryBuilder<Productgroup, Productgroup, QAfterFilterCondition> userIdEqualTo(
+  QueryBuilder<Productgroup, Productgroup, QAfterFilterCondition> orderEqualTo(
+      int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'order',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Productgroup, Productgroup, QAfterFilterCondition>
+      orderGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'order',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Productgroup, Productgroup, QAfterFilterCondition> orderLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'order',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Productgroup, Productgroup, QAfterFilterCondition> orderBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'order',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<Productgroup, Productgroup, QAfterFilterCondition>
+      storeIdEqualTo(
     String value, {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'userId',
+        property: r'storeId',
         value: value,
         caseSensitive: caseSensitive,
       ));
@@ -453,7 +517,7 @@ extension ProductgroupQueryFilter
   }
 
   QueryBuilder<Productgroup, Productgroup, QAfterFilterCondition>
-      userIdGreaterThan(
+      storeIdGreaterThan(
     String value, {
     bool include = false,
     bool caseSensitive = true,
@@ -461,7 +525,7 @@ extension ProductgroupQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
         include: include,
-        property: r'userId',
+        property: r'storeId',
         value: value,
         caseSensitive: caseSensitive,
       ));
@@ -469,7 +533,7 @@ extension ProductgroupQueryFilter
   }
 
   QueryBuilder<Productgroup, Productgroup, QAfterFilterCondition>
-      userIdLessThan(
+      storeIdLessThan(
     String value, {
     bool include = false,
     bool caseSensitive = true,
@@ -477,14 +541,15 @@ extension ProductgroupQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.lessThan(
         include: include,
-        property: r'userId',
+        property: r'storeId',
         value: value,
         caseSensitive: caseSensitive,
       ));
     });
   }
 
-  QueryBuilder<Productgroup, Productgroup, QAfterFilterCondition> userIdBetween(
+  QueryBuilder<Productgroup, Productgroup, QAfterFilterCondition>
+      storeIdBetween(
     String lower,
     String upper, {
     bool includeLower = true,
@@ -493,7 +558,7 @@ extension ProductgroupQueryFilter
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.between(
-        property: r'userId',
+        property: r'storeId',
         lower: lower,
         includeLower: includeLower,
         upper: upper,
@@ -504,13 +569,13 @@ extension ProductgroupQueryFilter
   }
 
   QueryBuilder<Productgroup, Productgroup, QAfterFilterCondition>
-      userIdStartsWith(
+      storeIdStartsWith(
     String value, {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'userId',
+        property: r'storeId',
         value: value,
         caseSensitive: caseSensitive,
       ));
@@ -518,13 +583,13 @@ extension ProductgroupQueryFilter
   }
 
   QueryBuilder<Productgroup, Productgroup, QAfterFilterCondition>
-      userIdEndsWith(
+      storeIdEndsWith(
     String value, {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'userId',
+        property: r'storeId',
         value: value,
         caseSensitive: caseSensitive,
       ));
@@ -532,22 +597,21 @@ extension ProductgroupQueryFilter
   }
 
   QueryBuilder<Productgroup, Productgroup, QAfterFilterCondition>
-      userIdContains(String value, {bool caseSensitive = true}) {
+      storeIdContains(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.contains(
-        property: r'userId',
+        property: r'storeId',
         value: value,
         caseSensitive: caseSensitive,
       ));
     });
   }
 
-  QueryBuilder<Productgroup, Productgroup, QAfterFilterCondition> userIdMatches(
-      String pattern,
-      {bool caseSensitive = true}) {
+  QueryBuilder<Productgroup, Productgroup, QAfterFilterCondition>
+      storeIdMatches(String pattern, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.matches(
-        property: r'userId',
+        property: r'storeId',
         wildcard: pattern,
         caseSensitive: caseSensitive,
       ));
@@ -555,20 +619,20 @@ extension ProductgroupQueryFilter
   }
 
   QueryBuilder<Productgroup, Productgroup, QAfterFilterCondition>
-      userIdIsEmpty() {
+      storeIdIsEmpty() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'userId',
+        property: r'storeId',
         value: '',
       ));
     });
   }
 
   QueryBuilder<Productgroup, Productgroup, QAfterFilterCondition>
-      userIdIsNotEmpty() {
+      storeIdIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'userId',
+        property: r'storeId',
         value: '',
       ));
     });
@@ -607,15 +671,27 @@ extension ProductgroupQuerySortBy
     });
   }
 
-  QueryBuilder<Productgroup, Productgroup, QAfterSortBy> sortByUserId() {
+  QueryBuilder<Productgroup, Productgroup, QAfterSortBy> sortByOrder() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'userId', Sort.asc);
+      return query.addSortBy(r'order', Sort.asc);
     });
   }
 
-  QueryBuilder<Productgroup, Productgroup, QAfterSortBy> sortByUserIdDesc() {
+  QueryBuilder<Productgroup, Productgroup, QAfterSortBy> sortByOrderDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'userId', Sort.desc);
+      return query.addSortBy(r'order', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Productgroup, Productgroup, QAfterSortBy> sortByStoreId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'storeId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Productgroup, Productgroup, QAfterSortBy> sortByStoreIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'storeId', Sort.desc);
     });
   }
 }
@@ -658,15 +734,27 @@ extension ProductgroupQuerySortThenBy
     });
   }
 
-  QueryBuilder<Productgroup, Productgroup, QAfterSortBy> thenByUserId() {
+  QueryBuilder<Productgroup, Productgroup, QAfterSortBy> thenByOrder() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'userId', Sort.asc);
+      return query.addSortBy(r'order', Sort.asc);
     });
   }
 
-  QueryBuilder<Productgroup, Productgroup, QAfterSortBy> thenByUserIdDesc() {
+  QueryBuilder<Productgroup, Productgroup, QAfterSortBy> thenByOrderDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'userId', Sort.desc);
+      return query.addSortBy(r'order', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Productgroup, Productgroup, QAfterSortBy> thenByStoreId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'storeId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Productgroup, Productgroup, QAfterSortBy> thenByStoreIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'storeId', Sort.desc);
     });
   }
 }
@@ -686,10 +774,16 @@ extension ProductgroupQueryWhereDistinct
     });
   }
 
-  QueryBuilder<Productgroup, Productgroup, QDistinct> distinctByUserId(
+  QueryBuilder<Productgroup, Productgroup, QDistinct> distinctByOrder() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'order');
+    });
+  }
+
+  QueryBuilder<Productgroup, Productgroup, QDistinct> distinctByStoreId(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'userId', caseSensitive: caseSensitive);
+      return query.addDistinctBy(r'storeId', caseSensitive: caseSensitive);
     });
   }
 }
@@ -714,9 +808,15 @@ extension ProductgroupQueryProperty
     });
   }
 
-  QueryBuilder<Productgroup, String, QQueryOperations> userIdProperty() {
+  QueryBuilder<Productgroup, int, QQueryOperations> orderProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'userId');
+      return query.addPropertyName(r'order');
+    });
+  }
+
+  QueryBuilder<Productgroup, String, QQueryOperations> storeIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'storeId');
     });
   }
 }

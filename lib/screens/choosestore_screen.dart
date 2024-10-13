@@ -1,131 +1,159 @@
-// import 'package:flutter/material.dart';
-// import 'package:cloud_firestore/cloud_firestore.dart';
-// import 'package:firebase_auth/firebase_auth.dart';
-// import 'itemslist_screen.dart';
-// import '../objects/template.dart';
+import 'package:flutter/material.dart';
+import 'package:isar/isar.dart';
+import '../objects/itemlist.dart'; // Your Isar model for Itemlist
+import '../objects/shop.dart'; // Your Isar model for Shops (Einkaufsladen)
+import 'itemslist_screen.dart';
 
-// class StoreScreen extends StatefulWidget {
-//   final String listId;
-//   final String listName;
-//   final String? selectedStoreId;
-//   final List<TemplateList> items;
-//   final Function(String storeId) onStoreSelected;
+class StoreScreen extends StatefulWidget {
+  final String listId;
+  final String listName;
+  final Isar isar;
+  final Function(String storeId) onStoreSelected;
 
-//   StoreScreen({
-//     required this.listId,
-//     required this.listName,
-//     this.selectedStoreId,
-//     required this.items,
-//     required this.onStoreSelected,
-//   });
+  StoreScreen({
+    required this.listId,
+    required this.listName,
+    required this.isar,
+    required this.onStoreSelected,
+  });
 
-//   @override
-//   _StoreScreenState createState() => _StoreScreenState();
-// }
+  @override
+  _StoreScreenState createState() => _StoreScreenState();
+}
 
-// class _StoreScreenState extends State<StoreScreen> {
-//   String? _selectedStoreId;
-//   List<DropdownMenuItem<String>> _storeItems = [];
-//   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+class _StoreScreenState extends State<StoreScreen> {
+  String? _selectedStoreId;
+  List<Einkaufsladen> _stores = [];
 
-//   @override
-//   void initState() {
-//     super.initState();
-//     _selectedStoreId = widget.selectedStoreId;
-//     _loadStores();
-//   }
+  @override
+  void initState() {
+    super.initState();
+    _loadStores();
+  }
 
-//   void _loadStores() async {
-//     var snapshot = await _firestore.collection('stores')
-//         .where('userId', isEqualTo: FirebaseAuth.instance.currentUser?.uid)
-//         .get();
-//     var stores = snapshot.docs.map((doc) => DropdownMenuItem<String>(
-//       value: doc.id,
-//       child: Text(doc.data()['name'] ?? 'idk laden'),
-//     )).toList();
+  // Läd die Stores aus der Datenbank
+  void _loadStores() async {
+    final stores = await widget.isar.einkaufsladens.where().findAll();
+    setState(() {
+      _stores = stores;
+    });
+  }
 
-//     setState(() {
-//       _storeItems = stores;
-//     });
-//   }
+  // Überprüfung, ob der Store einer Liste zugeordnet ist
+  Future<bool> _isStoreAssignedToList(String storeId) async {
+    final listsWithStore =
+        await widget.isar.itemlists.filter().groupIdEqualTo(storeId).findAll();
+    return listsWithStore.isNotEmpty;
+  }
 
-// @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: Text("Einkaufsladen zuordnen", style: TextStyle(color: Colors.white)),
-//         backgroundColor: Color(0xFF334B46),
-//         iconTheme: IconThemeData(color: Colors.white),
-//       ),
-//       backgroundColor: Color(0xFF334B46),
-//       body: Padding(
-//         padding: const EdgeInsets.all(16.0),
-//         child: Column(
-//           crossAxisAlignment: CrossAxisAlignment.start,
-//           children: <Widget>[
-//             DropdownButton<String>(
-//               value: _selectedStoreId,
-//               onChanged: (value) {
-//                 setState(() {
-//                   _selectedStoreId = value;
-//                 });
-//               },
-//               items: _storeItems,
-//               hint: Text('Einkaufsladen auswählen', style: TextStyle(color: Colors.white)),
-//               dropdownColor: Color(0xFF4A6963),
-//               isExpanded: true,
-//               style: TextStyle(color: Colors.white),
-//               iconEnabledColor: Colors.white,
-//             ),
-//             SizedBox(height: 20),
-//             Padding(
-//               padding: const EdgeInsets.symmetric(horizontal: 16),
-//               child: SizedBox(
-//                 width: double.infinity,
-//                 child: ElevatedButton.icon(
-//                   onPressed: _selectedStoreId != null
-//                       ? () {
-//                           widget.onStoreSelected(_selectedStoreId!);
-//                           Navigator.pushReplacement(
-//                             context,
-//                             MaterialPageRoute(
-//                               builder: (context) => ItemListScreen(
-//                                 listName: widget.listName,
-//                                 shoppingListId: widget.listId,
-//                                 items: widget.items,
-//                                 initialStoreId: _selectedStoreId,
-//                               ),
-//                             ),
-//                           );
-//                         }
-//                       : null,
-//                   icon: Container(
-//                     decoration: BoxDecoration(
-//                       color: Color(0xFF334B46),
-//                       shape: BoxShape.circle,
-//                     ),
-//                     padding: EdgeInsets.all(6),
-//                     child: Icon(Icons.add, size: 16, color: Colors.white),
-//                   ),
-//                   label: Text(
-//                     "Laden zu Liste hinzufügen",
-//                     style: TextStyle(fontSize: 20, color: Colors.white),
-//                   ),
-//                   style: ElevatedButton.styleFrom(
-//                     foregroundColor: Colors.white,
-//                     backgroundColor: Color(0xFF587A6F),
-//                     padding: EdgeInsets.symmetric(vertical: 10),
-//                     shape: RoundedRectangleBorder(
-//                       borderRadius: BorderRadius.circular(16),
-//                     ),
-//                   ),
-//                 ),
-//               ),
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }
+  // Holt die Items der ausgewählten Einkaufsliste
+  Future<List<Itemlist>> _fetchItemsForList(String listId) async {
+    return await widget.isar.itemlists
+        .filter()
+        .idEqualTo(int.parse(listId))
+        .findAll();
+  }
 
+  // Löscht den Store, falls er keiner Liste zugeordnet ist
+  Future<void> _deleteStore(String storeId) async {
+    final isAssigned = await _isStoreAssignedToList(storeId);
+    if (isAssigned) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+              'Dieser Laden ist einer Liste zugeordnet und kann nicht gelöscht werden.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    await widget.isar.writeTxn(() async {
+      await widget.isar.einkaufsladens.delete(int.parse(storeId));
+    });
+
+    _loadStores();
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Einkaufsladen zuordnen"),
+      ),
+      body: Column(
+        children: [
+          // Dropdown zum Auswählen eines Stores
+          DropdownButton<String>(
+            value: _selectedStoreId,
+            hint: Text("Einkaufsladen wählen"),
+            onChanged: (value) {
+              setState(() {
+                _selectedStoreId = value;
+              });
+            },
+            items: _stores.map((store) {
+              return DropdownMenuItem<String>(
+                value: store.id.toString(),
+                child: GestureDetector(
+                  onLongPress: () async {
+                    final shouldDelete = await showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: Text('Laden löschen?'),
+                          content: Text(
+                              'Möchten Sie diesen Laden wirklich löschen?'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(false),
+                              child: Text('Nein'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(true),
+                              child: Text('Ja'),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+
+                    if (shouldDelete == true) {
+                      await _deleteStore(store.id.toString());
+                    }
+                  },
+                  child: Text(store.name),
+                ),
+              );
+            }).toList(),
+          ),
+          ElevatedButton(
+            onPressed: _selectedStoreId != null
+                ? () async {
+                    // Items für die ausgewählte Liste laden
+                    final items = await _fetchItemsForList(widget.listId);
+                    widget.onStoreSelected(_selectedStoreId!);
+
+                    // Zur ItemListScreen mit dem ausgewählten Store weiterleiten
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ItemListScreen(
+                          listName: widget.listName,
+                          shoppingListId: widget.listId,
+                          items: items,
+                          initialStoreId: _selectedStoreId!,
+                          isar: widget.isar,
+                        ),
+                      ),
+                    );
+                  }
+                : null,
+            child: Text('Weiter zur Einkaufsliste'),
+          ),
+        ],
+      ),
+    );
+  }
+}

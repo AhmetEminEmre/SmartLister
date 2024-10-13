@@ -22,13 +22,18 @@ const ItemlistSchema = CollectionSchema(
       name: r'groupId',
       type: IsarType.string,
     ),
-    r'isDone': PropertySchema(
+    r'imagePath': PropertySchema(
       id: 1,
-      name: r'isDone',
-      type: IsarType.bool,
+      name: r'imagePath',
+      type: IsarType.string,
+    ),
+    r'itemsJson': PropertySchema(
+      id: 2,
+      name: r'itemsJson',
+      type: IsarType.string,
     ),
     r'name': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'name',
       type: IsarType.string,
     )
@@ -54,6 +59,13 @@ int _itemlistEstimateSize(
 ) {
   var bytesCount = offsets.last;
   bytesCount += 3 + object.groupId.length * 3;
+  {
+    final value = object.imagePath;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  bytesCount += 3 + object.itemsJson.length * 3;
   bytesCount += 3 + object.name.length * 3;
   return bytesCount;
 }
@@ -65,8 +77,9 @@ void _itemlistSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeString(offsets[0], object.groupId);
-  writer.writeBool(offsets[1], object.isDone);
-  writer.writeString(offsets[2], object.name);
+  writer.writeString(offsets[1], object.imagePath);
+  writer.writeString(offsets[2], object.itemsJson);
+  writer.writeString(offsets[3], object.name);
 }
 
 Itemlist _itemlistDeserialize(
@@ -77,10 +90,11 @@ Itemlist _itemlistDeserialize(
 ) {
   final object = Itemlist(
     groupId: reader.readString(offsets[0]),
-    isDone: reader.readBool(offsets[1]),
-    name: reader.readString(offsets[2]),
+    imagePath: reader.readStringOrNull(offsets[1]),
+    name: reader.readString(offsets[3]),
   );
   object.id = id;
+  object.itemsJson = reader.readString(offsets[2]);
   return object;
 }
 
@@ -94,8 +108,10 @@ P _itemlistDeserializeProp<P>(
     case 0:
       return (reader.readString(offset)) as P;
     case 1:
-      return (reader.readBool(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 2:
+      return (reader.readString(offset)) as P;
+    case 3:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -373,12 +389,280 @@ extension ItemlistQueryFilter
     });
   }
 
-  QueryBuilder<Itemlist, Itemlist, QAfterFilterCondition> isDoneEqualTo(
-      bool value) {
+  QueryBuilder<Itemlist, Itemlist, QAfterFilterCondition> imagePathIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'imagePath',
+      ));
+    });
+  }
+
+  QueryBuilder<Itemlist, Itemlist, QAfterFilterCondition> imagePathIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'imagePath',
+      ));
+    });
+  }
+
+  QueryBuilder<Itemlist, Itemlist, QAfterFilterCondition> imagePathEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'isDone',
+        property: r'imagePath',
         value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Itemlist, Itemlist, QAfterFilterCondition> imagePathGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'imagePath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Itemlist, Itemlist, QAfterFilterCondition> imagePathLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'imagePath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Itemlist, Itemlist, QAfterFilterCondition> imagePathBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'imagePath',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Itemlist, Itemlist, QAfterFilterCondition> imagePathStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'imagePath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Itemlist, Itemlist, QAfterFilterCondition> imagePathEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'imagePath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Itemlist, Itemlist, QAfterFilterCondition> imagePathContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'imagePath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Itemlist, Itemlist, QAfterFilterCondition> imagePathMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'imagePath',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Itemlist, Itemlist, QAfterFilterCondition> imagePathIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'imagePath',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Itemlist, Itemlist, QAfterFilterCondition>
+      imagePathIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'imagePath',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Itemlist, Itemlist, QAfterFilterCondition> itemsJsonEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'itemsJson',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Itemlist, Itemlist, QAfterFilterCondition> itemsJsonGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'itemsJson',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Itemlist, Itemlist, QAfterFilterCondition> itemsJsonLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'itemsJson',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Itemlist, Itemlist, QAfterFilterCondition> itemsJsonBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'itemsJson',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Itemlist, Itemlist, QAfterFilterCondition> itemsJsonStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'itemsJson',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Itemlist, Itemlist, QAfterFilterCondition> itemsJsonEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'itemsJson',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Itemlist, Itemlist, QAfterFilterCondition> itemsJsonContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'itemsJson',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Itemlist, Itemlist, QAfterFilterCondition> itemsJsonMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'itemsJson',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Itemlist, Itemlist, QAfterFilterCondition> itemsJsonIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'itemsJson',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Itemlist, Itemlist, QAfterFilterCondition>
+      itemsJsonIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'itemsJson',
+        value: '',
       ));
     });
   }
@@ -533,15 +817,27 @@ extension ItemlistQuerySortBy on QueryBuilder<Itemlist, Itemlist, QSortBy> {
     });
   }
 
-  QueryBuilder<Itemlist, Itemlist, QAfterSortBy> sortByIsDone() {
+  QueryBuilder<Itemlist, Itemlist, QAfterSortBy> sortByImagePath() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'isDone', Sort.asc);
+      return query.addSortBy(r'imagePath', Sort.asc);
     });
   }
 
-  QueryBuilder<Itemlist, Itemlist, QAfterSortBy> sortByIsDoneDesc() {
+  QueryBuilder<Itemlist, Itemlist, QAfterSortBy> sortByImagePathDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'isDone', Sort.desc);
+      return query.addSortBy(r'imagePath', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Itemlist, Itemlist, QAfterSortBy> sortByItemsJson() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'itemsJson', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Itemlist, Itemlist, QAfterSortBy> sortByItemsJsonDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'itemsJson', Sort.desc);
     });
   }
 
@@ -584,15 +880,27 @@ extension ItemlistQuerySortThenBy
     });
   }
 
-  QueryBuilder<Itemlist, Itemlist, QAfterSortBy> thenByIsDone() {
+  QueryBuilder<Itemlist, Itemlist, QAfterSortBy> thenByImagePath() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'isDone', Sort.asc);
+      return query.addSortBy(r'imagePath', Sort.asc);
     });
   }
 
-  QueryBuilder<Itemlist, Itemlist, QAfterSortBy> thenByIsDoneDesc() {
+  QueryBuilder<Itemlist, Itemlist, QAfterSortBy> thenByImagePathDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'isDone', Sort.desc);
+      return query.addSortBy(r'imagePath', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Itemlist, Itemlist, QAfterSortBy> thenByItemsJson() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'itemsJson', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Itemlist, Itemlist, QAfterSortBy> thenByItemsJsonDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'itemsJson', Sort.desc);
     });
   }
 
@@ -618,9 +926,17 @@ extension ItemlistQueryWhereDistinct
     });
   }
 
-  QueryBuilder<Itemlist, Itemlist, QDistinct> distinctByIsDone() {
+  QueryBuilder<Itemlist, Itemlist, QDistinct> distinctByImagePath(
+      {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'isDone');
+      return query.addDistinctBy(r'imagePath', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Itemlist, Itemlist, QDistinct> distinctByItemsJson(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'itemsJson', caseSensitive: caseSensitive);
     });
   }
 
@@ -646,9 +962,15 @@ extension ItemlistQueryProperty
     });
   }
 
-  QueryBuilder<Itemlist, bool, QQueryOperations> isDoneProperty() {
+  QueryBuilder<Itemlist, String?, QQueryOperations> imagePathProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'isDone');
+      return query.addPropertyName(r'imagePath');
+    });
+  }
+
+  QueryBuilder<Itemlist, String, QQueryOperations> itemsJsonProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'itemsJson');
     });
   }
 

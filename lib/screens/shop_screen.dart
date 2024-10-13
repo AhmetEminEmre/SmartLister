@@ -1,404 +1,307 @@
-// import 'package:flutter/material.dart';
-// import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+import 'package:isar/isar.dart';
+import '../objects/productgroup.dart'; // Your Isar model for ProductGroup
 
-// class EditStoreScreen extends StatefulWidget {
-//   final String storeId;
-//   final String storeName;
-//   final bool isNewStore;
+class EditStoreScreen extends StatefulWidget {
+  final String storeId;
+  final String storeName;
+  final bool isNewStore; // This flag determines if the store is new
+  final Isar isar;
 
-//   EditStoreScreen({
-//     required this.storeId,
-//     required this.storeName,
-//     this.isNewStore = false,
-//   });
+  EditStoreScreen({
+    required this.storeId,
+    required this.storeName,
+    required this.isNewStore, // Accept isNewStore as a parameter
+    required this.isar,
+  });
 
-//   @override
-//   _EditStoreScreenState createState() => _EditStoreScreenState();
-// }
+  @override
+  _EditStoreScreenState createState() => _EditStoreScreenState();
+}
 
-// class _EditStoreScreenState extends State<EditStoreScreen> {
-//   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-//   final List<Map<String, String>> defaultProductGroups = [
-//     {'name': 'Obst & Gemüse'},
-//     {'name': 'Säfte'},
-//     {'name': 'Fleisch'},
-//     {'name': 'Fischprodukte'}
-//   ];
+class _EditStoreScreenState extends State<EditStoreScreen> {
+  List<Productgroup> _productGroups = [];
+  bool _isLoading = true;
+  bool _isEditMode = false;
 
-//   List<DocumentSnapshot> _productGroups = [];
-//   bool _isLoading = true;
-//   bool _isEditMode = false;
+  @override
+  void initState() {
+    super.initState();
 
-//   @override
-//   void initState() {
-//     super.initState();
-//     if (widget.isNewStore) {
-//       WidgetsBinding.instance.addPostFrameCallback((_) {
-//         _promptAddDefaultProductGroups();
-//       });
-//     }
-//     _loadProductGroups();
-//   }
+    // Fetch the product groups when the screen is initialized
+    _fetchProductGroups();
 
-//   void _loadProductGroups() async {
-//     setState(() {
-//       _isLoading = true;
-//     });
-//     try {
-//       var querySnapshot = await _firestore
-//           .collection('product_groups')
-//           .where('storeId', isEqualTo: widget.storeId)
-//           .orderBy('order', descending: false)
-//           .get();
-//       setState(() {
-//         _productGroups = querySnapshot.docs;
-//         _isLoading = false;
-//       });
-//     } catch (e) {
-//       print("Fehler beim Laden der Produktgruppen: $e");
-//       setState(() {
-//         _isLoading = false;
-//       });
-//     }
-//   }
+    // Check if this is a new store, then show the prompt after the UI is built
+    if (widget.isNewStore) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _promptAddDefaultProductGroups();
+      });
+    }
+  }
 
-//   void _toggleEditMode() {
-//     setState(() {
-//       _isEditMode = !_isEditMode;
-//     });
-//   }
+  // Fetch product groups from the Isar database
+  Future<void> _fetchProductGroups() async {
+    final productGroups = await widget.isar.productgroups
+        .filter()
+        .storeIdEqualTo(widget.storeId)
+        .findAll();
 
-//   void _onReorder(int oldIndex, int newIndex) {
-//     if (newIndex > oldIndex) {
-//       newIndex -= 1;
-//     }
-//     setState(() {
-//       final item = _productGroups.removeAt(oldIndex);
-//       _productGroups.insert(newIndex, item);
-//     });
-//     _updateProductGroupOrder();
-//   }
+    setState(() {
+      _productGroups = productGroups;
+      _isLoading = false;
+    });
+  }
 
-//   void _updateProductGroupOrder() {
-//     for (int i = 0; i < _productGroups.length; i++) {
-//       _productGroups[i].reference.update({'order': i});
-//     }
-//   }
+  // Add default product groups
+  Future<void> _addDefaultProductGroups() async {
+    final defaultGroups = [
+      'Obst & Gemüse',
+      'Säfte',
+      'Fleisch',
+      'Fischprodukte',
+    ];
 
-//   void _deleteProductGroup(String docId) async {
-//     var shoppingLists = await _firestore.collection('shopping_lists').get();
-//     var count = 0;
+    try {
+      await widget.isar.writeTxn(() async {
+        for (var group in defaultGroups) {
+          final productGroup = Productgroup(
+            name: group,
+            storeId: widget.storeId,
+            order: defaultGroups.indexOf(group),
+            itemCount: 0,
+          );
+          await widget.isar.productgroups.put(productGroup);
+        }
+      });
 
-//     for (var doc in shoppingLists.docs) {
-//       var items = List.from(doc.data()['items']);
-//       if (items.any((item) => item['groupId'] == docId)) {
-//         count++;
-//       }
-//     }
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Standard Warengruppen hinzugefügt.'),
+        backgroundColor: Colors.green,
+      ));
 
-//     print("count, listen die diese gruppe usen: $count");
+      // Refresh the product groups
+      _fetchProductGroups();
+    } catch (e) {
+      print("Error adding product groups: $e");
+    }
+  }
 
-//     if (count > 0) {
-//       _showDeleteWarning(count, docId);
-//     } else {
-//       _deleteGroupAndItems(docId);
-//       _loadProductGroups();
-//     }
-//   }
+  // Prompt to ask if the user wants to add default product groups
+  void _promptAddDefaultProductGroups() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Color(0xFF334B46),
+          title: Text('Standard Warengruppen hinzufügen?',
+              style: TextStyle(color: Colors.white)),
+          content: Text(
+              'Möchten Sie die Standard Warengruppen zur neuen Filiale hinzufügen?',
+              style: TextStyle(color: Colors.white)),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Ja', style: TextStyle(color: Colors.white)),
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+                _addDefaultProductGroups(); // Only add groups if user agrees
+              },
+            ),
+            TextButton(
+              child: Text('Nein', style: TextStyle(color: Colors.white)),
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog without action
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
 
-//   void _showDeleteWarning(int count, String docId) {
-//     showDialog(
-//       context: context,
-//       builder: (BuildContext context) {
-//         return AlertDialog(
-//           backgroundColor: Color(0xFF334B46),
-//           title: Text('Warengruppe löschen',
-//               style: TextStyle(color: Colors.white)),
-//           content: Text(
-//               'Diese Gruppe wird $count mal verwendet. Wollen Sie sie trotzdem löschen?',
-//               style: TextStyle(color: Colors.white)),
-//           actions: <Widget>[
-//             TextButton(
-//               child: Text('Ja', style: TextStyle(color: Colors.white)),
-//               onPressed: () {
-//                 Navigator.of(context).pop();
-//                 _deleteGroupAndItems(docId);
-//               },
-//             ),
-//             TextButton(
-//               child: Text('Nein', style: TextStyle(color: Colors.white)),
-//               onPressed: () => Navigator.of(context).pop(),
-//             ),
-//           ],
-//         );
-//       },
-//     );
-//   }
+  // Toggle edit mode for reorderable list
+  void _toggleEditMode() {
+    setState(() {
+      _isEditMode = !_isEditMode;
+    });
+  }
 
-//   Future<void> _deleteGroupAndItems(String docId) async {
-//     await _firestore.collection('product_groups').doc(docId).delete();
+  // Handle reorder logic
+  void _onReorder(int oldIndex, int newIndex) {
+    if (newIndex > oldIndex) newIndex -= 1;
+    setState(() {
+      final item = _productGroups.removeAt(oldIndex);
+      _productGroups.insert(newIndex, item);
+    });
 
-//     var listsToUpdate = await _firestore.collection('shopping_lists').get();
-//     List<Future<void>> updateTasks = [];
+    _updateProductGroupOrder();
+  }
 
-//     for (var doc in listsToUpdate.docs) {
-//       var items = List<Map<String, dynamic>>.from(doc.data()['items'] ?? []);
-//       int originalLength = items.length;
-//       items.removeWhere((item) => item['groupId'] == docId);
-//       int newLength = items.length;
+  // Update the order of product groups in the database
+  void _updateProductGroupOrder() async {
+    await widget.isar.writeTxn(() async {
+      for (int i = 0; i < _productGroups.length; i++) {
+        _productGroups[i].order = i;
+        await widget.isar.productgroups.put(_productGroups[i]);
+      }
+    });
 
-//       if (originalLength != newLength) {
-//         updateTasks
-//             .add(doc.reference.update({'items': items}).catchError((error) {
-//           print("error after updating: $error");
-//         }));
-//       }
-//     }
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('Produktgruppenreihenfolge aktualisiert.'),
+      backgroundColor: Colors.green,
+    ));
+  }
 
-//     try {
-//       await Future.wait(updateTasks);
-//     } catch (e) {
-//       print("error bei update: $e");
-//     }
+  // Show add product group dialog
+  void _showAddProductGroupDialog() {
+    TextEditingController groupNameController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Color(0xFF334B46),
+          title: Text('Warengruppe hinzufügen',
+              style: TextStyle(color: Colors.white)),
+          content: TextField(
+            controller: groupNameController,
+            decoration: InputDecoration(
+              hintText: 'Warengruppe Name',
+              hintStyle: TextStyle(color: Colors.white54),
+              filled: true,
+              fillColor: Color(0xFF4A6963),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              contentPadding:
+                  EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+            ),
+            style: TextStyle(color: Colors.white),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                if (groupNameController.text.isNotEmpty) {
+                  _addProductGroupIfNotExists(groupNameController.text);
+                  Navigator.of(context).pop();
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text('Der Name der Warengruppe darf nicht leer sein.'),
+                    backgroundColor: Colors.red,
+                  ));
+                }
+              },
+              child: Text('Hinzufügen', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
-//     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-//       content: Text('Warengruppe gelöscht.'),
-//       backgroundColor: Colors.green,
-//     ));
+  // Add new product group if it doesn't already exist
+  Future<void> _addProductGroupIfNotExists(String name) async {
+    final existingGroup = await widget.isar.productgroups
+        .filter()
+        .nameEqualTo(name)
+        .storeIdEqualTo(widget.storeId)
+        .findFirst();
 
-//     _loadProductGroups();
-//     _reorderProductGroupsAfterDeletion();
-//   }
+    if (existingGroup == null) {
+      await widget.isar.writeTxn(() async {
+        final newOrder = _productGroups.length;
+        final productGroup = Productgroup(
+          name: name,
+          storeId: widget.storeId,
+          order: newOrder,
+          itemCount: 0,
+        );
+        await widget.isar.productgroups.put(productGroup);
+      });
 
-//   void _reorderProductGroupsAfterDeletion() async {
-//     int newOrder = 0;
-//     List<Future<void>> updateTasks = [];
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Warengruppe hinzugefügt.'),
+        backgroundColor: Colors.green,
+      ));
 
-//     for (var doc in _productGroups) {
-//       updateTasks
-//           .add(doc.reference.update({'order': newOrder++}).catchError((error) {
-//         print("error after adding: $error");
-//       }));
-//     }
+      // Refresh the product groups
+      _fetchProductGroups();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Warengruppe existiert bereits.'),
+        backgroundColor: Colors.red,
+      ));
+    }
+  }
 
-//     try {
-//       await Future.wait(updateTasks);
-//     } catch (e) {
-//       print("reorder error: $e");
-//     }
+  // Delete a product group
+  void _deleteProductGroup(Productgroup group) async {
+    await widget.isar.writeTxn(() async {
+      await widget.isar.productgroups.delete(group.id);
+    });
 
-//     _loadProductGroups();
-//   }
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('Warengruppe gelöscht.'),
+      backgroundColor: Colors.green,
+    ));
 
-//   Widget _buildReorderableTile(DocumentSnapshot doc) {
-//     return Container(
-//       key: ValueKey(doc.id),
-//       decoration: BoxDecoration(
-//         color: Color(0xFF334B46),
-//         border: Border(
-//           bottom: BorderSide(color: Colors.white24, width: 0.5),
-//         ),
-//       ),
-//       child: ListTile(
-//         title: Text(doc['name'], style: TextStyle(color: Colors.white)),
-//         trailing: _isEditMode
-//             ? IconButton(
-//                 icon: Icon(Icons.delete, color: Colors.red),
-//                 onPressed: () => _deleteProductGroup(doc.id),
-//               )
-//             : ReorderableDragStartListener(
-//                 index: _productGroups.indexOf(doc),
-//                 child: Icon(Icons.reorder, color: Color(0xFF96b17c)),
-//               ),
-//       ),
-//     );
-//   }
+    // Refresh the product groups
+    _fetchProductGroups();
+  }
 
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: Text(widget.storeName, style: TextStyle(color: Colors.white)),
-//         backgroundColor: Color(0xFF587A6F),
-//         iconTheme: IconThemeData(color: Colors.white),
-//         actions: [
-//           IconButton(
-//             icon: Icon(Icons.auto_awesome_motion, color: Colors.white),
-//             onPressed: _promptAddDefaultProductGroups,
-//           ),
-//           IconButton(
-//             icon: Icon(_isEditMode ? Icons.check : Icons.edit,
-//                 color: Colors.white),
-//             onPressed: _toggleEditMode,
-//           ),
-//         ],
-//         flexibleSpace: Container(
-//           decoration: BoxDecoration(
-//             gradient: LinearGradient(
-//               colors: [Color(0xFFb0c69f), Color(0xFF96b17c)],
-//               begin: Alignment.topLeft,
-//               end: Alignment.bottomRight,
-//             ),
-//           ),
-//         ),
-//       ),
-//       backgroundColor: Color(0xFF334B46),
-//       body: _isLoading
-//           ? Center(child: CircularProgressIndicator())
-//           : _productGroups.isEmpty
-//               ? Center(
-//                   child: Text("Keine Produktgruppen verfügbar.",
-//                       style: TextStyle(color: Colors.white)))
-//               : ReorderableListView(
-//                   onReorder: _onReorder,
-//                   children: _productGroups
-//                       .map((doc) => _buildReorderableTile(doc))
-//                       .toList(),
-//                 ),
-//       floatingActionButton: FloatingActionButton(
-//         backgroundColor: Color(0xFF96b17c),
-//         onPressed: _showAddProductGroupDialog,
-//         child: Icon(Icons.add, color: Colors.white),
-//         tooltip: 'Warengruppe hinzufügen',
-//       ),
-//     );
-//   }
-
-//   void _showAddProductGroupDialog() {
-//     TextEditingController groupNameController = TextEditingController();
-//     showDialog(
-//       context: context,
-//       builder: (BuildContext context) {
-//         return AlertDialog(
-//           backgroundColor: Color(0xFF334B46),
-//           title: Text('Warengruppe hinzufügen',
-//               style: TextStyle(color: Colors.white)),
-//           content: TextField(
-//             controller: groupNameController,
-//             decoration: InputDecoration(
-//               hintText: 'Warengruppe Name',
-//               hintStyle: TextStyle(color: Colors.white54),
-//               filled: true,
-//               fillColor: Color(0xFF4A6963),
-//               border: OutlineInputBorder(
-//                 borderRadius: BorderRadius.circular(16),
-//               ),
-//               contentPadding:
-//                   EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-//             ),
-//             style: TextStyle(color: Colors.white),
-//           ),
-//           actions: <Widget>[
-//             TextButton(
-//               onPressed: () {
-//                 if (groupNameController.text.isNotEmpty) {
-//                   _addProductGroupIfNotExists(groupNameController.text);
-//                   Navigator.of(context).pop();
-//                 } else {
-//                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-//                     content:
-//                         Text('Der Name der Warengruppe darf nicht leer sein.'),
-//                     backgroundColor: Colors.red,
-//                   ));
-//                 }
-//               },
-//               child: Text('Hinzufügen', style: TextStyle(color: Colors.white)),
-//             ),
-//           ],
-//         );
-//       },
-//     );
-//   }
-
-//   Future<void> _addProductGroupIfNotExists(String name) async {
-//     try {
-//       var existingGroups = await _firestore
-//           .collection('product_groups')
-//           .where('storeId', isEqualTo: widget.storeId)
-//           .where('name', isEqualTo: name)
-//           .get();
-//       if (existingGroups.docs.isEmpty) {
-//         var newOrder = _productGroups.length;
-//         await _firestore.collection('product_groups').add({
-//           'name': name,
-//           'storeId': widget.storeId,
-//           'order': newOrder,
-//         });
-//         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-//           content: Text('Warengruppe hinzugefügt.'),
-//           backgroundColor: Colors.green,
-//         ));
-//         _loadProductGroups();
-//       } else {
-//         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-//           content: Text('Warengruppe existiert bereits.'),
-//           backgroundColor: Colors.red,
-//         ));
-//       }
-//     } catch (e) {
-//       print("Fehler beim Hinzufügen der Produktgruppe: $e");
-//     }
-//   }
-
-//   void _promptAddDefaultProductGroups() {
-//     showDialog(
-//       context: context,
-//       builder: (BuildContext context) {
-//         return AlertDialog(
-//           backgroundColor: Color(0xFF334B46),
-//           title: Text('Standard Warengruppen hinzufügen?',
-//               style: TextStyle(color: Colors.white)),
-//           content: Text(
-//               'Möchten Sie die Standard Warengruppen zur neuen Filiale hinzufügen?',
-//               style: TextStyle(color: Colors.white)),
-//           actions: <Widget>[
-//             TextButton(
-//               child: Text('Nein', style: TextStyle(color: Colors.white)),
-//               onPressed: () => Navigator.of(context).pop(),
-//             ),
-//             TextButton(
-//               child: Text('Ja', style: TextStyle(color: Colors.white)),
-//               onPressed: () {
-//                 Navigator.of(context).pop();
-//                 _addDefaultProductGroups();
-//               },
-//             ),
-//           ],
-//         );
-//       },
-//     );
-//   }
-
-//   void _addDefaultProductGroups() async {
-//     try {
-//       var existingGroups = await _firestore
-//           .collection('product_groups')
-//           .where('storeId', isEqualTo: widget.storeId)
-//           .get();
-//       var existingNames = existingGroups.docs.map((doc) => doc['name']).toSet();
-
-//       List<Future<void>> tasks = [];
-
-//       for (var group in defaultProductGroups) {
-//         if (!existingNames.contains(group['name'])) {
-//           var newOrder = existingGroups.size + tasks.length;
-//           tasks.add(_firestore.collection('product_groups').add({
-//             'name': group['name'],
-//             'storeId': widget.storeId,
-//             'order': newOrder,
-//           }));
-//         }
-//       }
-
-//       await Future.wait(tasks);
-//       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-//         content: Text('Standard Warengruppen hinzugefügt.'),
-//         backgroundColor: Colors.green,
-//       ));
-
-//       _loadProductGroups();
-//     } catch (e) {
-//       print("Fehler beim Hinzufügen der Standard Warengruppen: $e");
-//     }
-//   }
-// }
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.storeName, style: TextStyle(color: Colors.white)),
+        backgroundColor: Color(0xFF334B46),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.auto_awesome_motion, color: Colors.white),
+            onPressed: _promptAddDefaultProductGroups,
+          ),
+          IconButton(
+            icon: Icon(_isEditMode ? Icons.check : Icons.edit,
+                color: Colors.white),
+            onPressed: _toggleEditMode,
+          ),
+        ],
+      ),
+      body: _isLoading
+          ? Center(child: CircularProgressIndicator())
+          : _productGroups.isEmpty
+              ? Center(child: Text("Keine Produktgruppen verfügbar.",
+                  style: TextStyle(color: Colors.white)))
+              : ReorderableListView(
+                  onReorder: _onReorder,
+                  children: _productGroups.map((group) {
+                    return Container(
+                      key: ValueKey(group.id),
+                      decoration: BoxDecoration(
+                        color: Color(0xFF334B46),
+                        border: Border(
+                          bottom: BorderSide(color: Colors.white24, width: 0.5),
+                        ),
+                      ),
+                      child: ListTile(
+                        title: Text(group.name, style: TextStyle(color: Colors.white)),
+                        trailing: _isEditMode
+                            ? IconButton(
+                                icon: Icon(Icons.delete, color: Colors.red),
+                                onPressed: () => _deleteProductGroup(group),
+                              )
+                            : ReorderableDragStartListener(
+                                index: _productGroups.indexOf(group),
+                                child: Icon(Icons.reorder, color: Color(0xFF96b17c)),
+                              ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Color(0xFF96b17c),
+        onPressed: _showAddProductGroupDialog,
+        child: Icon(Icons.add, color: Colors.white),
+        tooltip: 'Warengruppe hinzufügen',
+      ),
+    );
+  }
+}

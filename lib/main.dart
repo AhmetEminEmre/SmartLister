@@ -1,19 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:smart/objects/itemlist.dart';
-import 'package:smart/objects/shop.dart';
+import 'package:isar/isar.dart';
+import 'package:smart/objects/productgroup.dart';
+import 'package:smart/objects/template.dart';
+import '../objects/itemlist.dart'; // Your Isar model
+import '../objects/shop.dart'; // Your Isar model
 import 'package:smart/screens/homepage_screen.dart'; 
+
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Get the directory for Isar database storage
   final dir = await getApplicationDocumentsDirectory();
-  final isar = await Isar.open(
-    [ItemlistSchema, EinkaufsladenSchema],
-    directory: dir.path,
-  );
 
+  // Initialize Isar with the directory
+  final isar = await Isar.open([ItemlistSchema, EinkaufsladenSchema, TemplateSchema, ProductgroupSchema], directory: dir.path);
   runApp(MyApp(isar: isar));
 }
 
@@ -25,8 +28,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
-      home: HomePage(isar: isar),
+      home: HomePage(isar: isar), // Pass Isar instance to HomePage
     );
   }
 }

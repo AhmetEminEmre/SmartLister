@@ -26,11 +26,6 @@ const UserinfoSchema = CollectionSchema(
       id: 1,
       name: r'nickname',
       type: IsarType.string,
-    ),
-    r'userId': PropertySchema(
-      id: 2,
-      name: r'userId',
-      type: IsarType.string,
     )
   },
   estimateSize: _userinfoEstimateSize,
@@ -55,7 +50,6 @@ int _userinfoEstimateSize(
   var bytesCount = offsets.last;
   bytesCount += 3 + object.email.length * 3;
   bytesCount += 3 + object.nickname.length * 3;
-  bytesCount += 3 + object.userId.length * 3;
   return bytesCount;
 }
 
@@ -67,7 +61,6 @@ void _userinfoSerialize(
 ) {
   writer.writeString(offsets[0], object.email);
   writer.writeString(offsets[1], object.nickname);
-  writer.writeString(offsets[2], object.userId);
 }
 
 Userinfo _userinfoDeserialize(
@@ -79,7 +72,6 @@ Userinfo _userinfoDeserialize(
   final object = Userinfo(
     email: reader.readString(offsets[0]),
     nickname: reader.readString(offsets[1]),
-    userId: reader.readString(offsets[2]),
   );
   object.id = id;
   return object;
@@ -95,8 +87,6 @@ P _userinfoDeserializeProp<P>(
     case 0:
       return (reader.readString(offset)) as P;
     case 1:
-      return (reader.readString(offset)) as P;
-    case 2:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -503,136 +493,6 @@ extension UserinfoQueryFilter
       ));
     });
   }
-
-  QueryBuilder<Userinfo, Userinfo, QAfterFilterCondition> userIdEqualTo(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'userId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<Userinfo, Userinfo, QAfterFilterCondition> userIdGreaterThan(
-    String value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'userId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<Userinfo, Userinfo, QAfterFilterCondition> userIdLessThan(
-    String value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'userId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<Userinfo, Userinfo, QAfterFilterCondition> userIdBetween(
-    String lower,
-    String upper, {
-    bool includeLower = true,
-    bool includeUpper = true,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'userId',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<Userinfo, Userinfo, QAfterFilterCondition> userIdStartsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'userId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<Userinfo, Userinfo, QAfterFilterCondition> userIdEndsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'userId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<Userinfo, Userinfo, QAfterFilterCondition> userIdContains(
-      String value,
-      {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'userId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<Userinfo, Userinfo, QAfterFilterCondition> userIdMatches(
-      String pattern,
-      {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'userId',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<Userinfo, Userinfo, QAfterFilterCondition> userIdIsEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'userId',
-        value: '',
-      ));
-    });
-  }
-
-  QueryBuilder<Userinfo, Userinfo, QAfterFilterCondition> userIdIsNotEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'userId',
-        value: '',
-      ));
-    });
-  }
 }
 
 extension UserinfoQueryObject
@@ -663,18 +523,6 @@ extension UserinfoQuerySortBy on QueryBuilder<Userinfo, Userinfo, QSortBy> {
   QueryBuilder<Userinfo, Userinfo, QAfterSortBy> sortByNicknameDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'nickname', Sort.desc);
-    });
-  }
-
-  QueryBuilder<Userinfo, Userinfo, QAfterSortBy> sortByUserId() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'userId', Sort.asc);
-    });
-  }
-
-  QueryBuilder<Userinfo, Userinfo, QAfterSortBy> sortByUserIdDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'userId', Sort.desc);
     });
   }
 }
@@ -716,18 +564,6 @@ extension UserinfoQuerySortThenBy
       return query.addSortBy(r'nickname', Sort.desc);
     });
   }
-
-  QueryBuilder<Userinfo, Userinfo, QAfterSortBy> thenByUserId() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'userId', Sort.asc);
-    });
-  }
-
-  QueryBuilder<Userinfo, Userinfo, QAfterSortBy> thenByUserIdDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'userId', Sort.desc);
-    });
-  }
 }
 
 extension UserinfoQueryWhereDistinct
@@ -743,13 +579,6 @@ extension UserinfoQueryWhereDistinct
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'nickname', caseSensitive: caseSensitive);
-    });
-  }
-
-  QueryBuilder<Userinfo, Userinfo, QDistinct> distinctByUserId(
-      {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'userId', caseSensitive: caseSensitive);
     });
   }
 }
@@ -771,12 +600,6 @@ extension UserinfoQueryProperty
   QueryBuilder<Userinfo, String, QQueryOperations> nicknameProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'nickname');
-    });
-  }
-
-  QueryBuilder<Userinfo, String, QQueryOperations> userIdProperty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'userId');
     });
   }
 }

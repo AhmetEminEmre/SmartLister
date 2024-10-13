@@ -1,520 +1,333 @@
-// import 'package:flutter/material.dart';
-// import 'package:cloud_firestore/cloud_firestore.dart';
-// import 'package:printing/printing.dart';
-// import 'package:pdf/pdf.dart';
-// import 'package:pdf/widgets.dart' as pdf_wd;
-// import 'package:share_plus/share_plus.dart';
-// import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
-// import '../objects/template.dart';
+import 'package:flutter/material.dart';
+import 'package:isar/isar.dart';
+import 'package:smart/objects/productgroup.dart';
+import '../objects/itemlist.dart'; // Your Isar model for Itemlist
+import 'package:printing/printing.dart'; // For PDF creation and printing
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pdf_wd;
+import 'package:share_plus/share_plus.dart'; // For sharing functionality
+import 'package:path_provider/path_provider.dart';
 
-// class ItemListScreen extends StatefulWidget {
-//   final String listName;
-//   final String shoppingListId;
-//   final List<TemplateList>? items;
-//   final String? initialStoreId;
+class ItemListScreen extends StatefulWidget {
+  final String listName;
+  final String shoppingListId;
+  final List<Itemlist> items;
+  final String? initialStoreId;
+  final Isar isar; // Adding the isar parameter
 
-//   ItemListScreen(
-//       {required this.listName,
-//       required this.shoppingListId,
-//       this.items,
-//       this.initialStoreId});
+  ItemListScreen({
+    required this.listName,
+    required this.shoppingListId,
+    required this.items,
+    this.initialStoreId,
+    required this.isar, // Initialize the Isar instance
+  });
 
-//   @override
-//   _ItemListScreenState createState() => _ItemListScreenState();
-// }
+  @override
+  _ItemListScreenState createState() => _ItemListScreenState();
+}
 
-// class _ItemListScreenState extends State<ItemListScreen> {
-//   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-//   Map<String, List<Map<String, dynamic>>> itemsByGroup = {};
-//   bool _isDeleteMode = false;
-//   Set<String> selectedItems = Set();
-//   Set<String> selectedGroups = Set();
-//   List<TemplateList> items = [];
-//   String? currentStoreId;
+class _ItemListScreenState extends State<ItemListScreen> {
+  Map<String, List<Map<String, dynamic>>> itemsByGroup = {};
+  bool _isDeleteMode = false;
+  Set<String> selectedItems = {};
+  Set<String> selectedGroups = {};
+  late List<Itemlist> items;
+  String? currentStoreId;
 
-//   @override
-//   void initState() {
-//     super.initState();
-//     loadItems();
-//     if (widget.items != null && widget.items!.isNotEmpty) {
-//       loadItems();
-//       setTemplateItems(widget.items!);
-//     } else {
-//       loadItems();
-//     }
-//   }
+  @override
+  void initState() {
+    super.initState();
+    items = widget.items;
+    _groupItemsByCategory(items);
+  }
 
-//   void setTemplateItems(List<TemplateList> items) {
-//     var groupedItems = Map<String, List<Map<String, dynamic>>>();
-//     for (var item in items) {
-//       print("Setting group name: ${item.groupName} for item: ${item.name}");
-//       groupedItems.putIfAbsent(item.groupName, () => []).add({
-//         'name': item.name,
-//         'isDone': item.isDone,
-//         'groupId': item.groupId,
-//       });
-//     }
-//     setState(() {
-//       itemsByGroup = groupedItems;
-//     });
-//   }
+  void _groupItemsByCategory(List<Itemlist> items) async {
+    Map<String, List<Map<String, dynamic>>> groupedItems = {};
 
-// void loadItems() async {
-//     try {
-//       var listDoc = await _firestore.collection('shopping_lists').doc(widget.shoppingListId).get();
-//       currentStoreId = listDoc.data()?['ladenId'] as String?;
+    // Fetch product groups for the store
+    final productGroups = await widget.isar.productgroups
+        .filter()
+        .storeIdEqualTo(widget.initialStoreId!)
+        .findAll();
 
-//       if (currentStoreId == null) {
-//         print("No store ID found for list: ${widget.shoppingListId}");
-//         return;
-//       }
+    // Create a map of groupId -> groupName
+    Map<String, String> groupIdToName = {
+      for (var group in productGroups) group.id.toString(): group.name
+    };
 
-//       var items = List<Map<String, dynamic>>.from(listDoc.data()?['items'] ?? []);
-//       var groupsSnapshot = await _firestore
-//           .collection('product_groups')
-//           .where('storeId', isEqualTo: currentStoreId)
-//           .orderBy('order')
-//           .get();
+    // Print fetched product groups for debugging
+    print("Fetched product groups:");
+    for (var group in productGroups) {
+      print("Group ID: ${group.id}, Group Name: ${group.name}");
+    }
 
-//       Map<String, String> groupNames = {};
-//       Map<String, int> groupOrder = {};
-//       for (var doc in groupsSnapshot.docs) {
-//         groupNames[doc.id] = doc.data()['name'] as String;
-//         groupOrder[doc.id] = doc.data()['order'] as int;
-//       }
+    for (var item in items) {
+      List<Map<String, dynamic>> itemList =
+          item.getItems(); // Get items from the Itemlist
 
-//       List<Map<String, dynamic>> validItems = [];
-//       for (var item in items) {
-//         if (groupNames.containsKey(item['groupId'])) {
-//           validItems.add(item);
-//         }
-//       }
+      // Print the entire itemJson for each Itemlist to see what's inside
+      print(
+          "Itemlist ID: ${item.id}, Group ID: ${item.groupId}, ItemsJson: ${item.itemsJson}");
+      print(
+          "Decoded items: $itemList"); // This will print the decoded items (from JSON)
 
-//       validItems.sort((a, b) {
-//         int orderA = groupOrder[a['groupId']] ?? 1000;
-//         int orderB = groupOrder[b['groupId']] ?? 1000;
-//         return orderA.compareTo(orderB);
-//       });
+      for (var singleItem in itemList) {
+        // Assign 'Unbekannt' if groupId is null or empty
+        String groupName = groupIdToName[item.groupId ?? ""] ?? "Unbekannt";
+        print(
+            "Item Group ID: ${item.groupId}, Resolved Group Name: $groupName");
+        groupedItems.putIfAbsent(groupName, () => []).add(singleItem);
+      }
+    }
 
-//       await _firestore.collection('shopping_lists').doc(widget.shoppingListId).update({'items': validItems});
+    setState(() {
+      itemsByGroup = groupedItems; // Update the state with the grouped items
+    });
+  }
 
-//       Map<String, List<Map<String, dynamic>>> groupedItems = {};
-//       for (var item in validItems) {
-//         String groupName = groupNames[item['groupId']] ?? 'idk';
-//         groupedItems.putIfAbsent(groupName, () => []).add(item);
-//       }
+  // Toggle the isDone status of an item in the JSON list
+  Future<void> toggleItemDone(String groupId, int itemIndex) async {
+    setState(() {
+      // Access the first item in the group (which is a Map, not an Itemlist)
+      var itemDetails = itemsByGroup[groupId]![itemIndex];
 
-//       setState(() {
-//         itemsByGroup = groupedItems;
-//       });
-//     } catch (e) {
-//       print('Error loading items: $e');
-//     }
-//   }
+      // Toggle the 'isDone' status
+      itemDetails['isDone'] =
+          !(itemDetails['isDone'] ?? false); // Toggle isDone
+    });
 
-//   void toggleItemDone(String groupName, int index) {
-//     setState(() {
-//       itemsByGroup[groupName]![index]['isDone'] =
-//           !itemsByGroup[groupName]![index]['isDone'];
-//       _firestore
-//           .collection('shopping_lists')
-//           .doc(widget.shoppingListId)
-//           .update({'items': itemsByGroup.values.expand((x) => x).toList()});
-//     });
-//   }
+    // Update the JSON and save the changes to the Isar database
+    await widget.isar.writeTxn(() async {
+      // Since you're working with Maps, you don't need to use `setItems()`.
+      // Instead, save the updated `Itemlist` object where the changes occurred.
+      var listToUpdate =
+          widget.items.firstWhere((list) => list.groupId == groupId);
+      listToUpdate.setItems(itemsByGroup[groupId]!); // Update itemsJson
+      await widget.isar.itemlists.put(listToUpdate); // Save the updated list
+    });
+  }
 
-//   void toggleDeleteMode() {
-//     setState(() {
-//       _isDeleteMode = !_isDeleteMode;
-//       if (!_isDeleteMode) {
-//         selectedItems.clear();
-//         selectedGroups.clear();
-//       }
-//     });
-//   }
+  // Delete selected items and groups and save changes to Isar
+  Future<void> deleteSelectedItems() async {
+    if (selectedItems.isNotEmpty || selectedGroups.isNotEmpty) {
+      setState(() {
+        selectedItems.forEach((itemId) {
+          items.removeWhere((item) => item.id.toString() == itemId);
+        });
+        selectedGroups.forEach((groupId) {
+          itemsByGroup.remove(groupId);
+        });
+        _groupItemsByCategory(items); // Re-group after deletion
+        selectedItems.clear();
+        selectedGroups.clear();
+      });
 
-//  void deleteSelectedItems() {
-//   if (selectedItems.isNotEmpty || selectedGroups.isNotEmpty) {
-//     showDialog(
-//       context: context,
-//       builder: (BuildContext context) {
-//         return AlertDialog(
-//           backgroundColor: Color(0xFF96b17c),
-//           title: Text('Bestätigen', style: TextStyle(color: Colors.white)),
-//           content: Text(
-//             'Möchten Sie die ausgewählten Artikel und Gruppen wirklich löschen?',
-//             style: TextStyle(color: Colors.white),
-//           ),
-//           actions: <Widget>[
-//             TextButton(
-//               child: Text('Abbrechen', style: TextStyle(color: Colors.white)),
-//               onPressed: () => Navigator.of(context).pop(),
-//             ),
-//             TextButton(
-//               child: Text('Löschen', style: TextStyle(color: Colors.white)),
-//               onPressed: () async {
-//                 await _firestore.runTransaction((transaction) async {
-//                   final listRef = _firestore
-//                       .collection('shopping_lists')
-//                       .doc(widget.shoppingListId);
-//                   var snapshot = await transaction.get(listRef);
-//                   var items = List<Map<String, dynamic>>.from(
-//                       snapshot.data()?['items'] ?? []);
+      // Optionally save changes to Isar here
+      await widget.isar.writeTxn(() async {
+        for (var itemId in selectedItems) {
+          await widget.isar.itemlists.delete(int.parse(itemId));
+        }
+      });
+    }
+  }
 
-//                   items.removeWhere(
-//                       (item) => selectedItems.contains(item['name']));
+  // Add a new item to the list and update Isar
+  void _addItemToList(String itemName, String groupId) async {
+    try {
+      // Find the existing list where you want to add the item
+      final listToAddTo = items
+          .firstWhere((list) => list.id.toString() == widget.shoppingListId);
 
-//                   selectedGroups.forEach((groupId) {
-//                     items.removeWhere((item) => item['groupId'] == groupId);
-//                   });
+      // Extract current items from the list's itemsJson and add the new item
+      var currentItems = listToAddTo.getItems();
+      currentItems.add({
+        'name': itemName,
+        'isDone': false, // Default the new item to 'not done'
+        'groupId': groupId // Assign the correct groupId
+      });
 
-//                   transaction.update(listRef, {'items': items});
-//                 });
-//                 Navigator.of(context).pop();
-//                 toggleDeleteMode();
-//                 loadItems();
-//               },
-//             ),
-//           ],
-//         );
-//       },
-//     );
-//   }
-// }
+      // Update the itemsJson with the new item
+      listToAddTo.setItems(currentItems);
 
+      // Save the updated list in Isar
+      await widget.isar.writeTxn(() async {
+        await widget.isar.itemlists.put(listToAddTo);
+      });
 
-//   void _showAddItemDialog() async {
-//     TextEditingController itemNameController = TextEditingController();
-//     String? selectedGroupId;
+      // Reload the UI after adding the item
+      setState(() {
+        _groupItemsByCategory(items); // Refresh grouping of items
+      });
+    } catch (e) {
+      print('Error adding item: $e');
+    }
+  }
 
-//     var listDoc = await _firestore
-//         .collection('shopping_lists')
-//         .doc(widget.shoppingListId)
-//         .get();
-//     var storeId = listDoc.data()?['ladenId'] as String?;
+  // Show dialog to add a new item
+  void _showAddItemDialog() async {
+    TextEditingController itemNameController = TextEditingController();
+    String? selectedGroupId;
 
-//     if (storeId == null) {
-//       print("No store ID found for list: ${widget.shoppingListId}");
-//       return;
-//     }
-//     var snapshot = await _firestore
-//         .collection('product_groups')
-//         .where('storeId', isEqualTo: storeId)
-//         .orderBy('order')
-//         .get();
+    // Fetch product groups for the store
+    final productGroups = await widget.isar.productgroups
+        .filter()
+        .storeIdEqualTo(widget.initialStoreId!)
+        .findAll();
 
-//     if (snapshot.docs.isEmpty) {
-//       print("No product groups found for store ID: $storeId");
-//       return;
-//     }
-//     List<DropdownMenuItem<String>> groupItems = snapshot.docs.map((doc) {
-//       var name = doc.data()['name'] as String?;
-//       return DropdownMenuItem<String>(
-//         value: doc.id,
-//         child: Text(name ?? 'Unbekannt'),
-//       );
-//     }).toList();
+    List<DropdownMenuItem<String>> groupItems = productGroups.map((group) {
+      return DropdownMenuItem<String>(
+        value: group.id.toString(),
+        child: Text(group.name),
+      );
+    }).toList();
 
-//     showDialog(
-//       context: context,
-//       builder: (BuildContext context) {
-//         return StatefulBuilder(builder: (context, setState) {
-//           return AlertDialog(
-//             backgroundColor: Color(0xFF334B46),
-//             title: Text('Artikel hinzufügen',
-//                 style: TextStyle(color: Colors.white)),
-//             content: Column(
-//               mainAxisSize: MainAxisSize.min,
-//               children: <Widget>[
-//                 TextField(
-//                   controller: itemNameController,
-//                   decoration: InputDecoration(
-//                     labelText: 'Artikelname',
-//                     labelStyle: TextStyle(color: Colors.white),
-//                     filled: true,
-//                     fillColor: Color(0xFF4A6963),
-//                     border: OutlineInputBorder(
-//                       borderRadius: BorderRadius.circular(16),
-//                     ),
-//                     contentPadding:
-//                         EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-//                   ),
-//                   style: TextStyle(color: Colors.white),
-//                 ),
-//                 SizedBox(height: 20),
-//                 Container(
-//                   padding: EdgeInsets.symmetric(horizontal: 16),
-//                   decoration: BoxDecoration(
-//                     color: Color(0xFF4A6963),
-//                     borderRadius: BorderRadius.circular(16),
-//                   ),
-//                   child: DropdownButton<String>(
-//                     value: selectedGroupId,
-//                     dropdownColor: Color(0xFF4A6963),
-//                     onChanged: (newValue) {
-//                       setState(() {
-//                         selectedGroupId = newValue;
-//                       });
-//                     },
-//                     items: groupItems,
-//                     hint: Text('Warengruppe wählen',
-//                         style: TextStyle(color: Colors.white)),
-//                     isExpanded: true,
-//                     underline: SizedBox(),
-//                     iconEnabledColor:
-//                         Colors.white,
-//                     iconSize: 30,
-//                     style: TextStyle(color: Colors.white),
-//                   ),
-//                 ),
-//               ],
-//             ),
-//             actions: <Widget>[
-//               ElevatedButton(
-//                 style: ElevatedButton.styleFrom(
-//                   backgroundColor: Color(0xFF587A6F),
-//                 ),
-//                 child:
-//                     Text('Hinzufügen', style: TextStyle(color: Colors.white)),
-//                 onPressed: () {
-//                   if (itemNameController.text.isNotEmpty &&
-//                       selectedGroupId != null) {
-//                     _addItemToList(itemNameController.text, selectedGroupId!);
-//                     Navigator.of(context).pop();
-//                   }
-//                 },
-//               ),
-//             ],
-//           );
-//         });
-//       },
-//     );
-//   }
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(builder: (context, setState) {
+          return AlertDialog(
+            backgroundColor: Color(0xFF334B46),
+            title: Text('Artikel hinzufügen',
+                style: TextStyle(color: Colors.white)),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                TextField(
+                  controller: itemNameController,
+                  decoration: InputDecoration(
+                    labelText: 'Artikelname',
+                    labelStyle: TextStyle(color: Colors.white),
+                    filled: true,
+                    fillColor: Color(0xFF4A6963),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    contentPadding:
+                        EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                  ),
+                  style: TextStyle(color: Colors.white),
+                ),
+                SizedBox(height: 20),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: Color(0xFF4A6963),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: DropdownButton<String>(
+                    value: selectedGroupId,
+                    dropdownColor: Color(0xFF4A6963),
+                    onChanged: (newValue) {
+                      setState(() {
+                        selectedGroupId = newValue;
+                      });
+                    },
+                    items: groupItems,
+                    hint: Text('Warengruppe wählen',
+                        style: TextStyle(color: Colors.white)),
+                    isExpanded: true,
+                    underline: SizedBox(),
+                    iconEnabledColor: Colors.white,
+                    iconSize: 30,
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+            actions: <Widget>[
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF587A6F),
+                ),
+                child:
+                    Text('Hinzufügen', style: TextStyle(color: Colors.white)),
+                onPressed: () {
+                  if (itemNameController.text.isNotEmpty &&
+                      selectedGroupId != null) {
+                    _addItemToList(itemNameController.text, selectedGroupId!);
+                    Navigator.of(context).pop();
+                  }
+                },
+              ),
+            ],
+          );
+        });
+      },
+    );
+  }
 
-//   void _addItemToList(String itemName, String groupId) async {
-//     await _firestore
-//         .collection('shopping_lists')
-//         .doc(widget.shoppingListId)
-//         .update({
-//       'items': FieldValue.arrayUnion([
-//         {'name': itemName, 'groupId': groupId, 'isDone': false}
-//       ])
-//     });
-//     loadItems();
-//   }
+  Future<void> createPdf() async {
+    final pdf = pdf_wd.Document();
+    pdf.addPage(
+      pdf_wd.Page(
+        pageFormat: PdfPageFormat.a4,
+        build: (pdf_wd.Context context) {
+          return pdf_wd.Column(
+            crossAxisAlignment: pdf_wd.CrossAxisAlignment.start,
+            children: [
+              pdf_wd.Text(widget.listName,
+                  style: pdf_wd.TextStyle(fontSize: 24)),
+              pdf_wd.Divider(),
+              ...itemsByGroup.entries.map((entry) {
+                return pdf_wd.Column(
+                  crossAxisAlignment: pdf_wd.CrossAxisAlignment.start,
+                  children: [
+                    pdf_wd.Text(entry.key,
+                        style: pdf_wd.TextStyle(
+                            fontSize: 18, fontWeight: pdf_wd.FontWeight.bold)),
+                    ...entry.value.map((item) {
+                      return pdf_wd.Text(item['name'] ?? 'Unnamed Item',
+                          style: pdf_wd.TextStyle(fontSize: 14));
+                    }).toList(),
+                  ],
+                );
+              }).toList(),
+            ],
+          );
+        },
+      ),
+    );
+    await Printing.layoutPdf(
+        onLayout: (PdfPageFormat format) async => pdf.save());
+  }
 
-//   Future<String> createLink(String refCode) async {
-//     final String url = "https://smartlister01.page.link/?id=$refCode";
-
-//     final DynamicLinkParameters parameters = DynamicLinkParameters(
-//       androidParameters: const AndroidParameters(
-//         packageName: "com.example.smart",
-//         minimumVersion: 0,
-//       ),
-//       iosParameters: const IOSParameters(
-//         bundleId: "com.example.smart",
-//         minimumVersion: "0",
-//       ),
-//       link: Uri.parse(url),
-//       uriPrefix: "https://smartlister01.page.link",
-//     );
-
-//     final FirebaseDynamicLinks dynamicLinks = FirebaseDynamicLinks.instance;
-//     final ShortDynamicLink shortLink =
-//         await dynamicLinks.buildShortLink(parameters);
-//     return shortLink.shortUrl.toString();
-//   }
-
-//   void shareList() async {
-//     try {
-//       final shareableLink = await createLink(widget.shoppingListId);
-//       print('Generated short link: $shareableLink');
-//       await Share.share(shareableLink);
-//     } catch (e) {
-//       print('Error generating dynamic link: $e');
-//     }
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: Text(
-//           '${widget.listName}',
-//           style: TextStyle(
-//               color: Colors.white,
-//               fontSize: 20),
-//         ),
-//         leading: IconButton(
-//           icon: Icon(Icons.arrow_back, color: Colors.white),
-//           onPressed: () => Navigator.of(context).pop(),
-//         ),
-//         actions: <Widget>[
-//           if (!_isDeleteMode)
-//             IconButton(
-//               icon: Icon(Icons.share, color: Colors.white),
-//               onPressed: shareList,
-//               tooltip: 'Liste sharen',
-//             ),
-//           IconButton(
-//             icon: Icon(Icons.print, color: Colors.white),
-//             onPressed: createPdf,
-//             tooltip: 'Liste drucken',
-//           ),
-//           IconButton(
-//             icon: Icon(_isDeleteMode ? Icons.check : Icons.delete,
-//                 color: Colors.white),
-//             onPressed: toggleDeleteMode,
-//             tooltip: _isDeleteMode ? 'Fertig' : 'Löschen',
-//           ),
-//         ],
-//         flexibleSpace: Container(
-//           decoration: BoxDecoration(
-//             gradient: LinearGradient(
-//               colors: [Color(0xFFb0c69f), Color(0xFF96b17c)],
-//               begin: Alignment.topLeft,
-//               end: Alignment.bottomRight,
-//             ),
-//           ),
-//         ),
-//       ),
-//       backgroundColor: Color(0xFF334B46),
-//       body: ListView.builder(
-//         itemCount: itemsByGroup.keys.length,
-//         itemBuilder: (context, index) {
-//           String group = itemsByGroup.keys.elementAt(index);
-//           return Theme(
-//             data: Theme.of(context).copyWith(
-//               unselectedWidgetColor:
-//                   Colors.white,
-//               iconTheme:
-//                   IconThemeData(color: Colors.white),
-//             ),
-//             child: ExpansionTile(
-//               title: Row(
-//                 children: [
-//                   if (_isDeleteMode)
-//                     Checkbox(
-//                       value: selectedGroups.contains(group),
-//                       onChanged: (bool? value) {
-//                         setState(() {
-//                           if (value ?? false) {
-//                             selectedGroups.add(group);
-//                             selectedItems.addAll(itemsByGroup[group]!
-//                                 .map((item) => item['name'] as String));
-//                           } else {
-//                             selectedGroups.remove(group);
-//                             selectedItems.removeAll(itemsByGroup[group]!
-//                                 .map((item) => item['name'] as String));
-//                           }
-//                         });
-//                       },
-//                       checkColor: Colors.white,
-//                       activeColor:
-//                           Color(0xFF96b17c),
-//                     ),
-//                   Text(group.toUpperCase(),
-//                       style: TextStyle(color: Colors.white)),
-//                 ],
-//               ),
-//               iconColor: Colors.white,
-//               collapsedIconColor:
-//                   Colors.white,
-//               children: itemsByGroup[group]!.map((item) {
-//                 return Row(
-//                   children: [
-//                     if (_isDeleteMode)
-//                       Checkbox(
-//                         value: selectedItems.contains(item['name']),
-//                         onChanged: (bool? value) {
-//                           setState(() {
-//                             if (value ?? false) {
-//                               selectedItems.add(item['name']);
-//                             } else {
-//                               selectedItems.remove(item['name']);
-//                             }
-//                           });
-//                         },
-//                         checkColor: Colors.white,
-//                         activeColor: Color(
-//                             0xFF96b17c),
-//                       ),
-//                     Expanded(
-//                       child: CheckboxListTile(
-//                         title: Text(item['name'],
-//                             style: TextStyle(color: Colors.white)),
-//                         value: item['isDone'],
-//                         onChanged: !_isDeleteMode
-//                             ? (bool? value) {
-//                                 if (value != null) {
-//                                   int itemIndex =
-//                                       itemsByGroup[group]!.indexOf(item);
-//                                   toggleItemDone(group, itemIndex);
-//                                 }
-//                               }
-//                             : null,
-//                         controlAffinity: ListTileControlAffinity.trailing,
-//                         checkColor: Colors.white,
-//                         activeColor: Color(
-//                             0xFF96b17c),
-//                       ),
-//                     ),
-//                   ],
-//                 );
-//               }).toList(),
-//             ),
-//           );
-//         },
-//       ),
-//       floatingActionButton: FloatingActionButton(
-//         onPressed: _isDeleteMode ? deleteSelectedItems : _showAddItemDialog,
-//         child:
-//             Icon(_isDeleteMode ? Icons.delete : Icons.add, color: Colors.white),
-//         backgroundColor: _isDeleteMode
-//             ? Colors.red
-//             : Color(0xFF96b17c),
-//         tooltip: _isDeleteMode ? 'Ausgewählte löschen' : 'Artikel hinzufügen',
-//       ),
-//     );
-//   }
-
-//   Future<void> createPdf() async {
-//     final pdf = pdf_wd.Document();
-//     pdf.addPage(
-//       pdf_wd.Page(
-//         pageFormat: PdfPageFormat.a4,
-//         build: (pdf_wd.Context context) {
-//           return pdf_wd.Column(
-//             crossAxisAlignment: pdf_wd.CrossAxisAlignment.start,
-//             children: [
-//               pdf_wd.Container(
-//                 child: pdf_wd.Text(widget.listName,
-//                     style: pdf_wd.TextStyle(
-//                         fontWeight: pdf_wd.FontWeight.bold, fontSize: 24)),
-//               ),
-//               pdf_wd.Divider(),
-//               ...itemsByGroup.entries.map((entry) {
-//                 return pdf_wd.Column(
-//                   crossAxisAlignment: pdf_wd.CrossAxisAlignment.start,
-//                   children: [
-//                     pdf_wd.Text(entry.key,
-//                         style: pdf_wd.TextStyle(
-//                             fontWeight: pdf_wd.FontWeight.bold, fontSize: 16)),
-//                     ...entry.value
-//                         .map((item) => pdf_wd.Text(
-//                               item['name'],
-//                               style: pdf_wd.TextStyle(fontSize: 14),
-//                             ))
-//                         .toList(),
-//                   ],
-//                 );
-//               }).toList(),
-//             ],
-//           );
-//         },
-//       ),
-//     );
-//     await Printing.layoutPdf(
-//         onLayout: (PdfPageFormat format) async => pdf.save());
-//   }
-// }
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.listName),
+        actions: [
+          IconButton(icon: Icon(Icons.print), onPressed: createPdf),
+        ],
+      ),
+      body: ListView.builder(
+        itemCount: itemsByGroup.keys.length,
+        itemBuilder: (context, index) {
+          String groupId = itemsByGroup.keys.elementAt(index);
+          return ExpansionTile(
+            title: Text(groupId), // Display group name
+            children: itemsByGroup[groupId]!.map((item) {
+              return ListTile(
+                title: Text(item['name'] ?? 'Unnamed Item'),
+                trailing: Checkbox(
+                  value: item['isDone'] ?? false,
+                  onChanged: (value) {
+                    setState(() {
+                      item['isDone'] = value;
+                      // You don't need to call setItems() on Map items
+                    });
+                  },
+                ),
+              );
+            }).toList(),
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showAddItemDialog,
+        child: Icon(Icons.add),
+      ),
+    );
+  }
+}

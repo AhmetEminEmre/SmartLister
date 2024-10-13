@@ -21,11 +21,6 @@ const EinkaufsladenSchema = CollectionSchema(
       id: 0,
       name: r'name',
       type: IsarType.string,
-    ),
-    r'userId': PropertySchema(
-      id: 1,
-      name: r'userId',
-      type: IsarType.string,
     )
   },
   estimateSize: _einkaufsladenEstimateSize,
@@ -49,7 +44,6 @@ int _einkaufsladenEstimateSize(
 ) {
   var bytesCount = offsets.last;
   bytesCount += 3 + object.name.length * 3;
-  bytesCount += 3 + object.userId.length * 3;
   return bytesCount;
 }
 
@@ -60,7 +54,6 @@ void _einkaufsladenSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeString(offsets[0], object.name);
-  writer.writeString(offsets[1], object.userId);
 }
 
 Einkaufsladen _einkaufsladenDeserialize(
@@ -71,8 +64,8 @@ Einkaufsladen _einkaufsladenDeserialize(
 ) {
   final object = Einkaufsladen(
     name: reader.readString(offsets[0]),
-    userId: reader.readString(offsets[1]),
   );
+  object.id = id;
   return object;
 }
 
@@ -84,8 +77,6 @@ P _einkaufsladenDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readString(offset)) as P;
-    case 1:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -376,142 +367,6 @@ extension EinkaufsladenQueryFilter
       ));
     });
   }
-
-  QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterFilterCondition>
-      userIdEqualTo(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'userId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterFilterCondition>
-      userIdGreaterThan(
-    String value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'userId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterFilterCondition>
-      userIdLessThan(
-    String value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'userId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterFilterCondition>
-      userIdBetween(
-    String lower,
-    String upper, {
-    bool includeLower = true,
-    bool includeUpper = true,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'userId',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterFilterCondition>
-      userIdStartsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'userId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterFilterCondition>
-      userIdEndsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'userId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterFilterCondition>
-      userIdContains(String value, {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'userId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterFilterCondition>
-      userIdMatches(String pattern, {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'userId',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterFilterCondition>
-      userIdIsEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'userId',
-        value: '',
-      ));
-    });
-  }
-
-  QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterFilterCondition>
-      userIdIsNotEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'userId',
-        value: '',
-      ));
-    });
-  }
 }
 
 extension EinkaufsladenQueryObject
@@ -531,18 +386,6 @@ extension EinkaufsladenQuerySortBy
   QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterSortBy> sortByNameDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'name', Sort.desc);
-    });
-  }
-
-  QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterSortBy> sortByUserId() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'userId', Sort.asc);
-    });
-  }
-
-  QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterSortBy> sortByUserIdDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'userId', Sort.desc);
     });
   }
 }
@@ -572,18 +415,6 @@ extension EinkaufsladenQuerySortThenBy
       return query.addSortBy(r'name', Sort.desc);
     });
   }
-
-  QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterSortBy> thenByUserId() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'userId', Sort.asc);
-    });
-  }
-
-  QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterSortBy> thenByUserIdDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'userId', Sort.desc);
-    });
-  }
 }
 
 extension EinkaufsladenQueryWhereDistinct
@@ -592,13 +423,6 @@ extension EinkaufsladenQueryWhereDistinct
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'name', caseSensitive: caseSensitive);
-    });
-  }
-
-  QueryBuilder<Einkaufsladen, Einkaufsladen, QDistinct> distinctByUserId(
-      {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'userId', caseSensitive: caseSensitive);
     });
   }
 }
@@ -614,12 +438,6 @@ extension EinkaufsladenQueryProperty
   QueryBuilder<Einkaufsladen, String, QQueryOperations> nameProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'name');
-    });
-  }
-
-  QueryBuilder<Einkaufsladen, String, QQueryOperations> userIdProperty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'userId');
     });
   }
 }
