@@ -13,7 +13,7 @@ class ItemListScreen extends StatefulWidget {
   final String shoppingListId;
   final List<Itemlist> items;
   final String? initialStoreId;
-  final Isar isar; // Adding the isar parameter
+  final Isar isar; // Adding the Isar parameter
 
   ItemListScreen({
     required this.listName,
@@ -63,113 +63,71 @@ class _ItemListScreenState extends State<ItemListScreen> {
     }
 
     for (var item in items) {
-      List<Map<String, dynamic>> itemList =
-          item.getItems(); // Get items from the Itemlist
-
-      // Print the entire itemJson for each Itemlist to see what's inside
-      print(
-          "Itemlist ID: ${item.id}, Group ID: ${item.groupId}, ItemsJson: ${item.itemsJson}");
-      print(
-          "Decoded items: $itemList"); // This will print the decoded items (from JSON)
+      List<Map<String, dynamic>> itemList = item.getItems(); // Get items from the Itemlist
 
       for (var singleItem in itemList) {
-        // Assign 'Unbekannt' if groupId is null or empty
         String groupName = groupIdToName[item.groupId ?? ""] ?? "Unbekannt";
-        print(
-            "Item Group ID: ${item.groupId}, Resolved Group Name: $groupName");
         groupedItems.putIfAbsent(groupName, () => []).add(singleItem);
       }
     }
 
     setState(() {
-      itemsByGroup = groupedItems; // Update the state with the grouped items
+      itemsByGroup = groupedItems;
     });
   }
 
-  // Toggle the isDone status of an item in the JSON list
   Future<void> toggleItemDone(String groupId, int itemIndex) async {
     setState(() {
-      // Access the first item in the group (which is a Map, not an Itemlist)
       var itemDetails = itemsByGroup[groupId]![itemIndex];
-
-      // Toggle the 'isDone' status
-      itemDetails['isDone'] =
-          !(itemDetails['isDone'] ?? false); // Toggle isDone
+      itemDetails['isDone'] = !(itemDetails['isDone'] ?? false);
     });
 
-    // Update the JSON and save the changes to the Isar database
     await widget.isar.writeTxn(() async {
-      // Since you're working with Maps, you don't need to use `setItems()`.
-      // Instead, save the updated `Itemlist` object where the changes occurred.
-      var listToUpdate =
-          widget.items.firstWhere((list) => list.groupId == groupId);
-      listToUpdate.setItems(itemsByGroup[groupId]!); // Update itemsJson
-      await widget.isar.itemlists.put(listToUpdate); // Save the updated list
+      var listToUpdate = widget.items.firstWhere((list) => list.groupId == groupId);
+      listToUpdate.setItems(itemsByGroup[groupId]!);
+      await widget.isar.itemlists.put(listToUpdate);
     });
   }
 
-  // Delete selected items and groups and save changes to Isar
   Future<void> deleteSelectedItems() async {
-    if (selectedItems.isNotEmpty || selectedGroups.isNotEmpty) {
-      setState(() {
-        selectedItems.forEach((itemId) {
-          items.removeWhere((item) => item.id.toString() == itemId);
-        });
-        selectedGroups.forEach((groupId) {
-          itemsByGroup.remove(groupId);
-        });
-        _groupItemsByCategory(items); // Re-group after deletion
-        selectedItems.clear();
-        selectedGroups.clear();
+    setState(() {
+      selectedItems.forEach((itemId) {
+        items.removeWhere((item) => item.id.toString() == itemId);
       });
+      selectedGroups.forEach((groupId) {
+        itemsByGroup.remove(groupId);
+      });
+      _groupItemsByCategory(items);
+      selectedItems.clear();
+      selectedGroups.clear();
+    });
 
-      // Optionally save changes to Isar here
-      await widget.isar.writeTxn(() async {
-        for (var itemId in selectedItems) {
-          await widget.isar.itemlists.delete(int.parse(itemId));
-        }
-      });
-    }
+    await widget.isar.writeTxn(() async {
+      for (var itemId in selectedItems) {
+        await widget.isar.itemlists.delete(int.parse(itemId));
+      }
+    });
   }
 
-  // Add a new item to the list and update Isar
   void _addItemToList(String itemName, String groupId) async {
-    try {
-      // Find the existing list where you want to add the item
-      final listToAddTo = items
-          .firstWhere((list) => list.id.toString() == widget.shoppingListId);
+    final listToAddTo = items.firstWhere((list) => list.id.toString() == widget.shoppingListId);
+    var currentItems = listToAddTo.getItems();
+    currentItems.add({'name': itemName, 'isDone': false, 'groupId': groupId});
+    listToAddTo.setItems(currentItems);
 
-      // Extract current items from the list's itemsJson and add the new item
-      var currentItems = listToAddTo.getItems();
-      currentItems.add({
-        'name': itemName,
-        'isDone': false, // Default the new item to 'not done'
-        'groupId': groupId // Assign the correct groupId
-      });
+    await widget.isar.writeTxn(() async {
+      await widget.isar.itemlists.put(listToAddTo);
+    });
 
-      // Update the itemsJson with the new item
-      listToAddTo.setItems(currentItems);
-
-      // Save the updated list in Isar
-      await widget.isar.writeTxn(() async {
-        await widget.isar.itemlists.put(listToAddTo);
-      });
-
-      // Reload the UI after adding the item
-      setState(() {
-        _groupItemsByCategory(items); // Refresh grouping of items
-      });
-    } catch (e) {
-      print('Error adding item: $e');
-    }
+    setState(() {
+      _groupItemsByCategory(items);
+    });
   }
 
-  // Show dialog to add a new item
   void _showAddItemDialog() async {
     TextEditingController itemNameController = TextEditingController();
     String? selectedGroupId;
 
-    // Fetch product groups for the store
     final productGroups = await widget.isar.productgroups
         .filter()
         .storeIdEqualTo(widget.initialStoreId!)
@@ -188,8 +146,7 @@ class _ItemListScreenState extends State<ItemListScreen> {
         return StatefulBuilder(builder: (context, setState) {
           return AlertDialog(
             backgroundColor: Color(0xFF334B46),
-            title: Text('Artikel hinzufügen',
-                style: TextStyle(color: Colors.white)),
+            title: Text('Artikel hinzufügen', style: TextStyle(color: Colors.white)),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
@@ -203,8 +160,7 @@ class _ItemListScreenState extends State<ItemListScreen> {
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    contentPadding:
-                        EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                    contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                   ),
                   style: TextStyle(color: Colors.white),
                 ),
@@ -224,8 +180,7 @@ class _ItemListScreenState extends State<ItemListScreen> {
                       });
                     },
                     items: groupItems,
-                    hint: Text('Warengruppe wählen',
-                        style: TextStyle(color: Colors.white)),
+                    hint: Text('Warengruppe wählen', style: TextStyle(color: Colors.white)),
                     isExpanded: true,
                     underline: SizedBox(),
                     iconEnabledColor: Colors.white,
@@ -237,14 +192,10 @@ class _ItemListScreenState extends State<ItemListScreen> {
             ),
             actions: <Widget>[
               ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF587A6F),
-                ),
-                child:
-                    Text('Hinzufügen', style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF587A6F)),
+                child: Text('Hinzufügen', style: TextStyle(color: Colors.white)),
                 onPressed: () {
-                  if (itemNameController.text.isNotEmpty &&
-                      selectedGroupId != null) {
+                  if (itemNameController.text.isNotEmpty && selectedGroupId != null) {
                     _addItemToList(itemNameController.text, selectedGroupId!);
                     Navigator.of(context).pop();
                   }
@@ -259,37 +210,30 @@ class _ItemListScreenState extends State<ItemListScreen> {
 
   Future<void> createPdf() async {
     final pdf = pdf_wd.Document();
-    pdf.addPage(
-      pdf_wd.Page(
-        pageFormat: PdfPageFormat.a4,
-        build: (pdf_wd.Context context) {
-          return pdf_wd.Column(
-            crossAxisAlignment: pdf_wd.CrossAxisAlignment.start,
-            children: [
-              pdf_wd.Text(widget.listName,
-                  style: pdf_wd.TextStyle(fontSize: 24)),
-              pdf_wd.Divider(),
-              ...itemsByGroup.entries.map((entry) {
-                return pdf_wd.Column(
-                  crossAxisAlignment: pdf_wd.CrossAxisAlignment.start,
-                  children: [
-                    pdf_wd.Text(entry.key,
-                        style: pdf_wd.TextStyle(
-                            fontSize: 18, fontWeight: pdf_wd.FontWeight.bold)),
-                    ...entry.value.map((item) {
-                      return pdf_wd.Text(item['name'] ?? 'Unnamed Item',
-                          style: pdf_wd.TextStyle(fontSize: 14));
-                    }).toList(),
-                  ],
-                );
-              }).toList(),
-            ],
-          );
-        },
-      ),
-    );
-    await Printing.layoutPdf(
-        onLayout: (PdfPageFormat format) async => pdf.save());
+    pdf.addPage(pdf_wd.Page(
+      pageFormat: PdfPageFormat.a4,
+      build: (pdf_wd.Context context) {
+        return pdf_wd.Column(
+          crossAxisAlignment: pdf_wd.CrossAxisAlignment.start,
+          children: [
+            pdf_wd.Text(widget.listName, style: pdf_wd.TextStyle(fontSize: 24)),
+            pdf_wd.Divider(),
+            ...itemsByGroup.entries.map((entry) {
+              return pdf_wd.Column(
+                crossAxisAlignment: pdf_wd.CrossAxisAlignment.start,
+                children: [
+                  pdf_wd.Text(entry.key, style: pdf_wd.TextStyle(fontSize: 18, fontWeight: pdf_wd.FontWeight.bold)),
+                  ...entry.value.map((item) {
+                    return pdf_wd.Text(item['name'] ?? 'Unnamed Item', style: pdf_wd.TextStyle(fontSize: 14));
+                  }).toList(),
+                ],
+              );
+            }).toList(),
+          ],
+        );
+      },
+    ));
+    await Printing.layoutPdf(onLayout: (PdfPageFormat format) async => pdf.save());
   }
 
   @override
@@ -297,6 +241,12 @@ class _ItemListScreenState extends State<ItemListScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.listName),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.popUntil(context, (route) => route.isFirst);
+          },
+        ),
         actions: [
           IconButton(icon: Icon(Icons.print), onPressed: createPdf),
         ],
@@ -306,7 +256,7 @@ class _ItemListScreenState extends State<ItemListScreen> {
         itemBuilder: (context, index) {
           String groupId = itemsByGroup.keys.elementAt(index);
           return ExpansionTile(
-            title: Text(groupId), // Display group name
+            title: Text(groupId),
             children: itemsByGroup[groupId]!.map((item) {
               return ListTile(
                 title: Text(item['name'] ?? 'Unnamed Item'),
@@ -315,7 +265,6 @@ class _ItemListScreenState extends State<ItemListScreen> {
                   onChanged: (value) {
                     setState(() {
                       item['isDone'] = value;
-                      // You don't need to call setItems() on Map items
                     });
                   },
                 ),

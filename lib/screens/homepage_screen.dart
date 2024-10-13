@@ -3,14 +3,14 @@ import 'package:isar/isar.dart';
 import 'package:smart/objects/shop.dart';
 import 'package:smart/objects/template.dart';
 import 'package:smart/screens/shop_screen.dart';
-import '../objects/itemlist.dart'; // Your Isar model for Itemlist
-import 'addlist_screen.dart'; // For creating the new list
-import 'choosestore_screen.dart'; // Screen to choose stores
-import 'currencyconverter_screen.dart'; // Currency converter screen
+import '../objects/itemlist.dart';
+import 'addlist_screen.dart';
+import 'choosestore_screen.dart';
+import 'currencyconverter_screen.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../utilities/notificationmanager.dart';
-import 'itemslist_screen.dart'; // Import the ItemListScreen
-import 'addshop_screen.dart'; // Screen to create a new shop
+import 'itemslist_screen.dart';
+import 'addshop_screen.dart';
 
 class HomePage extends StatefulWidget {
   final Isar isar;
@@ -32,79 +32,58 @@ class _HomePageState extends State<HomePage> {
     _notificationManager.initNotification();
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    setState(() {
-      // Refresh the screen when navigating back
-    });
-  }
+Future<List<Itemlist>> _fetchLatestItemLists() async {
+  // Hole alle Itemlisten und sortiere sie dann in Dart nach dem 'creationDate' absteigend
+  final lists = await widget.isar.itemlists.where().findAll();
+  lists.sort((a, b) => b.creationDate.compareTo(a.creationDate)); // Sortiere absteigend
+  return lists.take(5).toList(); // Nehme die neuesten fünf Listen
+}
 
-  Future<String> getShopName(String groupId) async {
-    print("Fetching shop name for Group ID: $groupId");
-
-    if (groupId.isEmpty) {
-      print("Group ID is empty, returning 'Unbekannt'");
-      return "Unbekannt";
-    }
-
-    // Parse groupId safely and ensure it's numeric
-    final parsedGroupId = int.tryParse(groupId);
-    print("Parsed Group ID: $parsedGroupId");
-
-    if (parsedGroupId != null) {
-      final shop = await widget.isar.einkaufsladens
-          .filter()
-          .idEqualTo(parsedGroupId) // Use parsed int
-          .findFirst();
-
-      if (shop != null) {
-        print("Found Shop: ${shop.name}");
-        return shop.name;
-      } else {
-        print("No shop found for Group ID: $parsedGroupId");
-      }
-    } else {
-      print("Invalid Group ID, returning 'Unbekannt'");
-    }
-
-    return "Unbekannt"; // Return "Unbekannt" for invalid groupIds
-  }
-
-  Future<List<Einkaufsladen>> getMostUsedShops() async {
+  Future<List<Einkaufsladen>> _fetchTopShops() async {
     final allItemLists = await widget.isar.itemlists.where().findAll();
-    Map<String, int> shopUsage = {};
-
+    Map<int, int> shopUsage = {};
     for (var list in allItemLists) {
       final groupId = list.groupId;
-      if (groupId != null) {
-        shopUsage[groupId] = (shopUsage[groupId] ?? 0) + 1;
-        // Print the shop usage count for debugging
-        print("Group ID: $groupId, Usage Count: ${shopUsage[groupId]}");
+      if (groupId != null && int.tryParse(groupId) != null) {
+        final int id = int.parse(groupId);
+        shopUsage[id] = (shopUsage[id] ?? 0) + 1;
       }
     }
 
     final sortedGroupIds = shopUsage.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
-    final topGroupIds = sortedGroupIds.take(5).map((e) => e.key).toList();
+    final topGroupIds = sortedGroupIds.take(3).map((e) => e.key).toList();
 
     List<Einkaufsladen> topShops = [];
     for (var groupId in topGroupIds) {
-      final shop = await widget.isar.einkaufsladens
-          .filter()
-          .idEqualTo(int.parse(groupId))
-          .findFirst();
-
+      final shop = await widget.isar.einkaufsladens.filter().idEqualTo(groupId).findFirst();
       if (shop != null) {
-        print("Top Shop: ${shop.name}, Group ID: $groupId");
         topShops.add(shop);
-      } else {
-        print("No shop found for Group ID: $groupId");
       }
     }
 
     return topShops;
   }
+
+Future<String> getShopName(String groupId) async {
+  if (groupId.isEmpty) {
+    return "Unbekannt"; // Standardwert für leere Gruppen-ID
+  }
+  
+  final parsedGroupId = int.tryParse(groupId);
+  if (parsedGroupId == null) {
+    return "Unbekannt"; // Rückgabe "Unbekannt", wenn die ID nicht als Integer geparst werden kann
+  }
+
+  // Versuche, den Shop mit der gegebenen ID zu finden
+  final shop = await widget.isar.einkaufsladens.filter().idEqualTo(parsedGroupId).findFirst();
+  if (shop != null) {
+    return shop.name; // Rückgabe des Shopnamens, wenn gefunden
+  } else {
+    return "Unbekannt"; // Rückgabe "Unbekannt", wenn kein Shop gefunden wird
+  }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -156,13 +135,10 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             FutureBuilder<List<Itemlist>>(
-              future: widget.isar.itemlists
-                  .where()
-                  .findAll(), // Fetch all Itemlists
+              future: _fetchLatestItemLists(), // Fetch the latest five item lists
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.done &&
                     snapshot.hasData) {
-                  // Only display lists, not the individual items
                   return Column(
                     children: snapshot.data!
                         .map((itemlist) => _buildListCard(
@@ -176,8 +152,6 @@ class _HomePageState extends State<HomePage> {
                 }
               },
             ),
-
-            // Most-used shops
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               child: Text(
@@ -186,32 +160,17 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             FutureBuilder<List<Einkaufsladen>>(
-              future: getMostUsedShops(),
+              future: _fetchTopShops(), // Fetch the top three most used shops
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.done &&
                     snapshot.hasData) {
                   return Wrap(
                     spacing: 8.0,
                     runSpacing: 4.0,
-                    children: snapshot.data!.map((store) {
-                      return InkWell(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => EditStoreScreen(
-                                storeId: store.id.toString(),
-                                storeName: store.name,
-                                isar: widget.isar,
-                                isNewStore: false,
-                              ),
-                            ),
-                          );
-                        },
-                        child: Chip(
-                          label: Text(store.name),
-                          backgroundColor: Colors.orange,
-                        ),
+                    children: snapshot.data!.map((shop) {
+                      return Chip(
+                        label: Text(shop.name),
+                        backgroundColor: Colors.orange,
                       );
                     }).toList(),
                   );
@@ -222,7 +181,6 @@ class _HomePageState extends State<HomePage> {
                 }
               },
             ),
-            // Add new shopping list
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               child: ElevatedButton.icon(
@@ -235,7 +193,6 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
-            // Add new shop
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: ElevatedButton.icon(
@@ -264,7 +221,6 @@ class _HomePageState extends State<HomePage> {
   Widget _buildListCard(Itemlist itemlist) {
     String imagePath = itemlist.imagePath ?? 'lib/img/default_image.png';
 
-    // Extract items from the itemsJson field of the Itemlist
     List<Map<String, dynamic>> items = itemlist.getItems();
 
     return InkWell(
@@ -310,11 +266,10 @@ class _HomePageState extends State<HomePage> {
                 SizedBox(height: 8),
                 Row(
                   children: [
-                    // Display the number of items in the list
                     _buildTag('${items.length} Artikel'),
                     SizedBox(width: 5),
                     FutureBuilder<String>(
-                      future: getShopName(itemlist.groupId), // Fetch shop name
+                      future: getShopName(itemlist.groupId),
                       builder: (context, snapshot) {
                         if (snapshot.connectionState == ConnectionState.done &&
                             snapshot.hasData) {
@@ -324,10 +279,8 @@ class _HomePageState extends State<HomePage> {
                         }
                       },
                     ),
-
                     Spacer(),
-                    _buildOptionsMenu(
-                        itemlist), // Options menu for renaming, deleting, etc.
+                    _buildOptionsMenu(itemlist),
                   ],
                 ),
               ],
@@ -338,7 +291,20 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-// Method to build the options menu on the list card
+  Widget _buildTag(String label) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.orange,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(color: Colors.white),
+      ),
+    );
+  }
+
   Widget _buildOptionsMenu(Itemlist itemlist) {
     return PopupMenuButton<String>(
       onSelected: (value) {
@@ -372,7 +338,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-// Method to rename a list
   void _renameList(Itemlist itemlist) {
     TextEditingController _nameController =
         TextEditingController(text: itemlist.name);
@@ -388,7 +353,7 @@ class _HomePageState extends State<HomePage> {
           actions: <Widget>[
             TextButton(
               child: Text('Abbrechen'),
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () => Navigator.of(context). pop(),
             ),
             TextButton(
               child: Text('Speichern'),
@@ -409,7 +374,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-// Method to delete a list
   void _deleteList(Itemlist itemlist) async {
     await widget.isar.writeTxn(() async {
       await widget.isar.itemlists.delete(itemlist.id);
@@ -417,13 +381,12 @@ class _HomePageState extends State<HomePage> {
     setState(() {});
   }
 
-// Method to save a list as a template// Method to save a list as a template
   void _saveListAsTemplate(Itemlist itemlist) async {
     final newTemplate = Template(
       name: itemlist.name,
       items: itemlist.getItems(),
       imagePath: itemlist.imagePath!,
-      storeId: itemlist.groupId!, // Pass storeId (groupId) here
+      storeId: itemlist.groupId!,
     );
 
     await widget.isar.writeTxn(() async {
@@ -435,28 +398,12 @@ class _HomePageState extends State<HomePage> {
     ));
   }
 
-  // Method to build a small "tag" widget
-  Widget _buildTag(String label) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.orange,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(color: Colors.white),
-      ),
-    );
-  }
-
-  // Create List Dialog that navigates to CreateListScreen
   void _createListDialog(BuildContext context) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) =>
-            CreateListScreen(isar: widget.isar), // Navigate to CreateListScreen
+            CreateListScreen(isar: widget.isar),
       ),
     );
   }

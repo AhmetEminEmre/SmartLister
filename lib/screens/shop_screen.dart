@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
-import '../objects/productgroup.dart'; // Your Isar model for ProductGroup
+import '../objects/productgroup.dart'; // Dein Isar-Modell für ProductGroup
 
 class EditStoreScreen extends StatefulWidget {
   final String storeId;
   final String storeName;
-  final bool isNewStore; // This flag determines if the store is new
+  final bool isNewStore; // Dieser Flag bestimmt, ob es sich um einen neuen Laden handelt
   final Isar isar;
 
   EditStoreScreen({
     required this.storeId,
     required this.storeName,
-    required this.isNewStore, // Accept isNewStore as a parameter
+    this.isNewStore = false, // Accept isNewStore as a parameter
     required this.isar,
   });
 
@@ -61,21 +61,29 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
       'Fischprodukte',
     ];
 
+    final existingGroups = await widget.isar.productgroups
+      .filter()
+      .storeIdEqualTo(widget.storeId)
+      .findAll();
+    Set<String> existingNames = existingGroups.map((g) => g.name).toSet();
+
     try {
       await widget.isar.writeTxn(() async {
-        for (var group in defaultGroups) {
-          final productGroup = Productgroup(
-            name: group,
-            storeId: widget.storeId,
-            order: defaultGroups.indexOf(group),
-            itemCount: 0,
-          );
-          await widget.isar.productgroups.put(productGroup);
+        for (var groupName in defaultGroups) {
+          if (!existingNames.contains(groupName)) {
+            final productGroup = Productgroup(
+              name: groupName,
+              storeId: widget.storeId,
+              order: defaultGroups.indexOf(groupName),
+              itemCount: 0,
+            );
+            await widget.isar.productgroups.put(productGroup);
+          }
         }
       });
 
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Standard Warengruppen hinzugefügt.'),
+        content: Text('Fehlende Standard Warengruppen hinzugefügt.'),
         backgroundColor: Colors.green,
       ));
 
@@ -127,7 +135,9 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
 
   // Handle reorder logic
   void _onReorder(int oldIndex, int newIndex) {
-    if (newIndex > oldIndex) newIndex -= 1;
+    if (newIndex > oldIndex) {
+      newIndex -= 1;
+    }
     setState(() {
       final item = _productGroups.removeAt(oldIndex);
       _productGroups.insert(newIndex, item);
