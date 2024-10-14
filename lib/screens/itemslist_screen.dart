@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
 import 'package:smart/objects/productgroup.dart';
-import '../objects/itemlist.dart'; // Your Isar model for Itemlist
-import 'package:printing/printing.dart'; // For PDF creation and printing
+import '../objects/itemlist.dart'; // Dein Isar-Modell für Itemlist
+import 'package:printing/printing.dart'; // Für PDF-Erstellung und Drucken
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pdf_wd;
-import 'package:share_plus/share_plus.dart'; // For sharing functionality
+import 'package:share_plus/share_plus.dart'; // Für die Sharing-Funktionalität
 import 'package:path_provider/path_provider.dart';
 
 class ItemListScreen extends StatefulWidget {
@@ -13,14 +13,14 @@ class ItemListScreen extends StatefulWidget {
   final String shoppingListId;
   final List<Itemlist> items;
   final String? initialStoreId;
-  final Isar isar; // Adding the Isar parameter
+  final Isar isar; // Hinzufügen des Isar-Parameters
 
   ItemListScreen({
     required this.listName,
     required this.shoppingListId,
     required this.items,
     this.initialStoreId,
-    required this.isar, // Initialize the Isar instance
+    required this.isar, // Initialisiere die Isar-Instanz
   });
 
   @override
@@ -45,25 +45,25 @@ class _ItemListScreenState extends State<ItemListScreen> {
   void _groupItemsByCategory(List<Itemlist> items) async {
     Map<String, List<Map<String, dynamic>>> groupedItems = {};
 
-    // Fetch product groups for the store
+    // Produktgruppen für den Store abrufen
     final productGroups = await widget.isar.productgroups
         .filter()
         .storeIdEqualTo(widget.initialStoreId!)
         .findAll();
 
-    // Create a map of groupId -> groupName
+    // Map von groupId -> groupName erstellen
     Map<String, String> groupIdToName = {
       for (var group in productGroups) group.id.toString(): group.name
     };
 
-    // Print fetched product groups for debugging
+    // Abgerufene Produktgruppen zum Debuggen ausgeben
     print("Fetched product groups:");
     for (var group in productGroups) {
       print("Group ID: ${group.id}, Group Name: ${group.name}");
     }
 
     for (var item in items) {
-      List<Map<String, dynamic>> itemList = item.getItems(); // Get items from the Itemlist
+      List<Map<String, dynamic>> itemList = item.getItems(); // Hole Items aus der Itemliste
 
       for (var singleItem in itemList) {
         String groupName = groupIdToName[item.groupId ?? ""] ?? "Unbekannt";
@@ -263,9 +263,7 @@ class _ItemListScreenState extends State<ItemListScreen> {
                 trailing: Checkbox(
                   value: item['isDone'] ?? false,
                   onChanged: (value) {
-                    setState(() {
-                      item['isDone'] = value;
-                    });
+                    toggleItemDone(groupId, itemsByGroup[groupId]!.indexOf(item));
                   },
                 ),
               );

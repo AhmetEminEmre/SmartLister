@@ -22,7 +22,7 @@ class _CreateListScreenState extends State<CreateListScreen> {
   String? _selectedImagePath;
   List<Map<String, dynamic>> _items = [];
 
-final Map<String, String> imageNameToPath = {
+  final Map<String, String> imageNameToPath = {
     'Fahrrad ': 'lib/img/bild1.png',
     'Einkaufswagerl': 'lib/img/bild2.png',
     'Fleisch/Fisch': 'lib/img/bild3.png',
@@ -77,7 +77,8 @@ final Map<String, String> imageNameToPath = {
     if (_listNameController.text.trim().isEmpty ||
         _listNameController.text.trim().length < 3) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Der Name der Einkaufsliste muss mindestens 3 Zeichen lang sein.'),
+        content: Text(
+            'Der Name der Einkaufsliste muss mindestens 3 Zeichen lang sein.'),
         backgroundColor: Colors.red,
       ));
       return;
@@ -110,11 +111,15 @@ final Map<String, String> imageNameToPath = {
           listId: newList.id.toString(),
           listName: newList.name,
           isar: widget.isar,
-          onStoreSelected: (selectedStoreId) {
+          onStoreSelected: (selectedStoreId) async {
             newList.groupId = selectedStoreId; // Setze den Store
-            widget.isar.writeTxn(() async {
+
+            // Warte, bis die Transaktion abgeschlossen ist, bevor die Weiterleitung erfolgt
+            await widget.isar.writeTxn(() async {
               await widget.isar.itemlists.put(newList);
             });
+
+            // Erst nach erfolgreicher Speicherung zur ItemListScreen weiterleiten
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
@@ -160,7 +165,8 @@ final Map<String, String> imageNameToPath = {
                 if (value != null) _applyTemplate(value);
               },
               items: _templateItems,
-              hint: Text('Vorlage auswählen', style: TextStyle(color: Colors.white)),
+              hint: Text('Vorlage auswählen',
+                  style: TextStyle(color: Colors.white)),
               isExpanded: true,
               dropdownColor: Color(0xFF4A6963),
             ),
@@ -178,7 +184,8 @@ final Map<String, String> imageNameToPath = {
                   child: Text(name, style: TextStyle(color: Colors.white)),
                 );
               }).toList(),
-              hint: Text('Bild auswählen', style: TextStyle(color: Colors.white)),
+              hint:
+                  Text('Bild auswählen', style: TextStyle(color: Colors.white)),
               isExpanded: true,
               dropdownColor: Color(0xFF4A6963),
             ),
@@ -187,7 +194,6 @@ final Map<String, String> imageNameToPath = {
               onPressed: _createList,
               icon: Icon(Icons.add),
               label: Text('Neue Einkaufsliste erstellen'),
-              
             ),
           ],
         ),

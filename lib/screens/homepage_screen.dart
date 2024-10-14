@@ -26,20 +26,43 @@ class _HomePageState extends State<HomePage> {
   final FlutterLocalNotificationsPlugin notificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
+  late Stream<void> _itemListStream;
+  late Stream<void> _shopStream;
+
+  List<Einkaufsladen> _topShops = []; // Cached top shops
+  bool _loadingShops = true; // Loading state for shops
+
   @override
   void initState() {
     super.initState();
     _notificationManager.initNotification();
+    _setupWatchers(); // Set up the watchers for real-time updates
+    _fetchTopShops(); // Initial load for top shops
   }
 
-Future<List<Itemlist>> _fetchLatestItemLists() async {
-  // Hole alle Itemlisten und sortiere sie dann in Dart nach dem 'creationDate' absteigend
-  final lists = await widget.isar.itemlists.where().findAll();
-  lists.sort((a, b) => b.creationDate.compareTo(a.creationDate)); // Sortiere absteigend
-  return lists.take(5).toList(); // Nehme die neuesten fünf Listen
+ void _setupWatchers() {
+  // Convert streams to broadcast streams to avoid the "Stream has already been listened to" error
+  _itemListStream = widget.isar.itemlists.watchLazy().asBroadcastStream();
+  _shopStream = widget.isar.einkaufsladens.watchLazy().asBroadcastStream();
+
+  // Listen for item list changes and reload shops
+  _itemListStream.listen((_) {
+    _fetchLatestItemLists();
+    _fetchTopShops(); // Reload top shops when item list changes
+  });
+
+  // Listen for shop changes and reload shops
+  _shopStream.listen((_) {
+    _fetchTopShops();
+  });
 }
 
-  Future<List<Einkaufsladen>> _fetchTopShops() async {
+
+  Future<void> _fetchTopShops() async {
+    setState(() {
+      _loadingShops = true; // Show loading indicator while fetching
+    });
+
     final allItemLists = await widget.isar.itemlists.where().findAll();
     Map<int, int> shopUsage = {};
     for (var list in allItemLists) {
@@ -56,34 +79,20 @@ Future<List<Itemlist>> _fetchLatestItemLists() async {
 
     List<Einkaufsladen> topShops = [];
     for (var groupId in topGroupIds) {
-      final shop = await widget.isar.einkaufsladens.filter().idEqualTo(groupId).findFirst();
+      final shop = await widget.isar.einkaufsladens
+          .filter()
+          .idEqualTo(groupId)
+          .findFirst();
       if (shop != null) {
         topShops.add(shop);
       }
     }
 
-    return topShops;
+    setState(() {
+      _topShops = topShops; // Update the top shops
+      _loadingShops = false; // Hide loading indicator
+    });
   }
-
-Future<String> getShopName(String groupId) async {
-  if (groupId.isEmpty) {
-    return "Unbekannt"; // Standardwert für leere Gruppen-ID
-  }
-  
-  final parsedGroupId = int.tryParse(groupId);
-  if (parsedGroupId == null) {
-    return "Unbekannt"; // Rückgabe "Unbekannt", wenn die ID nicht als Integer geparst werden kann
-  }
-
-  // Versuche, den Shop mit der gegebenen ID zu finden
-  final shop = await widget.isar.einkaufsladens.filter().idEqualTo(parsedGroupId).findFirst();
-  if (shop != null) {
-    return shop.name; // Rückgabe des Shopnamens, wenn gefunden
-  } else {
-    return "Unbekannt"; // Rückgabe "Unbekannt", wenn kein Shop gefunden wird
-  }
-}
-
 
   @override
   Widget build(BuildContext context) {
@@ -117,7 +126,7 @@ Future<String> getShopName(String groupId) async {
           IconButton(
             icon: Icon(Icons.settings, color: Colors.white),
             onPressed: () {
-              // Add your settings functionality
+              // Füge deine Einstellungsfunktion hinzu
             },
           ),
         ],
@@ -134,22 +143,27 @@ Future<String> getShopName(String groupId) async {
                 style: TextStyle(fontSize: 18, color: Colors.white),
               ),
             ),
-            FutureBuilder<List<Itemlist>>(
-              future: _fetchLatestItemLists(), // Fetch the latest five item lists
+            StreamBuilder<void>(
+              stream:
+                  _itemListStream, // Listen to the itemlist collection changes
               builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.done &&
-                    snapshot.hasData) {
-                  return Column(
-                    children: snapshot.data!
-                        .map((itemlist) => _buildListCard(
-                            itemlist)) // Build cards for each list
-                        .toList(),
-                  );
-                } else if (snapshot.hasError) {
-                  return Text("Error: ${snapshot.error}");
-                } else {
-                  return CircularProgressIndicator();
-                }
+                return FutureBuilder<List<Itemlist>>(
+                  future: _fetchLatestItemLists(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.done &&
+                        snapshot.hasData) {
+                      return Column(
+                        children: snapshot.data!
+                            .map((itemlist) => _buildListCard(itemlist))
+                            .toList(),
+                      );
+                    } else if (snapshot.hasError) {
+                      return Text("Error: ${snapshot.error}");
+                    } else {
+                      return CircularProgressIndicator();
+                    }
+                  },
+                );
               },
             ),
             Padding(
@@ -159,28 +173,33 @@ Future<String> getShopName(String groupId) async {
                 style: TextStyle(fontSize: 18, color: Colors.white),
               ),
             ),
-            FutureBuilder<List<Einkaufsladen>>(
-              future: _fetchTopShops(), // Fetch the top three most used shops
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.done &&
-                    snapshot.hasData) {
-                  return Wrap(
+            _loadingShops
+                ? Center(child: CircularProgressIndicator())
+                : Wrap(
                     spacing: 8.0,
                     runSpacing: 4.0,
-                    children: snapshot.data!.map((shop) {
-                      return Chip(
-                        label: Text(shop.name),
-                        backgroundColor: Colors.orange,
+                    children: _topShops.map((shop) {
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => EditStoreScreen(
+                                storeId: shop.id.toString(),
+                                storeName: shop.name,
+                                isar: widget
+                                    .isar, // Passing Isar instance to EditStoreScreen
+                              ),
+                            ),
+                          );
+                        },
+                        child: Chip(
+                          label: Text(shop.name),
+                          backgroundColor: Colors.orange,
+                        ),
                       );
                     }).toList(),
-                  );
-                } else if (snapshot.hasError) {
-                  return Text("Error: ${snapshot.error}");
-                } else {
-                  return CircularProgressIndicator();
-                }
-              },
-            ),
+                  ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               child: ElevatedButton.icon(
@@ -218,6 +237,12 @@ Future<String> getShopName(String groupId) async {
     );
   }
 
+  Future<List<Itemlist>> _fetchLatestItemLists() async {
+    final lists = await widget.isar.itemlists.where().findAll();
+    lists.sort((a, b) => b.creationDate.compareTo(a.creationDate));
+    return lists.take(5).toList(); // Nur die neuesten fünf Listen anzeigen
+  }
+
   Widget _buildListCard(Itemlist itemlist) {
     String imagePath = itemlist.imagePath ?? 'lib/img/default_image.png';
 
@@ -231,7 +256,7 @@ Future<String> getShopName(String groupId) async {
             builder: (context) => ItemListScreen(
               listName: itemlist.name,
               shoppingListId: itemlist.id.toString(),
-              items: [itemlist], // Pass the list itself
+              items: [itemlist],
               initialStoreId: itemlist.groupId,
               isar: widget.isar,
             ),
@@ -338,6 +363,27 @@ Future<String> getShopName(String groupId) async {
     );
   }
 
+  Future<String> getShopName(String groupId) async {
+    if (groupId.isEmpty) {
+      return "Unbekannt"; // Default value for empty group ID
+    }
+
+    final parsedGroupId = int.tryParse(groupId);
+    if (parsedGroupId == null) {
+      return "Unbekannt"; // Return "Unbekannt" if ID is not an integer
+    }
+
+    final shop = await widget.isar.einkaufsladens
+        .filter()
+        .idEqualTo(parsedGroupId)
+        .findFirst();
+    if (shop != null) {
+      return shop.name; // Return shop name if found
+    } else {
+      return "Unbekannt"; // Return "Unbekannt" if no shop is found
+    }
+  }
+
   void _renameList(Itemlist itemlist) {
     TextEditingController _nameController =
         TextEditingController(text: itemlist.name);
@@ -353,7 +399,7 @@ Future<String> getShopName(String groupId) async {
           actions: <Widget>[
             TextButton(
               child: Text('Abbrechen'),
-              onPressed: () => Navigator.of(context). pop(),
+              onPressed: () => Navigator.of(context).pop(),
             ),
             TextButton(
               child: Text('Speichern'),
@@ -364,7 +410,9 @@ Future<String> getShopName(String groupId) async {
                     await widget.isar.itemlists.put(itemlist);
                   });
                   Navigator.of(context).pop();
-                  setState(() {});
+                  setState(() {
+                    _fetchLatestItemLists(); // Reload the lists after renaming
+                  });
                 }
               },
             ),
@@ -377,8 +425,26 @@ Future<String> getShopName(String groupId) async {
   void _deleteList(Itemlist itemlist) async {
     await widget.isar.writeTxn(() async {
       await widget.isar.itemlists.delete(itemlist.id);
+
+      // Check if any other list uses the same shop
+      final remainingLists = await widget.isar.itemlists
+          .filter()
+          .groupIdEqualTo(itemlist.groupId)
+          .findAll();
+
+      // If no other lists are using this shop, delete the shop
+      if (remainingLists.isEmpty && itemlist.groupId != null) {
+        final parsedGroupId = int.tryParse(itemlist.groupId!);
+        if (parsedGroupId != null) {
+          await widget.isar.einkaufsladens.delete(parsedGroupId);
+        }
+      }
     });
-    setState(() {});
+
+    setState(() {
+      _fetchLatestItemLists(); // Reload the lists after deletion
+      _fetchTopShops(); // Reload the top shops after a list deletion
+    });
   }
 
   void _saveListAsTemplate(Itemlist itemlist) async {
@@ -398,14 +464,20 @@ Future<String> getShopName(String groupId) async {
     ));
   }
 
-  void _createListDialog(BuildContext context) {
-    Navigator.push(
+  void _createListDialog(BuildContext context) async {
+    final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) =>
-            CreateListScreen(isar: widget.isar),
+        builder: (context) => CreateListScreen(isar: widget.isar),
       ),
     );
+
+    // Prüfe, ob eine neue Liste erstellt wurde, und aktualisiere dann
+    if (result == true) {
+      setState(() {
+        _fetchLatestItemLists(); // Aktualisiere die Itemlisten
+      });
+    }
   }
 
   Future<void> showNotificationDialog(BuildContext context) async {
