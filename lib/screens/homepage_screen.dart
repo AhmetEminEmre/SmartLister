@@ -40,23 +40,22 @@ class _HomePageState extends State<HomePage> {
     _fetchTopShops(); // Initial load for top shops
   }
 
- void _setupWatchers() {
-  // Convert streams to broadcast streams to avoid the "Stream has already been listened to" error
-  _itemListStream = widget.isar.itemlists.watchLazy().asBroadcastStream();
-  _shopStream = widget.isar.einkaufsladens.watchLazy().asBroadcastStream();
+  void _setupWatchers() {
+    // Convert streams to broadcast streams to avoid the "Stream has already been listened to" error
+    _itemListStream = widget.isar.itemlists.watchLazy().asBroadcastStream();
+    _shopStream = widget.isar.einkaufsladens.watchLazy().asBroadcastStream();
 
-  // Listen for item list changes and reload shops
-  _itemListStream.listen((_) {
-    _fetchLatestItemLists();
-    _fetchTopShops(); // Reload top shops when item list changes
-  });
+    // Listen for item list changes and reload shops
+    _itemListStream.listen((_) {
+      _fetchLatestItemLists();
+      _fetchTopShops(); // Reload top shops when item list changes
+    });
 
-  // Listen for shop changes and reload shops
-  _shopStream.listen((_) {
-    _fetchTopShops();
-  });
-}
-
+    // Listen for shop changes and reload shops
+    _shopStream.listen((_) {
+      _fetchTopShops();
+    });
+  }
 
   Future<void> _fetchTopShops() async {
     setState(() {
@@ -238,9 +237,19 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<List<Itemlist>> _fetchLatestItemLists() async {
+    // Alle Listen abrufen
     final lists = await widget.isar.itemlists.where().findAll();
-    lists.sort((a, b) => b.creationDate.compareTo(a.creationDate));
-    return lists.take(5).toList(); // Nur die neuesten fünf Listen anzeigen
+
+    // Filtere Listen, die eine gültige groupId haben
+    final validLists = lists
+        .where((list) => list.groupId != null && list.groupId!.isNotEmpty)
+        .toList();
+
+    // Sortiere die Listen nach Erstellungsdatum
+    validLists.sort((a, b) => b.creationDate.compareTo(a.creationDate));
+
+    // Nur die neuesten fünf Listen anzeigen
+    return validLists.take(5).toList();
   }
 
   Widget _buildListCard(Itemlist itemlist) {
@@ -432,13 +441,13 @@ class _HomePageState extends State<HomePage> {
           .groupIdEqualTo(itemlist.groupId)
           .findAll();
 
-      // If no other lists are using this shop, delete the shop
-      if (remainingLists.isEmpty && itemlist.groupId != null) {
-        final parsedGroupId = int.tryParse(itemlist.groupId!);
-        if (parsedGroupId != null) {
-          await widget.isar.einkaufsladens.delete(parsedGroupId);
-        }
-      }
+      // // If no other lists are using this shop, delete the shop
+      // if (remainingLists.isEmpty && itemlist.groupId != null) {
+      //   final parsedGroupId = int.tryParse(itemlist.groupId!);
+      //   if (parsedGroupId != null) {
+      //     await widget.isar.einkaufsladens.delete(parsedGroupId);
+      //   }
+      // }
     });
 
     setState(() {

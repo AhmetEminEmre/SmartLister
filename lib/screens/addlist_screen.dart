@@ -114,18 +114,17 @@ class _CreateListScreenState extends State<CreateListScreen> {
           onStoreSelected: (selectedStoreId) async {
             newList.groupId = selectedStoreId; // Setze den Store
 
-            // Warte, bis die Transaktion abgeschlossen ist, bevor die Weiterleitung erfolgt
             await widget.isar.writeTxn(() async {
               await widget.isar.itemlists.put(newList);
             });
 
-            // Erst nach erfolgreicher Speicherung zur ItemListScreen weiterleiten
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
                 builder: (context) => ItemListScreen(
                   listName: newList.name,
-                  shoppingListId: newList.id.toString(),
+                  shoppingListId:
+                      newList.id.toString(), // Übergebe hier die shoppingListId
                   items: [newList],
                   initialStoreId: selectedStoreId,
                   isar: widget.isar,
