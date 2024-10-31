@@ -6,7 +6,6 @@ import 'package:smart/screens/shop_screen.dart';
 import 'package:smart/objects/productgroup.dart';
 import '../objects/itemlist.dart';
 import 'addlist_screen.dart';
-import 'choosestore_screen.dart';
 import 'currencyconverter_screen.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../utilities/notificationmanager.dart';
@@ -14,20 +13,7 @@ import 'itemslist_screen.dart';
 import 'addshop_screen.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
-import 'dart:io';
-import 'package:share_plus/share_plus.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:flutter/services.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:path_provider/path_provider.dart';
-import 'dart:io';
-import 'package:flutter/material.dart';
-import 'package:share_plus/share_plus.dart';
-import 'package:path/path.dart' as p;
 import 'dart:convert';
-
 
 class HomePage extends StatefulWidget {
   final Isar isar;
@@ -46,61 +32,43 @@ class _HomePageState extends State<HomePage> {
   late Stream<void> _itemListStream;
   late Stream<void> _shopStream;
 
-  List<Einkaufsladen> _topShops = []; // Cached top shops
-  bool _loadingShops = true; // Loading state for shops
+  List<Einkaufsladen> _topShops = [];
+  bool _loadingShops = true;
+  String _username = 'default'; //hier in zukunft namen setzen
 
+  @override
   @override
   void initState() {
     super.initState();
-    requestPermissions(); // Request storage permission at startup
     _notificationManager.initNotification();
-    _setupWatchers(); // Set up the watchers for real-time updates
-    _fetchTopShops(); // Initial load for top shops
+    _setupWatchers();
+    _fetchTopShops();
   }
 
   void _setupWatchers() {
-    // Convert streams to broadcast streams to avoid the "Stream has already been listened to" error
+    //boardacast as streams caused error "Stream has already been listened to" error
     _itemListStream = widget.isar.itemlists.watchLazy().asBroadcastStream();
     _shopStream = widget.isar.einkaufsladens.watchLazy().asBroadcastStream();
 
-    // Listen for item list changes and reload shops
     _itemListStream.listen((_) {
       _fetchLatestItemLists();
-      _fetchTopShops(); // Reload top shops when item list changes
+      _fetchTopShops();
     });
 
-    // Listen for shop changes and reload shops
     _shopStream.listen((_) {
       _fetchTopShops();
     });
   }
 
-
-  Future<void> requestPermissions() async {
-    final permissions = [
-      Permission.storage,
-      Permission.manageExternalStorage,
-    ];
-
-    for (var permission in permissions) {
-      if (await permission.isDenied) {
-        final status = await permission.request();
-        if (status.isPermanentlyDenied) {
-          openAppSettings();
-        }
-      }
-    }
-  }
-
   Future<void> _fetchTopShops() async {
     setState(() {
-      _loadingShops = true; // Show loading indicator while fetching
+      _loadingShops = true;
     });
 
     final allItemLists = await widget.isar.itemlists.where().findAll();
     Map<int, int> shopUsage = {};
     for (var list in allItemLists) {
-      final groupId = list.groupId;
+      final groupId = list.shopId;
       if (int.tryParse(groupId) != null) {
         final int id = int.parse(groupId);
         shopUsage[id] = (shopUsage[id] ?? 0) + 1;
@@ -123,8 +91,8 @@ class _HomePageState extends State<HomePage> {
     }
 
     setState(() {
-      _topShops = topShops; // Update the top shops
-      _loadingShops = false; // Hide loading indicator
+      _topShops = topShops;
+      _loadingShops = false;
     });
   }
 
@@ -152,7 +120,7 @@ class _HomePageState extends State<HomePage> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => CurrencyConverterScreen(),
+                  builder: (context) => const CurrencyConverterScreen(),
                 ),
               );
             },
@@ -160,7 +128,7 @@ class _HomePageState extends State<HomePage> {
           IconButton(
             icon: const Icon(Icons.settings, color: Colors.white),
             onPressed: () {
-              // Füge deine Einstellungsfunktion hinzu
+              // settings here in future
             },
           ),
         ],
@@ -179,7 +147,7 @@ class _HomePageState extends State<HomePage> {
             ),
             StreamBuilder<void>(
               stream:
-                  _itemListStream, // Listen to the itemlist collection changes
+                  _itemListStream,
               builder: (context, snapshot) {
                 return FutureBuilder<List<Itemlist>>(
                   future: _fetchLatestItemLists(),
@@ -222,7 +190,7 @@ class _HomePageState extends State<HomePage> {
                                 storeId: shop.id.toString(),
                                 storeName: shop.name,
                                 isar: widget
-                                    .isar, // Passing Isar instance to EditStoreScreen
+                                    .isar,
                               ),
                             ),
                           );
@@ -272,16 +240,9 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<List<Itemlist>> _fetchLatestItemLists() async {
-    // Alle Listen abrufen
     final lists = await widget.isar.itemlists.where().findAll();
-
-    // Filtere Listen, die eine gültige groupId haben
-    final validLists = lists.where((list) => list.groupId.isNotEmpty).toList();
-
-    // Sortiere die Listen nach Erstellungsdatum
+    final validLists = lists.where((list) => list.shopId.isNotEmpty).toList();
     validLists.sort((a, b) => b.creationDate.compareTo(a.creationDate));
-
-    // Nur die neuesten fünf Listen anzeigen
     return validLists.take(5).toList();
   }
 
@@ -299,7 +260,7 @@ class _HomePageState extends State<HomePage> {
               listName: itemlist.name,
               shoppingListId: itemlist.id.toString(),
               items: [itemlist],
-              initialStoreId: itemlist.groupId,
+              initialStoreId: itemlist.shopId,
               isar: widget.isar,
             ),
           ),
@@ -336,7 +297,7 @@ class _HomePageState extends State<HomePage> {
                     _buildTag('${items.length} Artikel'),
                     const SizedBox(width: 5),
                     FutureBuilder<String>(
-                      future: getShopName(itemlist.groupId),
+                      future: getShopName(itemlist.shopId),
                       builder: (context, snapshot) {
                         if (snapshot.connectionState == ConnectionState.done &&
                             snapshot.hasData) {
@@ -386,7 +347,7 @@ class _HomePageState extends State<HomePage> {
             _saveListAsTemplate(itemlist);
             break;
           case 'exportCsv':
-            exportCsvWithFilePicker(itemlist); // Neue Option hinzufügen
+            exportCsvWithFilePicker(itemlist);
             break;
         }
       },
@@ -405,14 +366,14 @@ class _HomePageState extends State<HomePage> {
         ),
         const PopupMenuItem<String>(
           value: 'exportCsv',
-          child: Text('Liste exportieren'), // Neue Exportoption
+          child: Text('Liste exportieren'),
         ),
       ],
       icon: const Icon(Icons.more_vert, color: Colors.white),
     );
   }
 
-Future<Directory> _getDownloadDirectory() async {
+  Future<Directory> _getDownloadDirectory() async {
     Directory? directory;
     if (Platform.isAndroid) {
       directory = await getExternalStorageDirectory();
@@ -426,7 +387,7 @@ Future<Directory> _getDownloadDirectory() async {
           break;
         }
       }
-      newPath = newPath + "/Download";
+      newPath = "$newPath/Download";
       directory = Directory(newPath);
     } else {
       directory = await getApplicationDocumentsDirectory();
@@ -434,40 +395,33 @@ Future<Directory> _getDownloadDirectory() async {
     return directory;
   }
 
-Future<void> exportCsv(String fileName, List<Map<String, dynamic>> items) async {
-  StringBuffer csvBuffer = StringBuffer();
+  Future<void> exportCsv(
+      String fileName, List<Map<String, dynamic>> items) async {
+    StringBuffer csvBuffer = StringBuffer();
 
-  // Build header and debug it
-  csvBuffer.write('name;');
-  final productGroups = items.map((item) => item['productGroup']).toSet().toList();
-  csvBuffer.writeAll(productGroups, ';');
-  csvBuffer.write(';\n');
-  print('CSV Header: name;${productGroups.join(";")};'); // Debug the header line
+    csvBuffer.write('name;');
+    final productGroups =
+        items.map((item) => item['productGroup']).toSet().toList();
+    csvBuffer.writeAll(productGroups, ';');
+    csvBuffer.write(';\n');
+    print('CSV Header: name;${productGroups.join(";")};');
 
-  // Add each item with its group, name, and status
-  for (var productGroup in productGroups) {
-    final groupItems = items.where((item) => item['productGroup'] == productGroup).toList();
-    for (var item in groupItems) {
-      final line = '${item['productGroup']};${item['itemName']};${item['status']}';
-      csvBuffer.writeln(line);
-      print('CSV Line: $line');  // Debug each line
+    for (var productGroup in productGroups) {
+      final groupItems =
+          items.where((item) => item['productGroup'] == productGroup).toList();
+      for (var item in groupItems) {
+        final line =
+            '${item['productGroup']};${item['itemName']};${item['status']}';
+        csvBuffer.writeln(line);
+        print('CSV Line: $line');
+      }
     }
-  }
 
-  // Write CSV content to file and save
-  final directory = await _getDownloadDirectory();
-  final filePath = '${directory.path}/$fileName';
-  final file = File(filePath);
-  await file.writeAsString(csvBuffer.toString());
-  _showSnackBar('Datei erfolgreich im Downloads-Ordner gespeichert.');
-}
-
-
-
-   Future<void> _requestPermission(Permission permission) async {
-    if (await permission.isDenied) {
-      await permission.request();
-    }
+    final directory = await _getDownloadDirectory();
+    final filePath = '${directory.path}/$fileName';
+    final file = File(filePath);
+    await file.writeAsString(csvBuffer.toString());
+    _showSnackBar('Datei erfolgreich im Downloads-Ordner gespeichert.');
   }
 
   void _showSnackBar(String message) {
@@ -477,129 +431,79 @@ Future<void> exportCsv(String fileName, List<Map<String, dynamic>> items) async 
     ));
   }
 
-Future<void> exportCsvWithFilePicker(Itemlist itemlist) async {
-  StringBuffer csvBuffer = StringBuffer();
+  Future<void> exportCsvWithFilePicker(Itemlist itemlist) async {
+    StringBuffer csvBuffer = StringBuffer();
 
-  final List<dynamic> items = json.decode(itemlist.itemsJson);
-  
-  final productGroups = items.map((item) => item['groupId']).toSet().toList();
-  final headerLine = '${itemlist.name};${productGroups.join(";")};';
-  csvBuffer.writeln(headerLine);
-  print('Exported line 1: $headerLine'); // Debug header line
-
-  for (var item in items) {
-    final line = '${item['groupId']};${item['name']};${item['isDone']}';
-    csvBuffer.writeln(line);
-    print('Exported line: $line');  // Debug each item line
-  }
-
-  final fileName = '${itemlist.name}.csv';
-  final bytes = Uint8List.fromList(csvBuffer.toString().codeUnits);
-  final result = await saveFileToDownloads(fileName, bytes);
-
-  if (result) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Datei erfolgreich im Downloads-Ordner gespeichert.'))
-    );
-  } else {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Fehler beim Speichern der Datei.'), backgroundColor: Colors.red)
-    );
-  }
-}
-
-
-
-
-
-
-  Future<bool> saveFileToDownloads(String fileName, Uint8List bytes) async {
-    try {
-      final directory = await getDownloadsDirectory();
-      if (directory == null) {
-        print('Download directory not available');
-        return false;
-      }
-      final filePath = p.join(directory.path, fileName);
-      final file = File(filePath);
-      await file.writeAsBytes(bytes, flush: true);
-      print('File saved to: $filePath');  // Debugging output
-      return true;
-    } on Exception catch (e) {
-      print('Error saving file to downloads: $e');
-      return false;
+    String escapeCsvString(String input) {
+      return utf8.decode(utf8.encode(input.trim()));
     }
-  }
 
-  Future<Directory?> getDownloadsDirectory() async {
-    Directory? directory;
-    try {
-      if (Platform.isAndroid) {
-        directory = (await getExternalStorageDirectory())!;
-        String newPath = "";
-        List<String> folders = directory.path.split("/");
-        for (int x = 1; x < folders.length; x++) {
-          String folder = folders[x];
-          if (folder != "Android") {
-            newPath += "/$folder";
-          } else {
-            break;
-          }
-        }
-        newPath = newPath + "/Download";
-        directory = Directory(newPath);
-      } else {
-        return null;
-      }
-      print('Downloads directory: ${directory.path}');  // Debugging output
-      return directory;
-    } on PlatformException catch (e) {
-      print('Failed to get downloads directory: $e');
-      return null;
+    String shopName = escapeCsvString(await getShopName(itemlist.shopId));
+    List<String> productGroupNames =
+        (await getAllProductGroups(itemlist.shopId))
+            .map((groupName) => escapeCsvString(groupName))
+            .toList();
+
+    final listname = itemlist.name;
+    final imagePath = itemlist.imagePath;
+    csvBuffer.writeln(
+        '$listname;$imagePath;$shopName;${productGroupNames.join(";")};');
+
+    final List<dynamic> items = json.decode(itemlist.itemsJson);
+    for (var item in items) {
+      String groupName = escapeCsvString(await getGroupName(item['groupId']));
+      String itemName = escapeCsvString(item['name']);
+      String itemStatus = escapeCsvString(item['isDone'].toString());
+
+      final line = '$groupName;$itemName;$itemStatus';
+      print(line);
+      csvBuffer.writeln(line);
     }
-  }
 
-  Future<String?> _findDownloadsDirectory() async {
-    final directories = await getExternalStorageDirectories(type: StorageDirectory.downloads);
-    return directories?.first.path;
-  }
+    final fileName = '${itemlist.name}.csv';
+    final directory = await _getDownloadDirectory();
+    final filePath = '${directory.path}/$fileName';
+    final file = File(filePath);
 
-  Future<void> exportFile(Itemlist itemlist) async {
-  if (await Permission.manageExternalStorage.isGranted) {
-    exportCsvWithFilePicker(itemlist);
-    print('Datei wird exportiert.');
-  } else {
-    print('Speicherberechtigung nicht erteilt. Export wird abgebrochen.');
+    await file.writeAsBytes(utf8.encode(csvBuffer.toString()), flush: true);
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Speicherberechtigung abgelehnt. Bitte Berechtigung in den Einstellungen aktivieren.'),
-        backgroundColor: Colors.red,
-      ),
+          content: Text('Datei erfolgreich im Downloads-Ordner gespeichert.')),
     );
   }
-}
 
+  Future<List<String>> getAllProductGroups(String shopId) async {
+    final productGroups = await widget.isar.productgroups
+        .filter()
+        .storeIdEqualTo(shopId)
+        .sortByOrder()
+        .findAll();
 
-
-  Future<void> copyFilePath(String path) async {
-    await Clipboard.setData(ClipboardData(text: path));
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-      content: Text('Dateipfad kopiert!'),
-      backgroundColor: Colors.green,
-    ));
+    return productGroups
+        .map((group) => group.name.trim())
+        .toList();
   }
 
-// final path = '${directory.path}/${itemlist.name}_export.csv';
-// await copyFilePath(path);
+  Future<String> getGroupName(String groupId) async {
+    final productGroup = await widget.isar.productgroups
+        .filter()
+        .idEqualTo(int.parse(groupId))
+        .findFirst();
+    return productGroup?.name ??
+        "Unbekannt";
+  }
+
+ 
 
   Future<String> getShopName(String groupId) async {
     if (groupId.isEmpty) {
-      return "Unbekannt"; // Default value for empty group ID
+      return "Unbekannt";
     }
 
     final parsedGroupId = int.tryParse(groupId);
     if (parsedGroupId == null) {
-      return "Unbekannt"; // Return "Unbekannt" if ID is not an integer
+      return "Unbekannt";
     }
 
     final shop = await widget.isar.einkaufsladens
@@ -607,9 +511,9 @@ Future<void> exportCsvWithFilePicker(Itemlist itemlist) async {
         .idEqualTo(parsedGroupId)
         .findFirst();
     if (shop != null) {
-      return shop.name; // Return shop name if found
+      return shop.name;
     } else {
-      return "Unbekannt"; // Return "Unbekannt" if no shop is found
+      return "Unbekannt";
     }
   }
 
@@ -641,7 +545,7 @@ Future<void> exportCsvWithFilePicker(Itemlist itemlist) async {
                   });
                   Navigator.of(context).pop();
                   setState(() {
-                    _fetchLatestItemLists(); // Reload the lists after renaming
+                    _fetchLatestItemLists();
                   });
                 }
               },
@@ -655,25 +559,11 @@ Future<void> exportCsvWithFilePicker(Itemlist itemlist) async {
   void _deleteList(Itemlist itemlist) async {
     await widget.isar.writeTxn(() async {
       await widget.isar.itemlists.delete(itemlist.id);
-
-      // // Check if any other list uses the same shop
-      // final remainingLists = await widget.isar.itemlists
-      //     .filter()
-      //     .groupIdEqualTo(itemlist.groupId)
-      //     .findAll();
-
-      // // If no other lists are using this shop, delete the shop
-      // if (remainingLists.isEmpty && itemlist.groupId != null) {
-      //   final parsedGroupId = int.tryParse(itemlist.groupId!);
-      //   if (parsedGroupId != null) {
-      //     await widget.isar.einkaufsladens.delete(parsedGroupId);
-      //   }
-      // }
     });
 
     setState(() {
-      _fetchLatestItemLists(); // Reload the lists after deletion
-      _fetchTopShops(); // Reload the top shops after a list deletion
+      _fetchLatestItemLists();
+      _fetchTopShops();
     });
   }
 
@@ -682,7 +572,7 @@ Future<void> exportCsvWithFilePicker(Itemlist itemlist) async {
       name: itemlist.name,
       items: itemlist.getItems(),
       imagePath: itemlist.imagePath!,
-      storeId: itemlist.groupId,
+      storeId: itemlist.shopId,
     );
 
     await widget.isar.writeTxn(() async {
@@ -702,10 +592,9 @@ Future<void> exportCsvWithFilePicker(Itemlist itemlist) async {
       ),
     );
 
-    // Prüfe, ob eine neue Liste erstellt wurde, und aktualisiere dann
     if (result == true) {
       setState(() {
-        _fetchLatestItemLists(); // Aktualisiere die Itemlisten
+        _fetchLatestItemLists();
       });
     }
   }

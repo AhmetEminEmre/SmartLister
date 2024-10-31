@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
-import '../objects/itemlist.dart'; // Your Isar model for Itemlist
-import '../objects/shop.dart'; // Your Isar model for Shops (Einkaufsladen)
+import '../objects/itemlist.dart';
+import '../objects/shop.dart';
 import 'itemslist_screen.dart';
 
 class StoreScreen extends StatefulWidget {
@@ -10,7 +10,7 @@ class StoreScreen extends StatefulWidget {
   final Isar isar;
   final Function(String storeId) onStoreSelected;
 
-  StoreScreen({
+  const StoreScreen({super.key, 
     required this.listId,
     required this.listName,
     required this.isar,
@@ -31,7 +31,6 @@ class _StoreScreenState extends State<StoreScreen> {
     _loadStores();
   }
 
-  // Läd die Stores aus der Datenbank
   void _loadStores() async {
     final stores = await widget.isar.einkaufsladens.where().findAll();
     setState(() {
@@ -39,14 +38,12 @@ class _StoreScreenState extends State<StoreScreen> {
     });
   }
 
-  // Überprüfung, ob der Store einer Liste zugeordnet ist
   Future<bool> _isStoreAssignedToList(String storeId) async {
     final listsWithStore =
-        await widget.isar.itemlists.filter().groupIdEqualTo(storeId).findAll();
+        await widget.isar.itemlists.filter().shopIdEqualTo(storeId).findAll();
     return listsWithStore.isNotEmpty;
   }
 
-  // Holt die Items der ausgewählten Einkaufsliste
   Future<List<Itemlist>> _fetchItemsForList(String listId) async {
     return await widget.isar.itemlists
         .filter()
@@ -54,12 +51,11 @@ class _StoreScreenState extends State<StoreScreen> {
         .findAll();
   }
 
-  // Löscht den Store, falls er keiner Liste zugeordnet ist
   Future<void> _deleteStore(String storeId) async {
     final isAssigned = await _isStoreAssignedToList(storeId);
     if (isAssigned) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text(
               'Dieser Laden ist einer Liste zugeordnet und kann nicht gelöscht werden.'),
           backgroundColor: Colors.red,
@@ -80,14 +76,14 @@ class _StoreScreenState extends State<StoreScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Einkaufsladen zuordnen"),
+        title: const Text("Einkaufsladen zuordnen"),
       ),
       body: Column(
         children: [
           // Dropdown zum Auswählen eines Stores
           DropdownButton<String>(
             value: _selectedStoreId,
-            hint: Text("Einkaufsladen wählen"),
+            hint: const Text("Einkaufsladen wählen"),
             onChanged: (value) {
               setState(() {
                 _selectedStoreId = value;
@@ -102,17 +98,17 @@ class _StoreScreenState extends State<StoreScreen> {
                       context: context,
                       builder: (BuildContext context) {
                         return AlertDialog(
-                          title: Text('Laden löschen?'),
-                          content: Text(
+                          title: const Text('Laden löschen?'),
+                          content: const Text(
                               'Möchten Sie diesen Laden wirklich löschen?'),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.of(context).pop(false),
-                              child: Text('Nein'),
+                              child: const Text('Nein'),
                             ),
                             TextButton(
                               onPressed: () => Navigator.of(context).pop(true),
-                              child: Text('Ja'),
+                              child: const Text('Ja'),
                             ),
                           ],
                         );
@@ -131,11 +127,9 @@ class _StoreScreenState extends State<StoreScreen> {
           ElevatedButton(
             onPressed: _selectedStoreId != null
                 ? () async {
-                    // Items für die ausgewählte Liste laden
                     final items = await _fetchItemsForList(widget.listId);
                     widget.onStoreSelected(_selectedStoreId!);
 
-                    // Zur ItemListScreen mit dem ausgewählten Store weiterleiten
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
@@ -150,7 +144,7 @@ class _StoreScreenState extends State<StoreScreen> {
                     );
                   }
                 : null,
-            child: Text('Weiter zur Einkaufsliste'),
+            child: const Text('Weiter zur Einkaufsliste'),
           ),
         ],
       ),

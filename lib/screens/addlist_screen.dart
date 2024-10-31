@@ -1,21 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
-import 'package:smart/screens/choosestore_screen.dart'; // Stelle sicher, dass der korrekte Pfad verwendet wird
-import 'package:smart/screens/itemslist_screen.dart'; // Verwende diesen Screen nach der Store-Auswahl
-import '../objects/itemlist.dart'; // Dein Isar-Modell für Itemlist
-import '../objects/template.dart'; // Dein Isar-Modell für Template
-import 'package:flutter/material.dart';
-import 'package:isar/isar.dart';
-import 'package:file_picker/file_picker.dart'; // Import file_picker for file selection
-import 'dart:io';
 import 'package:smart/screens/choosestore_screen.dart';
 import 'package:smart/screens/itemslist_screen.dart';
 import '../objects/itemlist.dart';
 import '../objects/template.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:file_picker/file_picker.dart';
+import 'dart:io';
 import 'package:smart/objects/productgroup.dart';
-import '../objects/itemlist.dart';
 import '../objects/shop.dart';
+import 'dart:convert';
 
 class CreateListScreen extends StatefulWidget {
   final Isar isar;
@@ -105,7 +98,7 @@ class _CreateListScreenState extends State<CreateListScreen> {
   }
 
   Future<bool> isProductGroupOrderMatching(
-      String shopName, List<String> importedGroupIds) async {
+      String shopName, List<String> importedGroupNames) async {
     final existingShop = await widget.isar.einkaufsladens
         .filter()
         .nameEqualTo(shopName)
@@ -115,56 +108,118 @@ class _CreateListScreenState extends State<CreateListScreen> {
       final existingGroups = await widget.isar.productgroups
           .filter()
           .storeIdEqualTo(existingShop.id.toString())
+          .sortByOrder()
           .findAll();
 
-      List<String> existingGroupIds =
-          existingGroups.map((group) => group.id.toString()).toList();
-      return existingGroupIds == importedGroupIds;
-    }
+      List<String> existingGroupNames = existingGroups
+          .map((group) => group.name.trim())
+          .toList();
+      List<String> normalizedImportedGroupNames =
+          importedGroupNames.map((name) => name.trim()).toList();
 
+      print(
+          "Comparing imported groups with existing shop (order preserved)...");
+      print("Shop Name: $shopName");
+      print("Imported Groups (order-preserved): $normalizedImportedGroupNames");
+      print("Existing Shop Groups (order-preserved): $existingGroupNames");
+
+      if (_deepEquals(existingGroupNames, normalizedImportedGroupNames)) {
+        print(
+            "Exact match found for shop: $shopName with correct group order.");
+        return true;
+      } else {
+        print("No exact match found. Group order or names do not match.");
+      }
+    } else {
+      print("No shop found with the name: $shopName");
+    }
     return false;
+  }
+
+  bool _deepEquals(List<String> list1, List<String> list2) {
+    if (list1.length != list2.length) return false;
+    for (int i = 0; i < list1.length; i++) {
+      if (list1[i] != list2[i]) return false;
+    }
+    return true;
   }
 
   Future<void> importList(String csvContent) async {
     List<String> lines = csvContent.split('\n');
     if (lines.isEmpty) return;
 
-    // Parse the shop name and product groups from the first line
-    String shopName = lines[0].split(';')[0].trim();
-    List<String> importedGroupIds = lines[0]
+    String listName = lines[0].split(';')[0].trim();
+    String imagepath = lines[0].split(';')[1].trim();
+    String shopName = lines[0].split(';')[2].trim();
+
+    print("Starting import for list: $listName, with shop: $shopName");
+
+    List<String> importedGroupNames = lines[0]
         .split(';')
-        .skip(1)
-        .where((groupId) => groupId.isNotEmpty)
+        .skip(3)
+        .where((groupName) => groupName.isNotEmpty)
+        .map((name) => name.trim())
         .toList();
 
-    // Check if a matching shop exists, otherwise create a new one with a unique name
-    if (await isProductGroupOrderMatching(shopName, importedGroupIds)) {
-      print("Matching shop found. Using existing shop: $shopName");
-    } else {
-      shopName = await createUniqueShop(shopName);
-      print("Creating new shop with name: $shopName");
+    print("Imported Group Names (normalized): $importedGroupNames");
 
-      // Create the shop and save it to Isar
+    int shopId = -1;
+    Map<String, String> groupNameToId = {};
+
+    bool matchingOrder =
+        await isProductGroupOrderMatching(shopName, importedGroupNames);
+    if (matchingOrder) {
+      final existingShop = await widget.isar.einkaufsladens
+          .filter()
+          .nameEqualTo(shopName)
+          .findFirst();
+      shopId = existingShop?.id ?? -1;
+
+      print('Found existing shop: Name = ${existingShop?.name}, ID = $shopId');
+
+      if (shopId != -1) {
+        for (String groupName in importedGroupNames) {
+          final existingGroup = await widget.isar.productgroups
+              .filter()
+              .nameEqualTo(groupName)
+              .storeIdEqualTo(shopId.toString())
+              .findFirst();
+          if (existingGroup != null) {
+            groupNameToId[groupName] = existingGroup.id.toString();
+            print(
+                "Found existing group: Name = ${existingGroup.name}, ID = ${existingGroup.id}");
+          } else {
+            print("Group not found in existing shop: $groupName");
+          }
+        }
+      } else {
+        print("Shop ID retrieval failed for shop: $shopName");
+      }
+    } else {
+      print("No matching shop with correct group order. Creating a new shop.");
+
+      // if shops don't match
+      shopName = await createUniqueShop(shopName);
       final newShop = Einkaufsladen(name: shopName);
       await widget.isar.writeTxn(() async {
-        await widget.isar.einkaufsladens.put(newShop);
-
-// Add product groups to this new shop with the imported order
-        for (int i = 0; i < importedGroupIds.length; i++) {
-          final groupId = importedGroupIds[i];
+        shopId = await widget.isar.einkaufsladens.put(newShop);
+        for (int i = 0; i < importedGroupNames.length; i++) {
+          final groupName = importedGroupNames[i];
           final productGroup = Productgroup(
-            name: groupId,
-            itemCount: 0, // Default item count (set based on your requirements)
-            storeId: newShop.id.toString(),
-            order:
-                i, // Assign order based on the position in `importedGroupIds`
+            name: groupName,
+            storeId: shopId.toString(),
+            order: i,
           );
-          await widget.isar.productgroups.put(productGroup);
+          final groupId = await widget.isar.productgroups.put(productGroup);
+          groupNameToId[groupName] = groupId.toString();
+          print(
+              "Created new group in new shop: Name = $groupName, ID = $groupId");
         }
       });
+      print(
+          "Created new shop with name: $shopName, ID: $shopId, and groups: $groupNameToId");
     }
 
-    // Continue with importing items into the list
     List<Map<String, dynamic>> importedItems = [];
     for (int i = 1; i < lines.length; i++) {
       var line = lines[i].trim();
@@ -172,9 +227,10 @@ class _CreateListScreenState extends State<CreateListScreen> {
 
       var fields = line.split(';');
       if (fields.length >= 3) {
-        final groupId = fields[0].trim();
+        final groupName = fields[0].trim();
+        final groupId = groupNameToId[groupName] ?? "0";
         final itemName = fields[1].trim();
-        final status = fields[2].toLowerCase() == 'true';
+        final status = fields[2] == 'true';
 
         importedItems.add({
           'groupId': groupId,
@@ -182,11 +238,24 @@ class _CreateListScreenState extends State<CreateListScreen> {
           'isDone': status,
         });
         print(
-            'Imported Item - Group: $groupId, Name: $itemName, Status: $status');
+            "Imported item: Group ID = $groupId, Name = $itemName, Status = $status");
       }
     }
 
-    // You can now save these items into a new or existing list
+    print("Final imported items: $importedItems");
+
+    final newList = Itemlist(
+      name: listName,
+      imagePath: imagepath,
+      shopId: shopId.toString(),
+      items: importedItems,
+      creationDate: DateTime.now(),
+    );
+
+    await widget.isar.writeTxn(() async {
+      await widget.isar.itemlists.put(newList);
+    });
+    Navigator.popUntil(context, (route) => route.isFirst);
   }
 
   Future<void> _createList() async {
@@ -210,16 +279,16 @@ class _CreateListScreenState extends State<CreateListScreen> {
 
     final newList = Itemlist(
       name: _listNameController.text.trim(),
-      groupId: '', // `groupId` wird später festgelegt
+      shopId: '',
       imagePath: _selectedImagePath!,
       items: _items,
+      creationDate: DateTime.now(),
     );
 
     await widget.isar.writeTxn(() async {
       await widget.isar.itemlists.put(newList);
     });
 
-    // Weiterleitung zum ChooseStoreScreen
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -228,8 +297,7 @@ class _CreateListScreenState extends State<CreateListScreen> {
           listName: newList.name,
           isar: widget.isar,
           onStoreSelected: (selectedStoreId) async {
-            newList.groupId = selectedStoreId; // Setze den Store
-
+            newList.shopId = selectedStoreId;
             await widget.isar.writeTxn(() async {
               await widget.isar.itemlists.put(newList);
             });
@@ -239,8 +307,7 @@ class _CreateListScreenState extends State<CreateListScreen> {
               MaterialPageRoute(
                 builder: (context) => ItemListScreen(
                   listName: newList.name,
-                  shoppingListId:
-                      newList.id.toString(), // Übergebe hier die shoppingListId
+                  shoppingListId: newList.id.toString(),
                   items: [newList],
                   initialStoreId: selectedStoreId,
                   isar: widget.isar,
@@ -315,14 +382,20 @@ class _CreateListScreenState extends State<CreateListScreen> {
                 foregroundColor: Colors.white,
               ),
             ),
-            const SizedBox(height: 10), // Add spacing between buttons
+            const SizedBox(height: 10),
             ElevatedButton.icon(
               onPressed: () async {
                 final result = await FilePicker.platform.pickFiles();
                 if (result != null) {
                   final file = File(result.files.single.path!);
-                  final csvContent = await file.readAsString();
-                  await importList(csvContent);
+                  String csvContent;
+
+                  try {
+                    csvContent = await file.readAsString(encoding: utf8);
+                    await importList(csvContent);
+                  } catch (e) {
+                    print("UTF-8 decoding failed$e");
+                  }
                 }
               },
               icon: const Icon(Icons.upload_file),

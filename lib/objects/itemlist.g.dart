@@ -17,10 +17,10 @@ const ItemlistSchema = CollectionSchema(
   name: r'Itemlist',
   id: 604439071929499887,
   properties: {
-    r'groupId': PropertySchema(
+    r'creationDate': PropertySchema(
       id: 0,
-      name: r'groupId',
-      type: IsarType.string,
+      name: r'creationDate',
+      type: IsarType.dateTime,
     ),
     r'imagePath': PropertySchema(
       id: 1,
@@ -35,6 +35,11 @@ const ItemlistSchema = CollectionSchema(
     r'name': PropertySchema(
       id: 3,
       name: r'name',
+      type: IsarType.string,
+    ),
+    r'shopId': PropertySchema(
+      id: 4,
+      name: r'shopId',
       type: IsarType.string,
     )
   },
@@ -58,7 +63,6 @@ int _itemlistEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
-  bytesCount += 3 + object.groupId.length * 3;
   {
     final value = object.imagePath;
     if (value != null) {
@@ -67,6 +71,7 @@ int _itemlistEstimateSize(
   }
   bytesCount += 3 + object.itemsJson.length * 3;
   bytesCount += 3 + object.name.length * 3;
+  bytesCount += 3 + object.shopId.length * 3;
   return bytesCount;
 }
 
@@ -76,10 +81,11 @@ void _itemlistSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeString(offsets[0], object.groupId);
+  writer.writeDateTime(offsets[0], object.creationDate);
   writer.writeString(offsets[1], object.imagePath);
   writer.writeString(offsets[2], object.itemsJson);
   writer.writeString(offsets[3], object.name);
+  writer.writeString(offsets[4], object.shopId);
 }
 
 Itemlist _itemlistDeserialize(
@@ -89,9 +95,10 @@ Itemlist _itemlistDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = Itemlist(
-    groupId: reader.readString(offsets[0]),
+    creationDate: reader.readDateTime(offsets[0]),
     imagePath: reader.readStringOrNull(offsets[1]),
     name: reader.readString(offsets[3]),
+    shopId: reader.readString(offsets[4]),
   );
   object.id = id;
   object.itemsJson = reader.readString(offsets[2]);
@@ -106,12 +113,14 @@ P _itemlistDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readString(offset)) as P;
+      return (reader.readDateTime(offset)) as P;
     case 1:
       return (reader.readStringOrNull(offset)) as P;
     case 2:
       return (reader.readString(offset)) as P;
     case 3:
+      return (reader.readString(offset)) as P;
+    case 4:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -207,132 +216,56 @@ extension ItemlistQueryWhere on QueryBuilder<Itemlist, Itemlist, QWhereClause> {
 
 extension ItemlistQueryFilter
     on QueryBuilder<Itemlist, Itemlist, QFilterCondition> {
-  QueryBuilder<Itemlist, Itemlist, QAfterFilterCondition> groupIdEqualTo(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  QueryBuilder<Itemlist, Itemlist, QAfterFilterCondition> creationDateEqualTo(
+      DateTime value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'groupId',
+        property: r'creationDate',
         value: value,
-        caseSensitive: caseSensitive,
       ));
     });
   }
 
-  QueryBuilder<Itemlist, Itemlist, QAfterFilterCondition> groupIdGreaterThan(
-    String value, {
+  QueryBuilder<Itemlist, Itemlist, QAfterFilterCondition>
+      creationDateGreaterThan(
+    DateTime value, {
     bool include = false,
-    bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
         include: include,
-        property: r'groupId',
+        property: r'creationDate',
         value: value,
-        caseSensitive: caseSensitive,
       ));
     });
   }
 
-  QueryBuilder<Itemlist, Itemlist, QAfterFilterCondition> groupIdLessThan(
-    String value, {
+  QueryBuilder<Itemlist, Itemlist, QAfterFilterCondition> creationDateLessThan(
+    DateTime value, {
     bool include = false,
-    bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.lessThan(
         include: include,
-        property: r'groupId',
+        property: r'creationDate',
         value: value,
-        caseSensitive: caseSensitive,
       ));
     });
   }
 
-  QueryBuilder<Itemlist, Itemlist, QAfterFilterCondition> groupIdBetween(
-    String lower,
-    String upper, {
+  QueryBuilder<Itemlist, Itemlist, QAfterFilterCondition> creationDateBetween(
+    DateTime lower,
+    DateTime upper, {
     bool includeLower = true,
     bool includeUpper = true,
-    bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.between(
-        property: r'groupId',
+        property: r'creationDate',
         lower: lower,
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<Itemlist, Itemlist, QAfterFilterCondition> groupIdStartsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'groupId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<Itemlist, Itemlist, QAfterFilterCondition> groupIdEndsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'groupId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<Itemlist, Itemlist, QAfterFilterCondition> groupIdContains(
-      String value,
-      {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'groupId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<Itemlist, Itemlist, QAfterFilterCondition> groupIdMatches(
-      String pattern,
-      {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'groupId',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<Itemlist, Itemlist, QAfterFilterCondition> groupIdIsEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'groupId',
-        value: '',
-      ));
-    });
-  }
-
-  QueryBuilder<Itemlist, Itemlist, QAfterFilterCondition> groupIdIsNotEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'groupId',
-        value: '',
       ));
     });
   }
@@ -796,6 +729,136 @@ extension ItemlistQueryFilter
       ));
     });
   }
+
+  QueryBuilder<Itemlist, Itemlist, QAfterFilterCondition> shopIdEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'shopId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Itemlist, Itemlist, QAfterFilterCondition> shopIdGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'shopId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Itemlist, Itemlist, QAfterFilterCondition> shopIdLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'shopId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Itemlist, Itemlist, QAfterFilterCondition> shopIdBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'shopId',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Itemlist, Itemlist, QAfterFilterCondition> shopIdStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'shopId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Itemlist, Itemlist, QAfterFilterCondition> shopIdEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'shopId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Itemlist, Itemlist, QAfterFilterCondition> shopIdContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'shopId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Itemlist, Itemlist, QAfterFilterCondition> shopIdMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'shopId',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Itemlist, Itemlist, QAfterFilterCondition> shopIdIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'shopId',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Itemlist, Itemlist, QAfterFilterCondition> shopIdIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'shopId',
+        value: '',
+      ));
+    });
+  }
 }
 
 extension ItemlistQueryObject
@@ -805,15 +868,15 @@ extension ItemlistQueryLinks
     on QueryBuilder<Itemlist, Itemlist, QFilterCondition> {}
 
 extension ItemlistQuerySortBy on QueryBuilder<Itemlist, Itemlist, QSortBy> {
-  QueryBuilder<Itemlist, Itemlist, QAfterSortBy> sortByGroupId() {
+  QueryBuilder<Itemlist, Itemlist, QAfterSortBy> sortByCreationDate() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'groupId', Sort.asc);
+      return query.addSortBy(r'creationDate', Sort.asc);
     });
   }
 
-  QueryBuilder<Itemlist, Itemlist, QAfterSortBy> sortByGroupIdDesc() {
+  QueryBuilder<Itemlist, Itemlist, QAfterSortBy> sortByCreationDateDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'groupId', Sort.desc);
+      return query.addSortBy(r'creationDate', Sort.desc);
     });
   }
 
@@ -852,19 +915,31 @@ extension ItemlistQuerySortBy on QueryBuilder<Itemlist, Itemlist, QSortBy> {
       return query.addSortBy(r'name', Sort.desc);
     });
   }
+
+  QueryBuilder<Itemlist, Itemlist, QAfterSortBy> sortByShopId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'shopId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Itemlist, Itemlist, QAfterSortBy> sortByShopIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'shopId', Sort.desc);
+    });
+  }
 }
 
 extension ItemlistQuerySortThenBy
     on QueryBuilder<Itemlist, Itemlist, QSortThenBy> {
-  QueryBuilder<Itemlist, Itemlist, QAfterSortBy> thenByGroupId() {
+  QueryBuilder<Itemlist, Itemlist, QAfterSortBy> thenByCreationDate() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'groupId', Sort.asc);
+      return query.addSortBy(r'creationDate', Sort.asc);
     });
   }
 
-  QueryBuilder<Itemlist, Itemlist, QAfterSortBy> thenByGroupIdDesc() {
+  QueryBuilder<Itemlist, Itemlist, QAfterSortBy> thenByCreationDateDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'groupId', Sort.desc);
+      return query.addSortBy(r'creationDate', Sort.desc);
     });
   }
 
@@ -915,14 +990,25 @@ extension ItemlistQuerySortThenBy
       return query.addSortBy(r'name', Sort.desc);
     });
   }
+
+  QueryBuilder<Itemlist, Itemlist, QAfterSortBy> thenByShopId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'shopId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Itemlist, Itemlist, QAfterSortBy> thenByShopIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'shopId', Sort.desc);
+    });
+  }
 }
 
 extension ItemlistQueryWhereDistinct
     on QueryBuilder<Itemlist, Itemlist, QDistinct> {
-  QueryBuilder<Itemlist, Itemlist, QDistinct> distinctByGroupId(
-      {bool caseSensitive = true}) {
+  QueryBuilder<Itemlist, Itemlist, QDistinct> distinctByCreationDate() {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'groupId', caseSensitive: caseSensitive);
+      return query.addDistinctBy(r'creationDate');
     });
   }
 
@@ -946,6 +1032,13 @@ extension ItemlistQueryWhereDistinct
       return query.addDistinctBy(r'name', caseSensitive: caseSensitive);
     });
   }
+
+  QueryBuilder<Itemlist, Itemlist, QDistinct> distinctByShopId(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'shopId', caseSensitive: caseSensitive);
+    });
+  }
 }
 
 extension ItemlistQueryProperty
@@ -956,9 +1049,9 @@ extension ItemlistQueryProperty
     });
   }
 
-  QueryBuilder<Itemlist, String, QQueryOperations> groupIdProperty() {
+  QueryBuilder<Itemlist, DateTime, QQueryOperations> creationDateProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'groupId');
+      return query.addPropertyName(r'creationDate');
     });
   }
 
@@ -977,6 +1070,12 @@ extension ItemlistQueryProperty
   QueryBuilder<Itemlist, String, QQueryOperations> nameProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'name');
+    });
+  }
+
+  QueryBuilder<Itemlist, String, QQueryOperations> shopIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'shopId');
     });
   }
 }

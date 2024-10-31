@@ -5,31 +5,28 @@ part 'itemlist.g.dart';
 
 @Collection()
 class Itemlist {
-  Id id = Isar.autoIncrement; // Automatisch generierte ID durch Isar
-  late String name; // Name der Liste
-  late String groupId; // Referenz zum Shop (oder Gruppe)
-  String? imagePath; // Optionaler Bildpfad
-  DateTime creationDate = DateTime.now(); // Datum der Erstellung
+  Id id = Isar.autoIncrement;
+  late String name;
+  late String shopId;
+  String? imagePath;
+  DateTime creationDate = DateTime.now();
 
   @ignore
   List<Map<String, dynamic>> _items = [];
 
-  late String itemsJson; // JSON, das die Artikel enthält
+  late String itemsJson;
 
   Itemlist({
     required this.name,
-    required this.groupId, // Muss aus dem ausgewählten Shop kommen
+    required this.shopId,
     this.imagePath,
     List<Map<String, dynamic>>? items,
-    DateTime? creationDate,
+    required DateTime creationDate,
   }) {
     setItems(items ?? []);
-    if (creationDate != null) {
-      this.creationDate = creationDate;
+    this.creationDate = creationDate;
     }
-  }
 
-  // Getter, um das itemsJson zurück in eine Liste von Maps zu dekodieren
   List<Map<String, dynamic>> getItems() {
     if (itemsJson.isEmpty) {
       return [];
@@ -42,26 +39,34 @@ class Itemlist {
     }
   }
 
-  // Setter, um eine Liste von Maps in itemsJson zu kodieren
-  void setItems(List<Map<String, dynamic>> items) {
+void setItems(List<Map<String, dynamic>> items) {
     _items = items;
     itemsJson = jsonEncode(items);
-  }
+    print('Items JSON: $itemsJson');
+}
 
-  // JSON-Serialisierung
   Map<String, dynamic> toJson() => {
         'id': id,
         'name': name,
-        'groupId': groupId,
+        'groupId': shopId,
         'imagePath': imagePath,
         'itemsJson': itemsJson,
-        'creationDate': creationDate.toIso8601String(), // Datum im ISO-8601 Format serialisieren
+        'creationDate': creationDate.toIso8601String(),
       };
 
   static Itemlist fromJson(Map<String, dynamic> json) => Itemlist(
         name: json['name'],
-        groupId: json['groupId'],
+        shopId: json['groupId'],
         imagePath: json['imagePath'],
-        creationDate: DateTime.parse(json['creationDate']), // Datum aus dem String parsen
+        creationDate: DateTime.parse(json['creationDate']),
       )..itemsJson = json['itemsJson'];
+
+  @override
+String toString() {
+  return 'Itemlist{name: $name, shopId: $shopId, creationDate: $creationDate, items: ${getItems()}}';
 }
+
+}
+
+
+

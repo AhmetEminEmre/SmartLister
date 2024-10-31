@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
-import '../objects/productgroup.dart'; // Dein Isar-Modell für ProductGroup
+import '../objects/productgroup.dart';
+import '../objects/shop.dart';
 
 class EditStoreScreen extends StatefulWidget {
   final String storeId;
   final String storeName;
-  final bool isNewStore; // Dieser Flag bestimmt, ob es sich um einen neuen Laden handelt
+  final bool isNewStore;
   final Isar isar;
 
-  EditStoreScreen({
+  const EditStoreScreen({
+    super.key,
     required this.storeId,
     required this.storeName,
-    this.isNewStore = false, // Accept isNewStore as a parameter
+    this.isNewStore = false,
     required this.isar,
   });
 
@@ -23,15 +25,16 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
   List<Productgroup> _productGroups = [];
   bool _isLoading = true;
   bool _isEditMode = false;
+  late TextEditingController _storeNameController;
+  late String storename;
 
   @override
   void initState() {
     super.initState();
-
-    // Fetch the product groups when the screen is initialized
+    _storeNameController = TextEditingController(text: widget.storeName);
+    storename = widget.storeName;
     _fetchProductGroups();
 
-    // Check if this is a new store, then show the prompt after the UI is built
     if (widget.isNewStore) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _promptAddDefaultProductGroups();
@@ -39,11 +42,11 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
     }
   }
 
-  // Fetch product groups from the Isar database
   Future<void> _fetchProductGroups() async {
     final productGroups = await widget.isar.productgroups
         .filter()
         .storeIdEqualTo(widget.storeId)
+        .sortByOrder()
         .findAll();
 
     setState(() {
@@ -52,7 +55,6 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
     });
   }
 
-  // Add default product groups
   Future<void> _addDefaultProductGroups() async {
     final defaultGroups = [
       'Obst & Gemüse',
@@ -62,9 +64,9 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
     ];
 
     final existingGroups = await widget.isar.productgroups
-      .filter()
-      .storeIdEqualTo(widget.storeId)
-      .findAll();
+        .filter()
+        .storeIdEqualTo(widget.storeId)
+        .findAll();
     Set<String> existingNames = existingGroups.map((g) => g.name).toSet();
 
     try {
@@ -75,49 +77,46 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
               name: groupName,
               storeId: widget.storeId,
               order: defaultGroups.indexOf(groupName),
-              itemCount: 0,
             );
             await widget.isar.productgroups.put(productGroup);
           }
         }
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         content: Text('Fehlende Standard Warengruppen hinzugefügt.'),
         backgroundColor: Colors.green,
       ));
 
-      // Refresh the product groups
       _fetchProductGroups();
     } catch (e) {
       print("Error adding product groups: $e");
     }
   }
 
-  // Prompt to ask if the user wants to add default product groups
   void _promptAddDefaultProductGroups() {
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: Color(0xFF334B46),
-          title: Text('Standard Warengruppen hinzufügen?',
+          backgroundColor: const Color(0xFF334B46),
+          title: const Text('Standard Warengruppen hinzufügen?',
               style: TextStyle(color: Colors.white)),
-          content: Text(
+          content: const Text(
               'Möchten Sie die Standard Warengruppen zur neuen Filiale hinzufügen?',
               style: TextStyle(color: Colors.white)),
           actions: <Widget>[
             TextButton(
-              child: Text('Ja', style: TextStyle(color: Colors.white)),
+              child: const Text('Ja', style: TextStyle(color: Colors.white)),
               onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
-                _addDefaultProductGroups(); // Only add groups if user agrees
+                Navigator.of(context).pop();
+                _addDefaultProductGroups();
               },
             ),
             TextButton(
-              child: Text('Nein', style: TextStyle(color: Colors.white)),
+              child: const Text('Nein', style: TextStyle(color: Colors.white)),
               onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog without action
+                Navigator.of(context).pop();
               },
             ),
           ],
@@ -126,14 +125,47 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
     );
   }
 
-  // Toggle edit mode for reorderable list
-  void _toggleEditMode() {
+  Future<void> _saveStoreName() async {
+    final newStoreName = _storeNameController.text.trim();
+    if (newStoreName.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Der Name des Ladens darf nicht leer sein.'),
+        backgroundColor: Colors.red,
+      ));
+      return;
+    }
+
+    await widget.isar.writeTxn(() async {
+      final shop = await widget.isar.einkaufsladens
+          .filter()
+          .idEqualTo(int.parse(widget.storeId))
+          .findFirst();
+      if (shop != null) {
+        shop.name = newStoreName;
+        storename = newStoreName;
+        await widget.isar.einkaufsladens.put(shop);
+      }
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      content: Text('Ladenname erfolgreich geändert.'),
+      backgroundColor: Colors.green,
+    ));
+
     setState(() {
-      _isEditMode = !_isEditMode;
+      _isEditMode = false;
     });
   }
 
-  // Handle reorder logic
+  void _toggleEditMode() {
+    setState(() {
+      _isEditMode = !_isEditMode;
+      if (!_isEditMode) {
+        _saveStoreName();
+      }
+    });
+  }
+
   void _onReorder(int oldIndex, int newIndex) {
     if (newIndex > oldIndex) {
       newIndex -= 1;
@@ -146,7 +178,6 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
     _updateProductGroupOrder();
   }
 
-  // Update the order of product groups in the database
   void _updateProductGroupOrder() async {
     await widget.isar.writeTxn(() async {
       for (int i = 0; i < _productGroups.length; i++) {
@@ -155,36 +186,35 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
       }
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
       content: Text('Produktgruppenreihenfolge aktualisiert.'),
       backgroundColor: Colors.green,
     ));
   }
 
-  // Show add product group dialog
   void _showAddProductGroupDialog() {
     TextEditingController groupNameController = TextEditingController();
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: Color(0xFF334B46),
-          title: Text('Warengruppe hinzufügen',
+          backgroundColor: const Color(0xFF334B46),
+          title: const Text('Warengruppe hinzufügen',
               style: TextStyle(color: Colors.white)),
           content: TextField(
             controller: groupNameController,
             decoration: InputDecoration(
               hintText: 'Warengruppe Name',
-              hintStyle: TextStyle(color: Colors.white54),
+              hintStyle: const TextStyle(color: Colors.white54),
               filled: true,
-              fillColor: Color(0xFF4A6963),
+              fillColor: const Color(0xFF4A6963),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
               contentPadding:
-                  EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                  const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
             ),
-            style: TextStyle(color: Colors.white),
+            style: const TextStyle(color: Colors.white),
           ),
           actions: <Widget>[
             TextButton(
@@ -193,13 +223,15 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
                   _addProductGroupIfNotExists(groupNameController.text);
                   Navigator.of(context).pop();
                 } else {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text('Der Name der Warengruppe darf nicht leer sein.'),
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content:
+                        Text('Der Name der Warengruppe darf nicht leer sein.'),
                     backgroundColor: Colors.red,
                   ));
                 }
               },
-              child: Text('Hinzufügen', style: TextStyle(color: Colors.white)),
+              child: const Text('Hinzufügen',
+                  style: TextStyle(color: Colors.white)),
             ),
           ],
         );
@@ -207,7 +239,6 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
     );
   }
 
-  // Add new product group if it doesn't already exist
   Future<void> _addProductGroupIfNotExists(String name) async {
     final existingGroup = await widget.isar.productgroups
         .filter()
@@ -222,38 +253,34 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
           name: name,
           storeId: widget.storeId,
           order: newOrder,
-          itemCount: 0,
         );
         await widget.isar.productgroups.put(productGroup);
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         content: Text('Warengruppe hinzugefügt.'),
         backgroundColor: Colors.green,
       ));
 
-      // Refresh the product groups
       _fetchProductGroups();
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         content: Text('Warengruppe existiert bereits.'),
         backgroundColor: Colors.red,
       ));
     }
   }
 
-  // Delete a product group
   void _deleteProductGroup(Productgroup group) async {
     await widget.isar.writeTxn(() async {
       await widget.isar.productgroups.delete(group.id);
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
       content: Text('Warengruppe gelöscht.'),
       backgroundColor: Colors.green,
     ));
 
-    // Refresh the product groups
     _fetchProductGroups();
   }
 
@@ -261,13 +288,20 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.storeName, style: TextStyle(color: Colors.white)),
-        backgroundColor: Color(0xFF334B46),
+        title: _isEditMode
+            ? TextField(
+                controller: _storeNameController,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  hintText: "Ladenname bearbeiten",
+                  hintStyle: TextStyle(color: Colors.white54),
+                ),
+                onSubmitted: (_) => _toggleEditMode(),
+              )
+            : Text(storename, //hier anpassung
+                style: const TextStyle(color: Colors.white)),
+        backgroundColor: const Color(0xFF334B46),
         actions: [
-          IconButton(
-            icon: Icon(Icons.auto_awesome_motion, color: Colors.white),
-            onPressed: _promptAddDefaultProductGroups,
-          ),
           IconButton(
             icon: Icon(_isEditMode ? Icons.check : Icons.edit,
                 color: Colors.white),
@@ -276,41 +310,45 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
         ],
       ),
       body: _isLoading
-          ? Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator())
           : _productGroups.isEmpty
-              ? Center(child: Text("Keine Produktgruppen verfügbar.",
-                  style: TextStyle(color: Colors.white)))
+              ? const Center(
+                  child: Text("Keine Produktgruppen verfügbar.",
+                      style: TextStyle(color: Colors.white)))
               : ReorderableListView(
                   onReorder: _onReorder,
                   children: _productGroups.map((group) {
                     return Container(
                       key: ValueKey(group.id),
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         color: Color(0xFF334B46),
                         border: Border(
                           bottom: BorderSide(color: Colors.white24, width: 0.5),
                         ),
                       ),
                       child: ListTile(
-                        title: Text(group.name, style: TextStyle(color: Colors.white)),
+                        title: Text(group.name,
+                            style: const TextStyle(color: Colors.white)),
                         trailing: _isEditMode
                             ? IconButton(
-                                icon: Icon(Icons.delete, color: Colors.red),
+                                icon:
+                                    const Icon(Icons.delete, color: Colors.red),
                                 onPressed: () => _deleteProductGroup(group),
                               )
                             : ReorderableDragStartListener(
                                 index: _productGroups.indexOf(group),
-                                child: Icon(Icons.reorder, color: Color(0xFF96b17c)),
+                                child: const Icon(Icons.reorder,
+                                    color: Color(0xFF96b17c)),
                               ),
                       ),
                     );
                   }).toList(),
                 ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: Color(0xFF96b17c),
+        backgroundColor: const Color(0xFF96b17c),
         onPressed: _showAddProductGroupDialog,
-        child: Icon(Icons.add, color: Colors.white),
         tooltip: 'Warengruppe hinzufügen',
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }

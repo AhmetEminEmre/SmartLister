@@ -17,23 +17,18 @@ const ProductgroupSchema = CollectionSchema(
   name: r'Productgroup',
   id: -8773708925523039992,
   properties: {
-    r'itemCount': PropertySchema(
-      id: 0,
-      name: r'itemCount',
-      type: IsarType.long,
-    ),
     r'name': PropertySchema(
-      id: 1,
+      id: 0,
       name: r'name',
       type: IsarType.string,
     ),
     r'order': PropertySchema(
-      id: 2,
+      id: 1,
       name: r'order',
       type: IsarType.long,
     ),
     r'storeId': PropertySchema(
-      id: 3,
+      id: 2,
       name: r'storeId',
       type: IsarType.string,
     )
@@ -43,7 +38,21 @@ const ProductgroupSchema = CollectionSchema(
   deserialize: _productgroupDeserialize,
   deserializeProp: _productgroupDeserializeProp,
   idName: r'id',
-  indexes: {},
+  indexes: {
+    r'order': IndexSchema(
+      id: 5897270977454184057,
+      name: r'order',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'order',
+          type: IndexType.value,
+          caseSensitive: false,
+        )
+      ],
+    )
+  },
   links: {},
   embeddedSchemas: {},
   getId: _productgroupGetId,
@@ -69,10 +78,9 @@ void _productgroupSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeLong(offsets[0], object.itemCount);
-  writer.writeString(offsets[1], object.name);
-  writer.writeLong(offsets[2], object.order);
-  writer.writeString(offsets[3], object.storeId);
+  writer.writeString(offsets[0], object.name);
+  writer.writeLong(offsets[1], object.order);
+  writer.writeString(offsets[2], object.storeId);
 }
 
 Productgroup _productgroupDeserialize(
@@ -82,10 +90,9 @@ Productgroup _productgroupDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = Productgroup(
-    itemCount: reader.readLong(offsets[0]),
-    name: reader.readString(offsets[1]),
-    order: reader.readLong(offsets[2]),
-    storeId: reader.readString(offsets[3]),
+    name: reader.readString(offsets[0]),
+    order: reader.readLong(offsets[1]),
+    storeId: reader.readString(offsets[2]),
   );
   object.id = id;
   return object;
@@ -99,12 +106,10 @@ P _productgroupDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readLong(offset)) as P;
-    case 1:
       return (reader.readString(offset)) as P;
-    case 2:
+    case 1:
       return (reader.readLong(offset)) as P;
-    case 3:
+    case 2:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -129,6 +134,14 @@ extension ProductgroupQueryWhereSort
   QueryBuilder<Productgroup, Productgroup, QAfterWhere> anyId() {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(const IdWhereClause.any());
+    });
+  }
+
+  QueryBuilder<Productgroup, Productgroup, QAfterWhere> anyOrder() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        const IndexWhereClause.any(indexName: r'order'),
+      );
     });
   }
 }
@@ -201,6 +214,96 @@ extension ProductgroupQueryWhere
       ));
     });
   }
+
+  QueryBuilder<Productgroup, Productgroup, QAfterWhereClause> orderEqualTo(
+      int order) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'order',
+        value: [order],
+      ));
+    });
+  }
+
+  QueryBuilder<Productgroup, Productgroup, QAfterWhereClause> orderNotEqualTo(
+      int order) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'order',
+              lower: [],
+              upper: [order],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'order',
+              lower: [order],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'order',
+              lower: [order],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'order',
+              lower: [],
+              upper: [order],
+              includeUpper: false,
+            ));
+      }
+    });
+  }
+
+  QueryBuilder<Productgroup, Productgroup, QAfterWhereClause> orderGreaterThan(
+    int order, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'order',
+        lower: [order],
+        includeLower: include,
+        upper: [],
+      ));
+    });
+  }
+
+  QueryBuilder<Productgroup, Productgroup, QAfterWhereClause> orderLessThan(
+    int order, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'order',
+        lower: [],
+        upper: [order],
+        includeUpper: include,
+      ));
+    });
+  }
+
+  QueryBuilder<Productgroup, Productgroup, QAfterWhereClause> orderBetween(
+    int lowerOrder,
+    int upperOrder, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'order',
+        lower: [lowerOrder],
+        includeLower: includeLower,
+        upper: [upperOrder],
+        includeUpper: includeUpper,
+      ));
+    });
+  }
 }
 
 extension ProductgroupQueryFilter
@@ -250,62 +353,6 @@ extension ProductgroupQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.between(
         property: r'id',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-      ));
-    });
-  }
-
-  QueryBuilder<Productgroup, Productgroup, QAfterFilterCondition>
-      itemCountEqualTo(int value) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'itemCount',
-        value: value,
-      ));
-    });
-  }
-
-  QueryBuilder<Productgroup, Productgroup, QAfterFilterCondition>
-      itemCountGreaterThan(
-    int value, {
-    bool include = false,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'itemCount',
-        value: value,
-      ));
-    });
-  }
-
-  QueryBuilder<Productgroup, Productgroup, QAfterFilterCondition>
-      itemCountLessThan(
-    int value, {
-    bool include = false,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'itemCount',
-        value: value,
-      ));
-    });
-  }
-
-  QueryBuilder<Productgroup, Productgroup, QAfterFilterCondition>
-      itemCountBetween(
-    int lower,
-    int upper, {
-    bool includeLower = true,
-    bool includeUpper = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'itemCount',
         lower: lower,
         includeLower: includeLower,
         upper: upper,
@@ -647,18 +694,6 @@ extension ProductgroupQueryLinks
 
 extension ProductgroupQuerySortBy
     on QueryBuilder<Productgroup, Productgroup, QSortBy> {
-  QueryBuilder<Productgroup, Productgroup, QAfterSortBy> sortByItemCount() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'itemCount', Sort.asc);
-    });
-  }
-
-  QueryBuilder<Productgroup, Productgroup, QAfterSortBy> sortByItemCountDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'itemCount', Sort.desc);
-    });
-  }
-
   QueryBuilder<Productgroup, Productgroup, QAfterSortBy> sortByName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'name', Sort.asc);
@@ -710,18 +745,6 @@ extension ProductgroupQuerySortThenBy
     });
   }
 
-  QueryBuilder<Productgroup, Productgroup, QAfterSortBy> thenByItemCount() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'itemCount', Sort.asc);
-    });
-  }
-
-  QueryBuilder<Productgroup, Productgroup, QAfterSortBy> thenByItemCountDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'itemCount', Sort.desc);
-    });
-  }
-
   QueryBuilder<Productgroup, Productgroup, QAfterSortBy> thenByName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'name', Sort.asc);
@@ -761,12 +784,6 @@ extension ProductgroupQuerySortThenBy
 
 extension ProductgroupQueryWhereDistinct
     on QueryBuilder<Productgroup, Productgroup, QDistinct> {
-  QueryBuilder<Productgroup, Productgroup, QDistinct> distinctByItemCount() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'itemCount');
-    });
-  }
-
   QueryBuilder<Productgroup, Productgroup, QDistinct> distinctByName(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -793,12 +810,6 @@ extension ProductgroupQueryProperty
   QueryBuilder<Productgroup, int, QQueryOperations> idProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'id');
-    });
-  }
-
-  QueryBuilder<Productgroup, int, QQueryOperations> itemCountProperty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'itemCount');
     });
   }
 

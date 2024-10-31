@@ -4,6 +4,8 @@ import 'dart:convert';
 import 'dart:async';
 
 class CurrencyConverterScreen extends StatefulWidget {
+  const CurrencyConverterScreen({super.key});
+
   @override
   _CurrencyConverterScreenState createState() => _CurrencyConverterScreenState();
 }
@@ -83,22 +85,22 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
   Widget _buildCurrencyDropdown(String value, ValueChanged<String?> onChanged) {
     return Container(
       decoration: BoxDecoration(
-        color: Color(0xFF587A6F),
+        color: const Color(0xFF587A6F),
         borderRadius: BorderRadius.circular(5),
       ),
-      padding: EdgeInsets.symmetric(horizontal: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 10),
       child: DropdownButton<String>(
         value: value,
         onChanged: onChanged,
         items: _currencies.map((currency) {
           return DropdownMenuItem(
-            child: Text(currency, style: TextStyle(color: Colors.white)),
             value: currency,
+            child: Text(currency, style: const TextStyle(color: Colors.white)),
           );
         }).toList(),
-        dropdownColor: Color(0xFF587A6F),
+        dropdownColor: const Color(0xFF587A6F),
         iconEnabledColor: Colors.white,
-        underline: SizedBox(),
+        underline: const SizedBox(),
       ),
     );
   }
@@ -107,13 +109,13 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Währungsrechner', style: TextStyle(color: Colors.white)),
-        iconTheme: IconThemeData(color: Colors.white),
-        backgroundColor: Color(0xFF334B46),
+        title: const Text('Währungsrechner', style: TextStyle(color: Colors.white)),
+        iconTheme: const IconThemeData(color: Colors.white),
+        backgroundColor: const Color(0xFF334B46),
       ),
-      backgroundColor: Color(0xFF334B46),
+      backgroundColor: const Color(0xFF334B46),
       body: Padding(
-        padding: EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
@@ -132,10 +134,10 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
                               _convertCurrency();
                             });
                           }),
-                          SizedBox(height: 10),
+                          const SizedBox(height: 10),
                           TextField(
                             controller: _fromAmountController,
-                            decoration: InputDecoration(
+                            decoration: const InputDecoration(
                               labelText: 'Betrag',
                               labelStyle: TextStyle(color: Colors.white),
                               border: OutlineInputBorder(),
@@ -145,13 +147,13 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
                               fillColor: Color(0xFF587A6F),
                               filled: true,
                             ),
-                            style: TextStyle(color: Colors.white),
-                            keyboardType: TextInputType.numberWithOptions(decimal: true),
+                            style: const TextStyle(color: Colors.white),
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
                           ),
                         ],
                       ),
                     ),
-                    Icon(Icons.swap_horiz, size: 40, color: Colors.white),
+                    const Icon(Icons.swap_horiz, size: 40, color: Colors.white),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -162,10 +164,10 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
                               _convertCurrency();
                             });
                           }),
-                          SizedBox(height: 10),
+                          const SizedBox(height: 10),
                           TextField(
                             controller: _toAmountController,
-                            decoration: InputDecoration(
+                            decoration: const InputDecoration(
                               labelText: 'Betrag',
                               labelStyle: TextStyle(color: Colors.white),
                               border: OutlineInputBorder(),
@@ -176,7 +178,7 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
                               filled: true,
                             ),
                             readOnly: true,
-                            style: TextStyle(color: Colors.white),
+                            style: const TextStyle(color: Colors.white),
                           ),
                         ],
                       ),
@@ -185,7 +187,7 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
                 ),
               ],
             ),
-            if (_isLoading) CircularProgressIndicator(),
+            if (_isLoading) const CircularProgressIndicator(),
           ],
         ),
       ),
