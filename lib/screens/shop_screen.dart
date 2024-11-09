@@ -127,11 +127,17 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
 
   Future<void> _saveStoreName() async {
     final newStoreName = _storeNameController.text.trim();
+
     if (newStoreName.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         content: Text('Der Name des Ladens darf nicht leer sein.'),
         backgroundColor: Colors.red,
       ));
+      return;
+    } else if (newStoreName == storename) {
+      setState(() {
+        _isEditMode = false;
+      });
       return;
     }
 
@@ -302,6 +308,10 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
                 style: const TextStyle(color: Colors.white)),
         backgroundColor: const Color(0xFF334B46),
         actions: [
+          IconButton(
+            icon: Icon(Icons.auto_awesome_motion, color: Colors.white),
+            onPressed: _promptAddDefaultProductGroups,
+          ),
           IconButton(
             icon: Icon(_isEditMode ? Icons.check : Icons.edit,
                 color: Colors.white),
