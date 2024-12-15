@@ -65,33 +65,10 @@ class _HomePageState extends State<HomePage> {
       _loadingShops = true;
     });
 
-    final allItemLists = await widget.isar.itemlists.where().findAll();
-    Map<int, int> shopUsage = {};
-    for (var list in allItemLists) {
-      final groupId = list.shopId;
-      if (int.tryParse(groupId) != null) {
-        final int id = int.parse(groupId);
-        shopUsage[id] = (shopUsage[id] ?? 0) + 1;
-      }
-    }
-
-    final sortedGroupIds = shopUsage.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-    final topGroupIds = sortedGroupIds.take(3).map((e) => e.key).toList();
-
-    List<Einkaufsladen> topShops = [];
-    for (var groupId in topGroupIds) {
-      final shop = await widget.isar.einkaufsladens
-          .filter()
-          .idEqualTo(groupId)
-          .findFirst();
-      if (shop != null) {
-        topShops.add(shop);
-      }
-    }
+    final allShops = await widget.isar.einkaufsladens.where().findAll();
 
     setState(() {
-      _topShops = topShops;
+      _topShops = allShops;
       _loadingShops = false;
     });
   }
@@ -146,8 +123,7 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             StreamBuilder<void>(
-              stream:
-                  _itemListStream,
+              stream: _itemListStream,
               builder: (context, snapshot) {
                 return FutureBuilder<List<Itemlist>>(
                   future: _fetchLatestItemLists(),
@@ -177,30 +153,34 @@ class _HomePageState extends State<HomePage> {
             ),
             _loadingShops
                 ? const Center(child: CircularProgressIndicator())
-                : Wrap(
-                    spacing: 8.0,
-                    runSpacing: 4.0,
-                    children: _topShops.map((shop) {
-                      return GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => EditStoreScreen(
-                                storeId: shop.id.toString(),
-                                storeName: shop.name,
-                                isar: widget
-                                    .isar,
+                : SingleChildScrollView(
+                    scrollDirection: Axis.horizontal, // Horizontal Scrollbar
+                    child: Row(
+                      children: _topShops.map((shop) {
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => EditStoreScreen(
+                                  storeId: shop.id.toString(),
+                                  storeName: shop.name,
+                                  isar: widget.isar,
+                                ),
                               ),
+                            );
+                          },
+                          child: Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 4.0),
+                            child: Chip(
+                              label: Text(shop.name),
+                              backgroundColor: Colors.orange,
                             ),
-                          );
-                        },
-                        child: Chip(
-                          label: Text(shop.name),
-                          backgroundColor: Colors.orange,
-                        ),
-                      );
-                    }).toList(),
+                          ),
+                        );
+                      }).toList(),
+                    ),
                   ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -388,11 +368,15 @@ class _HomePageState extends State<HomePage> {
         }
       }
       newPath = "$newPath/Download";
-      directory = Directory(newPath);
-    } else {
+      directory =
+          Directory(newPath);
+    } else if (Platform.isIOS) {
       directory = await getApplicationDocumentsDirectory();
+      directory = Directory(
+          '${directory.path}/Downloads');
     }
-    return directory;
+
+    return directory!;
   }
 
   Future<void> exportCsv(
@@ -480,9 +464,7 @@ class _HomePageState extends State<HomePage> {
         .sortByOrder()
         .findAll();
 
-    return productGroups
-        .map((group) => group.name.trim())
-        .toList();
+    return productGroups.map((group) => group.name.trim()).toList();
   }
 
   Future<String> getGroupName(String groupId) async {
@@ -490,11 +472,8 @@ class _HomePageState extends State<HomePage> {
         .filter()
         .idEqualTo(int.parse(groupId))
         .findFirst();
-    return productGroup?.name ??
-        "Unbekannt";
+    return productGroup?.name ?? "Unbekannt";
   }
-
- 
 
   Future<String> getShopName(String groupId) async {
     if (groupId.isEmpty) {
