@@ -325,18 +325,24 @@ Widget build(BuildContext context) {
   return Scaffold(
     appBar: AppBar(
       title: const Text("Neue Einkaufsliste erstellen"),
-      backgroundColor: const Color(0xFF334B46),
+      backgroundColor: const Color(0xFF334B46), // Gleiche Hintergrundfarbe
     ),
+    backgroundColor: const Color(0xFF334B46), // Hintergrundfarbe für die gesamte Seite
     body: SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           TextField(
             controller: _listNameController,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Name der Einkaufsliste',
               filled: true,
-              fillColor: Color(0xFF4A6963),
+              fillColor: const Color(0xFF4A6963), // Feld-Hintergrund
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide.none,
+              ),
             ),
             style: const TextStyle(color: Colors.white),
           ),
@@ -372,49 +378,53 @@ Widget build(BuildContext context) {
             dropdownColor: const Color(0xFF4A6963),
           ),
           const SizedBox(height: 20),
-
-          if (_selectedImagePath != null) 
+          if (_selectedImagePath != null)
             Padding(
               padding: const EdgeInsets.only(top: 20.0),
-              child: Image.asset(
-                _selectedImagePath!,
-                width: 100,
-                height: 100,
-                fit: BoxFit.cover,
+              child: Center(
+                child: Image.asset(
+                  _selectedImagePath!,
+                  width: 100,
+                  height: 100,
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
           const SizedBox(height: 20),
-
-          ElevatedButton.icon(
-            onPressed: _createList,
-            icon: const Icon(Icons.add),
-            label: const Text('Neue Einkaufsliste erstellen'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF587A6F),
-              foregroundColor: Colors.white,
+          Center(
+            child: ElevatedButton.icon(
+              onPressed: _createList,
+              icon: const Icon(Icons.add),
+              label: const Text('Neue Einkaufsliste erstellen'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF587A6F),
+                foregroundColor: Colors.white,
+              ),
             ),
           ),
           const SizedBox(height: 10),
-          ElevatedButton.icon(
-            onPressed: () async {
-              final result = await FilePicker.platform.pickFiles();
-              if (result != null) {
-                final file = File(result.files.single.path!);
-                String csvContent;
+          Center(
+            child: ElevatedButton.icon(
+              onPressed: () async {
+                final result = await FilePicker.platform.pickFiles();
+                if (result != null) {
+                  final file = File(result.files.single.path!);
+                  String csvContent;
 
-                try {
-                  csvContent = await file.readAsString(encoding: utf8);
-                  await importList(csvContent);
-                } catch (e) {
-                  print("UTF-8 decoding failed$e");
+                  try {
+                    csvContent = await file.readAsString(encoding: utf8);
+                    await importList(csvContent);
+                  } catch (e) {
+                    print("UTF-8 decoding failed$e");
+                  }
                 }
-              }
-            },
-            icon: const Icon(Icons.upload_file),
-            label: const Text('Liste importieren'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF587A6F),
-              foregroundColor: Colors.white,
+              },
+              icon: const Icon(Icons.upload_file),
+              label: const Text('Liste importieren'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF587A6F),
+                foregroundColor: Colors.white,
+              ),
             ),
           ),
         ],
@@ -422,4 +432,5 @@ Widget build(BuildContext context) {
     ),
   );
 }
+
 }

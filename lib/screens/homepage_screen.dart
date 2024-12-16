@@ -14,6 +14,7 @@ import 'addshop_screen.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'dart:convert';
+import 'showAllList.dart';
 
 class HomePage extends StatefulWidget {
   final Isar isar;
@@ -144,6 +145,25 @@ class _HomePageState extends State<HomePage> {
                 );
               },
             ),
+            Padding(
+  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+  child: ElevatedButton.icon(
+    onPressed: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => AllListsScreen(isar: widget.isar),
+        ),
+      );
+    },
+    icon: const Icon(Icons.list),
+    label: const Text("Alle Listen anzeigen"),
+    style: ElevatedButton.styleFrom(
+      backgroundColor: const Color(0xFF587A6F),
+      foregroundColor: Colors.white,
+    ),
+  ),
+),
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               child: Text(
