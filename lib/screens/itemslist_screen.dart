@@ -132,7 +132,7 @@ class _ItemListScreenState extends State<ItemListScreen> {
                         .findFirst();
 
                     if (listToUpdate == null) {
-                      print("Fehler: Die Liste wurde nicht gefunden.");
+                      debugPrint("Fehler: Die Liste wurde nicht gefunden.");
                       return;
                     }
 
@@ -160,7 +160,7 @@ class _ItemListScreenState extends State<ItemListScreen> {
                     await loadItems();
                   });
                 } catch (e) {
-                  print("Error during deletion: $e");
+                  debugPrint("Error during deletion: $e");
                 }
 
                 toggleDeleteMode();
@@ -215,13 +215,13 @@ class _ItemListScreenState extends State<ItemListScreen> {
         itemsByGroup = orderedGroupedItems;
       });
 
-      print('==== Loaded Items from Database with Correct Order ====');
+      debugPrint('==== Loaded Items from Database with Correct Order ====');
       for (var group in itemsByGroup.keys) {
         for (var item in itemsByGroup[group]!) {
           print('Item: ${item['name']}, isDone: ${item['isDone']}');
         }
       }
-      print('==================================');
+      debugPrint('==================================');
     }
   }
 
@@ -254,16 +254,15 @@ class _ItemListScreenState extends State<ItemListScreen> {
             listToUpdate.setItems(currentItems);
             await widget.isar.itemlists.put(listToUpdate);
 
-            print('==== Current List Contents (after toggleItemDone) ====');
+            debugPrint('==== Current List Contents (after toggleItemDone) ====');
             for (var i = 0; i < currentItems.length; i++) {
-              print(
-                  'Item $i: ${currentItems[i]['name']}, isDone: ${currentItems[i]['isDone']}');
+              debugPrint('Item $i: ${currentItems[i]['name']}, isDone: ${currentItems[i]['isDone']}');
             }
-            print('===============================');
+            debugPrint('===============================');
 
-            print("List successfully updated.");
+            debugPrint("List successfully updated.");
           } else {
-            print('Item not found in the current list.');
+            debugPrint('Item not found in the current list.');
           }
         }
       });
@@ -272,15 +271,14 @@ class _ItemListScreenState extends State<ItemListScreen> {
 
   void _addItemToList(String itemName, String groupId) async {
     if (items.isEmpty) {
-      print('Es gibt keine Listen.');
+      debugPrint('Es gibt keine Listen.');
       return;
     }
 
     final listToAddTo = items.firstWhere(
       (list) => list.id.toString() == widget.shoppingListId,
       orElse: () {
-        print(
-            'Keine passende Liste gefunden für shoppingListId: ${widget.shoppingListId}');
+        debugPrint('Keine passende Liste gefunden für shoppingListId: ${widget.shoppingListId}');
         return Itemlist(
           name: 'Unbekannte Liste',
           shopId: 'unknown',
@@ -291,8 +289,7 @@ class _ItemListScreenState extends State<ItemListScreen> {
     );
 
     if (listToAddTo.name == 'Unbekannte Liste') {
-      print(
-          'Artikel kann nicht hinzugefügt werden, da keine Liste gefunden wurde.');
+      debugPrint('Artikel kann nicht hinzugefügt werden, da keine Liste gefunden wurde.');
       return;
     }
 
@@ -307,8 +304,7 @@ class _ItemListScreenState extends State<ItemListScreen> {
             List.from(listToUpdate.getItems());
 
         for (var i = 0; i < currentItems.length; i++) {
-          print(
-              'Item $i: ${currentItems[i]['name']}, isDone: ${currentItems[i]['isDone']}');
+          debugPrint('Item $i: ${currentItems[i]['name']}, isDone: ${currentItems[i]['isDone']}');
         }
 
         currentItems
@@ -317,14 +313,13 @@ class _ItemListScreenState extends State<ItemListScreen> {
         listToUpdate.setItems(currentItems);
         await widget.isar.itemlists.put(listToUpdate);
 
-        print('==== List after adding a new item ====');
+        debugPrint('==== List after adding a new item ====');
         for (var i = 0; i < currentItems.length; i++) {
-          print(
-              'Item $i: ${currentItems[i]['name']}, isDone: ${currentItems[i]['isDone']}');
+          debugPrint('Item $i: ${currentItems[i]['name']}, isDone: ${currentItems[i]['isDone']}');
         }
-        print('=====================================');
+        debugPrint('=====================================');
 
-        print("List successfully updated.");
+        debugPrint("List successfully updated.");
       }
     });
 

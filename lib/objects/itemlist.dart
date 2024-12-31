@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:isar/isar.dart';
+import 'package:flutter/foundation.dart';
 
 part 'itemlist.g.dart';
 
@@ -21,11 +22,10 @@ class Itemlist {
     required this.shopId,
     this.imagePath,
     List<Map<String, dynamic>>? items,
-    required DateTime creationDate,
+    required this.creationDate,
   }) {
     setItems(items ?? []);
-    this.creationDate = creationDate;
-    }
+  }
 
   List<Map<String, dynamic>> getItems() {
     if (itemsJson.isEmpty) {
@@ -34,7 +34,7 @@ class Itemlist {
     try {
       return List<Map<String, dynamic>>.from(jsonDecode(itemsJson));
     } catch (e) {
-      print('Fehler beim Decodieren von itemsJson: $e. Inhalt: $itemsJson');
+      debugPrint('Fehler beim Decodieren von itemsJson: $e. Inhalt: $itemsJson');
       return [];
     }
   }
@@ -42,7 +42,7 @@ class Itemlist {
 void setItems(List<Map<String, dynamic>> items) {
     _items = items;
     itemsJson = jsonEncode(items);
-    print('Items JSON: $itemsJson');
+    debugPrint('Items JSON: $itemsJson');
 }
 
   Map<String, dynamic> toJson() => {

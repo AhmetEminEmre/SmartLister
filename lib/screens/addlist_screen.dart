@@ -117,21 +117,20 @@ class _CreateListScreenState extends State<CreateListScreen> {
       List<String> normalizedImportedGroupNames =
           importedGroupNames.map((name) => name.trim()).toList();
 
-      print(
-          "Comparing imported groups with existing shop (order preserved)...");
-      print("Shop Name: $shopName");
-      print("Imported Groups (order-preserved): $normalizedImportedGroupNames");
-      print("Existing Shop Groups (order-preserved): $existingGroupNames");
+      debugPrint("Comparing imported groups with existing shop (order preserved)...");
+      debugPrint("Shop Name: $shopName");
+      debugPrint("Imported Groups (order-preserved): $normalizedImportedGroupNames");
+      debugPrint("Existing Shop Groups (order-preserved): $existingGroupNames");
 
       if (_deepEquals(existingGroupNames, normalizedImportedGroupNames)) {
-        print(
+        debugPrint(
             "Exact match found for shop: $shopName with correct group order.");
         return true;
       } else {
-        print("No exact match found. Group order or names do not match.");
+        debugPrint("No exact match found. Group order or names do not match.");
       }
     } else {
-      print("No shop found with the name: $shopName");
+      debugPrint("No shop found with the name: $shopName");
     }
     return false;
   }
@@ -152,7 +151,7 @@ class _CreateListScreenState extends State<CreateListScreen> {
     String imagepath = lines[0].split(';')[1].trim();
     String shopName = lines[0].split(';')[2].trim();
 
-    print("Starting import for list: $listName, with shop: $shopName");
+    debugPrint("Starting import for list: $listName, with shop: $shopName");
 
     List<String> importedGroupNames = lines[0]
         .split(';')
@@ -161,7 +160,7 @@ class _CreateListScreenState extends State<CreateListScreen> {
         .map((name) => name.trim())
         .toList();
 
-    print("Imported Group Names (normalized): $importedGroupNames");
+    debugPrint("Imported Group Names (normalized): $importedGroupNames");
 
     int shopId = -1;
     Map<String, String> groupNameToId = {};
@@ -175,7 +174,7 @@ class _CreateListScreenState extends State<CreateListScreen> {
           .findFirst();
       shopId = existingShop?.id ?? -1;
 
-      print('Found existing shop: Name = ${existingShop?.name}, ID = $shopId');
+      debugPrint('Found existing shop: Name = ${existingShop?.name}, ID = $shopId');
 
       if (shopId != -1) {
         for (String groupName in importedGroupNames) {
@@ -186,17 +185,17 @@ class _CreateListScreenState extends State<CreateListScreen> {
               .findFirst();
           if (existingGroup != null) {
             groupNameToId[groupName] = existingGroup.id.toString();
-            print(
+            debugPrint(
                 "Found existing group: Name = ${existingGroup.name}, ID = ${existingGroup.id}");
           } else {
-            print("Group not found in existing shop: $groupName");
+            debugPrint("Group not found in existing shop: $groupName");
           }
         }
       } else {
-        print("Shop ID retrieval failed for shop: $shopName");
+        debugPrint("Shop ID retrieval failed for shop: $shopName");
       }
     } else {
-      print("No matching shop with correct group order. Creating a new shop.");
+      debugPrint("No matching shop with correct group order. Creating a new shop.");
 
       // if shops don't match
       shopName = await createUniqueShop(shopName);
@@ -212,12 +211,10 @@ class _CreateListScreenState extends State<CreateListScreen> {
           );
           final groupId = await widget.isar.productgroups.put(productGroup);
           groupNameToId[groupName] = groupId.toString();
-          print(
-              "Created new group in new shop: Name = $groupName, ID = $groupId");
+          debugPrint("Created new group in new shop: Name = $groupName, ID = $groupId");
         }
       });
-      print(
-          "Created new shop with name: $shopName, ID: $shopId, and groups: $groupNameToId");
+      debugPrint("Created new shop with name: $shopName, ID: $shopId, and groups: $groupNameToId");
     }
 
     List<Map<String, dynamic>> importedItems = [];
@@ -237,12 +234,11 @@ class _CreateListScreenState extends State<CreateListScreen> {
           'name': itemName,
           'isDone': status,
         });
-        print(
-            "Imported item: Group ID = $groupId, Name = $itemName, Status = $status");
+        debugPrint("Imported item: Group ID = $groupId, Name = $itemName, Status = $status");
       }
     }
 
-    print("Final imported items: $importedItems");
+    debugPrint("Final imported items: $importedItems");
 
     final newList = Itemlist(
       name: listName,
@@ -262,8 +258,7 @@ class _CreateListScreenState extends State<CreateListScreen> {
     if (_listNameController.text.trim().isEmpty ||
         _listNameController.text.trim().length < 3) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text(
-            'Der Name der Einkaufsliste muss mindestens 3 Zeichen lang sein.'),
+        content: Text('Der Name der Einkaufsliste muss mindestens 3 Zeichen lang sein.'),
         backgroundColor: Colors.red,
       ));
       return;
@@ -325,9 +320,9 @@ Widget build(BuildContext context) {
   return Scaffold(
     appBar: AppBar(
       title: const Text("Neue Einkaufsliste erstellen"),
-      backgroundColor: const Color(0xFF334B46), // Gleiche Hintergrundfarbe
+      backgroundColor: const Color(0xFF334B46),
     ),
-    backgroundColor: const Color(0xFF334B46), // Hintergrundfarbe für die gesamte Seite
+    backgroundColor: const Color(0xFF334B46),
     body: SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -338,7 +333,7 @@ Widget build(BuildContext context) {
             decoration: InputDecoration(
               labelText: 'Name der Einkaufsliste',
               filled: true,
-              fillColor: const Color(0xFF4A6963), // Feld-Hintergrund
+              fillColor: const Color(0xFF4A6963),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide.none,
@@ -415,7 +410,7 @@ Widget build(BuildContext context) {
                     csvContent = await file.readAsString(encoding: utf8);
                     await importList(csvContent);
                   } catch (e) {
-                    print("UTF-8 decoding failed$e");
+                    debugPrint("UTF-8 decoding failed$e");
                   }
                 }
               },
