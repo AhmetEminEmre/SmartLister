@@ -40,16 +40,16 @@ class _ItemListScreenState extends State<ItemListScreen> {
     items = widget.items ?? [];
     loadItems();
   }
+void toggleDeleteMode() {
+  setState(() {
+    if (_isDeleteMode) {
+      selectedItems.clear();
+      selectedGroups.clear();
+    }
+    _isDeleteMode = !_isDeleteMode;
+  });
+}
 
-  void toggleDeleteMode() {
-    setState(() {
-      if (_isDeleteMode) {
-        selectedItems.clear();
-        selectedGroups.clear();
-      }
-      _isDeleteMode = !_isDeleteMode;
-    });
-  }
 
   void deleteSelectedItems() async {
     if (selectedItems.isEmpty && selectedGroups.isEmpty) {
@@ -254,9 +254,11 @@ class _ItemListScreenState extends State<ItemListScreen> {
             listToUpdate.setItems(currentItems);
             await widget.isar.itemlists.put(listToUpdate);
 
-            debugPrint('==== Current List Contents (after toggleItemDone) ====');
+            debugPrint(
+                '==== Current List Contents (after toggleItemDone) ====');
             for (var i = 0; i < currentItems.length; i++) {
-              debugPrint('Item $i: ${currentItems[i]['name']}, isDone: ${currentItems[i]['isDone']}');
+              debugPrint(
+                  'Item $i: ${currentItems[i]['name']}, isDone: ${currentItems[i]['isDone']}');
             }
             debugPrint('===============================');
 
@@ -278,7 +280,8 @@ class _ItemListScreenState extends State<ItemListScreen> {
     final listToAddTo = items.firstWhere(
       (list) => list.id.toString() == widget.shoppingListId,
       orElse: () {
-        debugPrint('Keine passende Liste gefunden für shoppingListId: ${widget.shoppingListId}');
+        debugPrint(
+            'Keine passende Liste gefunden für shoppingListId: ${widget.shoppingListId}');
         return Itemlist(
           name: 'Unbekannte Liste',
           shopId: 'unknown',
@@ -289,7 +292,8 @@ class _ItemListScreenState extends State<ItemListScreen> {
     );
 
     if (listToAddTo.name == 'Unbekannte Liste') {
-      debugPrint('Artikel kann nicht hinzugefügt werden, da keine Liste gefunden wurde.');
+      debugPrint(
+          'Artikel kann nicht hinzugefügt werden, da keine Liste gefunden wurde.');
       return;
     }
 
@@ -304,7 +308,8 @@ class _ItemListScreenState extends State<ItemListScreen> {
             List.from(listToUpdate.getItems());
 
         for (var i = 0; i < currentItems.length; i++) {
-          debugPrint('Item $i: ${currentItems[i]['name']}, isDone: ${currentItems[i]['isDone']}');
+          debugPrint(
+              'Item $i: ${currentItems[i]['name']}, isDone: ${currentItems[i]['isDone']}');
         }
 
         currentItems
@@ -315,7 +320,8 @@ class _ItemListScreenState extends State<ItemListScreen> {
 
         debugPrint('==== List after adding a new item ====');
         for (var i = 0; i < currentItems.length; i++) {
-          debugPrint('Item $i: ${currentItems[i]['name']}, isDone: ${currentItems[i]['isDone']}');
+          debugPrint(
+              'Item $i: ${currentItems[i]['name']}, isDone: ${currentItems[i]['isDone']}');
         }
         debugPrint('=====================================');
 
@@ -330,8 +336,7 @@ class _ItemListScreenState extends State<ItemListScreen> {
 
   void _showAddItemDialog() async {
     TextEditingController itemNameController = TextEditingController();
-    TextEditingController newGroupNameController =
-        TextEditingController();
+    TextEditingController newGroupNameController = TextEditingController();
     String? selectedGroupId;
 
     final productGroups = await widget.isar.productgroups
@@ -351,9 +356,9 @@ class _ItemListScreenState extends State<ItemListScreen> {
       builder: (BuildContext context) {
         return StatefulBuilder(builder: (context, setState) {
           return AlertDialog(
-            backgroundColor: const Color(0xFF334B46),
+            backgroundColor: Color.fromARGB(255, 255, 255, 255),
             title: const Text('Artikel hinzufügen',
-                style: TextStyle(color: Colors.white)),
+                style: TextStyle(color: Color.fromARGB(255, 22, 22, 22))),
             content: SizedBox(
               width: 400,
               child: Column(
@@ -363,51 +368,115 @@ class _ItemListScreenState extends State<ItemListScreen> {
                     controller: itemNameController,
                     decoration: InputDecoration(
                       labelText: 'Artikelname',
-                      labelStyle: const TextStyle(color: Colors.white),
-                      filled: true,
-                      fillColor: const Color(0xFF4A6963),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
+                      labelStyle: const TextStyle(
+                        color: Color.fromARGB(255, 54, 54, 54),
+                        fontSize: 16,
                       ),
-                      contentPadding: const EdgeInsets.symmetric(
-                          vertical: 12, horizontal: 16),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                          color: Color(0xFFBDBDBD),
+                          width: 1,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                          color: Color(0xFFBDBDBD),
+                          width: 2,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                          color: Color(0xFFE5A462),
+                          width: 2,
+                        ),
+                      ),
                     ),
-                    style: const TextStyle(color: Colors.white, fontSize: 14),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Warengruppe auswählen
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF4A6963),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: DropdownButton<String>(
-                      value: selectedGroupId,
-                      dropdownColor: const Color(0xFF4A6963),
-                      onChanged: (newValue) {
-                        setState(() {
-                          selectedGroupId = newValue;
-                        });
-                      },
-                      items: groupItems,
-                      hint: const Text('Warengruppe wählen',
-                          style: TextStyle(color: Colors.white)),
-                      isExpanded: true,
-                      underline: const SizedBox(),
-                      iconEnabledColor: Colors.white,
-                      iconSize: 30,
-                      style: const TextStyle(color: Colors.white),
+                    style: const TextStyle(
+                      color: Color.fromARGB(255, 26, 26, 26),
                     ),
                   ),
                   const SizedBox(height: 20),
-
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF587A6F)),
-                    child: const Text('Artikel hinzufügen',
-                        style: TextStyle(color: Colors.white)),
+                  DropdownButtonFormField<String>(
+                    value: selectedGroupId,
+                    onChanged: (newValue) {
+                      setState(() {
+                        selectedGroupId = newValue;
+                      });
+                    },
+                    items: groupItems,
+                    decoration: InputDecoration(
+                      labelText: '',
+                      labelStyle: const TextStyle(
+                        color: Color.fromARGB(255, 54, 54, 54),
+                        fontSize: 16,
+                      ),
+                      filled: true,
+                      fillColor: Colors.white, // Hintergrundfarbe
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                          color: Color(0xFFBDBDBD),
+                          width: 1,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                          color: Color(
+                              0xFFBDBDBD), // Grauer Rand für nicht fokussierten Zustand
+                          width: 2,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                          color: Color(
+                              0xFFE5A462), // Orange Rand für fokussierten Zustand
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                    dropdownColor: Colors.white, // Dropdown-Hintergrund
+                    iconEnabledColor: Color(0xFFE5A462), // Icon-Farbe
+                    style: const TextStyle(
+                      color: Color(0xFF212121), // Textfarbe im Dropdown
+                      fontSize: 16,
+                    ),
+                    hint: const Text(
+                      'Warengruppe wählen',
+                      style: TextStyle(
+                        color: Color.fromARGB(255, 54, 54, 54), // Hint-Farbe
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  TextButton(
+                    style: TextButton.styleFrom(
+                      backgroundColor: const Color.fromARGB(
+                          255, 239, 141, 37), // Orangener Hintergrund
+                      shape: RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.circular(12), // Abgerundete Ecken
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 10,
+                        horizontal: 12,
+                      ),
+                    ),
+                    child: const Text(
+                      'Artikel hinzufügen',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ), // Weiße Schrift
+                    ),
                     onPressed: () async {
                       if (itemNameController.text.isNotEmpty) {
                         if (selectedGroupId != null) {
@@ -429,7 +498,9 @@ class _ItemListScreenState extends State<ItemListScreen> {
                               storeId: widget.initialStoreId!,
                               order: newOrder,
                             );
-                            await widget.isar.productgroups.put(newGroup);
+                            await widget.isar.writeTxn(() async {
+                              await widget.isar.productgroups.put(newGroup);
+                            });
 
                             _addItemToList(itemNameController.text,
                                 newGroup.id.toString());
@@ -440,29 +511,64 @@ class _ItemListScreenState extends State<ItemListScreen> {
                     },
                   ),
                   const SizedBox(height: 20),
-
                   TextField(
                     controller: newGroupNameController,
                     decoration: InputDecoration(
                       labelText: 'Neue Warengruppe hinzufügen',
-                      labelStyle: const TextStyle(color: Colors.white),
-                      filled: true,
-                      fillColor: const Color(0xFF4A6963),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
+                      labelStyle: const TextStyle(
+                        color: Color.fromARGB(255, 54, 54, 54),
+                        fontSize: 16,
                       ),
-                      contentPadding: const EdgeInsets.symmetric(
-                          vertical: 12, horizontal: 16),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                          color: Color(0xFFBDBDBD),
+                          width: 1,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                          color: Color(0xFFBDBDBD),
+                          width: 2,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                          color: Color(0xFFE5A462),
+                          width: 2,
+                        ),
+                      ),
                     ),
-                    style: const TextStyle(color: Colors.white, fontSize: 14),
+                    style: const TextStyle(
+                      color: Color.fromARGB(255, 26, 26, 26),
+                    ),
                   ),
                   const SizedBox(height: 20),
-
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF587A6F)),
-                    child: const Text('Warengruppe hinzufügen',
-                        style: TextStyle(color: Colors.white)),
+                  TextButton(
+                    style: TextButton.styleFrom(
+                      backgroundColor: const Color.fromARGB(
+                          255, 239, 141, 37), // Orangener Hintergrund
+                      shape: RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.circular(12), // Abgerundete Ecken
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 10,
+                        horizontal: 12,
+                      ),
+                    ),
+                    child: const Text(
+                      'Warengruppe hinzufügen',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ), // Weiße Schrift
+                    ),
                     onPressed: () async {
                       if (newGroupNameController.text.isNotEmpty) {
                         await widget.isar.writeTxn(() async {
@@ -481,6 +587,7 @@ class _ItemListScreenState extends State<ItemListScreen> {
                             order: newOrder,
                           );
                           await widget.isar.productgroups.put(newGroup);
+
                           setState(() {
                             groupItems.add(DropdownMenuItem<String>(
                               value: newGroup.id.toString(),
@@ -531,15 +638,23 @@ class _ItemListScreenState extends State<ItemListScreen> {
       },
     ));
 
-    String pdfFileName = widget.listName.replaceAll(' ', '_') + '.pdf';
+    String pdfFileName = '${widget.listName.replaceAll(' ', '_')}.pdf';
     await Printing.sharePdf(bytes: await pdf.save(), filename: pdfFileName);
   }
 
+//WICHTIG
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.listName),
+        title: Text(
+          widget.listName,
+          style: TextStyle(
+            fontSize: 30, // Ändere die Schriftgröße hier
+            fontWeight: FontWeight.w500, // Optional: Schriftstärke anpassen
+          ),
+        ),
+        backgroundColor: Colors.white,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () =>
@@ -547,26 +662,28 @@ class _ItemListScreenState extends State<ItemListScreen> {
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.print),
+            icon: const Icon(Icons.print),
             onPressed: createPdf,
           ),
           if (_isDeleteMode)
             IconButton(
-              icon: Icon(Icons.check),
+              icon: const Icon(Icons.check),
               onPressed: deleteSelectedItems,
             )
           else
             IconButton(
-              icon: Icon(Icons.delete),
+              icon: const Icon(Icons.delete),
               onPressed: toggleDeleteMode,
             ),
         ],
       ),
+      backgroundColor: Colors.white,
       body: ListView.builder(
         itemCount: itemsByGroup.keys.length,
         itemBuilder: (context, index) {
           String groupId = itemsByGroup.keys.elementAt(index);
           return ExpansionTile(
+            //WARENGRUPPEN DROPWDOWN
             title: Row(
               children: [
                 if (_isDeleteMode)
@@ -586,7 +703,15 @@ class _ItemListScreenState extends State<ItemListScreen> {
                       });
                     },
                   ),
-                Text(groupId),
+                // WARENGRUPPEN TEXT
+                Text(
+                  groupId,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w500,
+                    color: const Color.fromARGB(255, 133, 131, 131),
+                  ),
+                ),
               ],
             ),
             children: [
@@ -612,9 +737,16 @@ class _ItemListScreenState extends State<ItemListScreen> {
                               },
                             ),
                           ),
+                        //EINZELNE ARTIKEL
                         Expanded(
                           child: ListTile(
-                            title: Text(item['name']),
+                            title: Text(
+                              item['name'],
+                              style: TextStyle(
+                                fontSize: 23, // Ändere die Schriftgröße hier
+                                fontWeight: FontWeight.normal,
+                              ),
+                            ),
                             trailing: !_isDeleteMode
                                 ? Checkbox(
                                     value: item['isDone'] ?? false,
@@ -632,17 +764,32 @@ class _ItemListScreenState extends State<ItemListScreen> {
                         ),
                       ],
                     );
-                  }).toList(),
+                  }),
                 ],
               ),
             ],
           );
         },
       ),
+      // ADD ARTIKEL BUTTON
       floatingActionButton: !_isDeleteMode
-          ? FloatingActionButton(
-              onPressed: _showAddItemDialog,
-              child: Icon(Icons.add),
+          ? Padding(
+              padding: const EdgeInsets.only(
+                  right: 16.0, bottom: 16.0), // Abstand rechts und unten
+              child: SizedBox(
+                height: 80, // Höhe des Buttons
+                width: 80, // Breite des Buttons
+                child: FloatingActionButton(
+                  onPressed: _showAddItemDialog,
+                  backgroundColor:
+                      Color.fromARGB(255, 239, 141, 37), // Hintergrundfarbe
+                  foregroundColor: Colors.white, // Icon-Farbe
+                  child: const Icon(Icons.add, size: 36), // Größeres Icon
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(40), // Eckenradius
+                  ),
+                ),
+              ),
             )
           : null,
     );

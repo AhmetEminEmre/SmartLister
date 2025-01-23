@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
 import '../objects/shop.dart';
-import 'shop_screen.dart';
 
 class AddStoreScreen extends StatefulWidget {
   final Isar isar;
@@ -14,57 +13,199 @@ class AddStoreScreen extends StatefulWidget {
 
 class _AddStoreScreenState extends State<AddStoreScreen> {
   final TextEditingController _storeNameController = TextEditingController();
+  String? _selectedImagePath;
+
+  // Map für die Bilder in img2
+  final Map<String, String> imageNameToPath = {
+    'Bild 1': 'lib/img2/Img1.png',
+    'Bild 2': 'lib/img2/Img2.png',
+    'Bild 3': 'lib/img2/Img3.png',
+    'Bild 4': 'lib/img2/Img4.png',
+    'Bild 5': 'lib/img2/Img5.png',
+    'Bild 6': 'lib/img2/Img6.png',
+    'Bild 7': 'lib/img2/Img7.png',
+  };
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          "Neuen Laden hinzufügen",
-          style: TextStyle(color: Colors.white),
+          "Neuen Einkaufsladen erstellen",
+          style: TextStyle(color: Color.fromARGB(255, 38, 38, 38)),
         ),
-        backgroundColor: const Color(0xFF334B46),
-        iconTheme: const IconThemeData(color: Colors.white),
+        backgroundColor: Colors.white,
+        iconTheme: const IconThemeData(color: Color.fromARGB(255, 40, 40, 40)),
       ),
-      backgroundColor: const Color(0xFF334B46),
+      backgroundColor: Colors.white,
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
+            // Textfeld für den Namen
             TextField(
               controller: _storeNameController,
+              cursorColor: const Color.fromARGB(255, 37, 37, 37),
+              onChanged: (value) {
+                setState(() {});
+              },
               decoration: InputDecoration(
-                labelText: 'Name des Ladens',
-                labelStyle: const TextStyle(color: Colors.white),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
+                label: RichText(
+                  text: TextSpan(
+                    text: 'Name',
+                    style: const TextStyle(
+                      color: Color.fromARGB(255, 46, 46, 46),
+                      fontSize: 16,
+                    ),
+                    children: const [
+                      TextSpan(
+                        text: ' *',
+                        style: TextStyle(
+                          color: Colors.red,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 filled: true,
-                fillColor: const Color(0xFF4A6963),
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(
+                    color: Color(0xFFBDBDBD),
+                    width: 1,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(
+                    color: Color(0xFFBDBDBD),
+                    width: 2,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(
+                    color: Color(0xFFE5A462),
+                    width: 2,
+                  ),
+                ),
               ),
-              style: const TextStyle(color: Colors.white),
+              style: const TextStyle(
+                color: Color.fromARGB(255, 26, 26, 26),
+              ),
             ),
+
+            // Dropdown für die Bildauswahl
+            const SizedBox(height: 20),
+            DropdownButtonFormField<String>(
+              value: _selectedImagePath,
+              onChanged: (value) {
+                setState(() {
+                  _selectedImagePath = value;
+                  print('Selected Image Path DROPDOWN: $_selectedImagePath');
+                });
+              },
+              items: imageNameToPath.keys.map((name) {
+                return DropdownMenuItem<String>(
+                  value: imageNameToPath[name],
+                  child: Text(
+                    name,
+                    style: const TextStyle(
+                      color: Color(0xFF212121),
+                    ),
+                  ),
+                );
+              }).toList(),
+              decoration: InputDecoration(
+                label: RichText(
+                  text: TextSpan(
+                    text: 'Bild auswählen',
+                    style: const TextStyle(
+                      color: Color.fromARGB(255, 52, 52, 52),
+                      fontSize: 16,
+                    ),
+                    children: const [
+                      TextSpan(
+                        text: ' *',
+                        style: TextStyle(
+                          color: Colors.red,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(
+                    color: Color(0xFFBDBDBD),
+                    width: 1,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(
+                    color: Color(0xFFBDBDBD),
+                    width: 2,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(
+                    color: Color(0xFFE5A462),
+                    width: 2,
+                  ),
+                ),
+              ),
+              dropdownColor: Colors.white,
+              style: const TextStyle(
+                color: Color(0xFF212121),
+              ),
+            ),
+
+            // BUTTON LADEN HINZUFÜGEN
             const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _addStore,
-                icon: Container(
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF334B46),
-                    shape: BoxShape.circle,
+              child: ElevatedButton(
+                onPressed: (_storeNameController.text.isNotEmpty &&
+                        _selectedImagePath != null)
+                    ? _addStore
+                    : null,
+                child: const Text(
+                  'Laden hinzufügen',
+                  style: TextStyle(
+                    fontSize: 23,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
                   ),
-                  padding: const EdgeInsets.all(6),
-                  child: const Icon(Icons.add, size: 16, color: Colors.white),
                 ),
-                label: const Text('Laden hinzufügen', style: TextStyle(fontSize: 20)),
-                style: ElevatedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  backgroundColor: const Color(0xFF587A6F),
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                style: ButtonStyle(
+                  backgroundColor: MaterialStateProperty.resolveWith<Color>(
+                    (Set<MaterialState> states) {
+                      if (states.contains(MaterialState.disabled)) {
+                        return const Color(0xFFFFD9B3);
+                      }
+                      return const Color.fromARGB(255, 239, 141, 37);
+                    },
+                  ),
+                  foregroundColor:
+                      MaterialStateProperty.all(Colors.white), // Textfarbe
+                  padding: MaterialStateProperty.all(
+                    const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  shape: MaterialStateProperty.all(
+                    RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  minimumSize: MaterialStateProperty.all(
+                    const Size.fromHeight(56),
                   ),
                 ),
               ),
@@ -75,33 +216,37 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
     );
   }
 
-  void _addStore() async {
-    if (_storeNameController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Der Name des Einkaufsladens darf nicht leer sein.'),
-        backgroundColor: Colors.red,
-      ));
+  Future<void> _addStore() async {
+    if (_storeNameController.text.isEmpty || _selectedImagePath == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Bitte geben Sie den Namen und ein Bild ein.'),
+          backgroundColor: Colors.red,
+        ),
+      );
       return;
     }
 
-    final newStore = Einkaufsladen(
-      name: _storeNameController.text.trim(),
+      // Debugging-Print, um den Wert des Bildpfads zu überprüfen
+  print('Selected Image Path beim Speichern: $_selectedImagePath');
+
+    // Speichere den neuen Laden in der Isar-Datenbank
+    final newShop = Einkaufsladen(
+      name: _storeNameController.text,
+      imagePath: _selectedImagePath!,
     );
 
     await widget.isar.writeTxn(() async {
-      await widget.isar.einkaufsladens.put(newStore);
+      await widget.isar.einkaufsladens.put(newShop);
     });
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => EditStoreScreen(
-          storeId: newStore.id.toString(),
-          storeName: newStore.name,
-          isNewStore: true,
-          isar: widget.isar,
-        ),
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Laden erfolgreich hinzugefügt!'),
+        backgroundColor: Colors.green,
       ),
     );
+
+    Navigator.pop(context); // Schließe den Screen
   }
 }

@@ -28,19 +28,21 @@ class _CreateListScreenState extends State<CreateListScreen> {
   List<Map<String, dynamic>> _items = [];
 
   final Map<String, String> imageNameToPath = {
-    'Fahrrad ': 'lib/img/bild1.png',
-    'Einkaufswagerl': 'lib/img/bild2.png',
-    'Fleisch/Fisch': 'lib/img/bild3.png',
-    'Euro': 'lib/img/bild4.png',
-    'Kaffee': 'lib/img/bild5.png',
+    'Einkaufssackerl ': 'lib/img/bild1.png',
+    'Schneidebrett': 'lib/img/bild2.png',
+    'Drogerie': 'lib/img/bild3.png',
+    'Gardening': 'lib/img/bild4.png',
+    'Party': 'lib/img/bild5.png',
+    'Büro': 'lib/img/bild6.png',
   };
 
   final Map<String, String> imagePathToName = {
-    'lib/img/bild1.png': 'Fahrrad',
-    'lib/img/bild2.png': 'Einkaufswagerl',
-    'lib/img/bild3.png': 'Fleisch/Fisch',
-    'lib/img/bild4.png': 'Euro',
-    'lib/img/bild5.png': 'Kaffee',
+    'lib/img/bild1.png': 'Einkaufssackerl',
+    'lib/img/bild2.png': 'Schneidebrett',
+    'lib/img/bild3.png': 'Drogerie',
+    'lib/img/bild4.png': 'Gardening',
+    'lib/img/bild5.png': 'Party',
+    'lib/img/bild6.png': 'Bür0',
   };
 
   @override
@@ -111,15 +113,16 @@ class _CreateListScreenState extends State<CreateListScreen> {
           .sortByOrder()
           .findAll();
 
-      List<String> existingGroupNames = existingGroups
-          .map((group) => group.name.trim())
-          .toList();
+      List<String> existingGroupNames =
+          existingGroups.map((group) => group.name.trim()).toList();
       List<String> normalizedImportedGroupNames =
           importedGroupNames.map((name) => name.trim()).toList();
 
-      debugPrint("Comparing imported groups with existing shop (order preserved)...");
+      debugPrint(
+          "Comparing imported groups with existing shop (order preserved)...");
       debugPrint("Shop Name: $shopName");
-      debugPrint("Imported Groups (order-preserved): $normalizedImportedGroupNames");
+      debugPrint(
+          "Imported Groups (order-preserved): $normalizedImportedGroupNames");
       debugPrint("Existing Shop Groups (order-preserved): $existingGroupNames");
 
       if (_deepEquals(existingGroupNames, normalizedImportedGroupNames)) {
@@ -174,7 +177,8 @@ class _CreateListScreenState extends State<CreateListScreen> {
           .findFirst();
       shopId = existingShop?.id ?? -1;
 
-      debugPrint('Found existing shop: Name = ${existingShop?.name}, ID = $shopId');
+      debugPrint(
+          'Found existing shop: Name = ${existingShop?.name}, ID = $shopId');
 
       if (shopId != -1) {
         for (String groupName in importedGroupNames) {
@@ -195,7 +199,8 @@ class _CreateListScreenState extends State<CreateListScreen> {
         debugPrint("Shop ID retrieval failed for shop: $shopName");
       }
     } else {
-      debugPrint("No matching shop with correct group order. Creating a new shop.");
+      debugPrint(
+          "No matching shop with correct group order. Creating a new shop.");
 
       // if shops don't match
       shopName = await createUniqueShop(shopName);
@@ -211,10 +216,12 @@ class _CreateListScreenState extends State<CreateListScreen> {
           );
           final groupId = await widget.isar.productgroups.put(productGroup);
           groupNameToId[groupName] = groupId.toString();
-          debugPrint("Created new group in new shop: Name = $groupName, ID = $groupId");
+          debugPrint(
+              "Created new group in new shop: Name = $groupName, ID = $groupId");
         }
       });
-      debugPrint("Created new shop with name: $shopName, ID: $shopId, and groups: $groupNameToId");
+      debugPrint(
+          "Created new shop with name: $shopName, ID: $shopId, and groups: $groupNameToId");
     }
 
     List<Map<String, dynamic>> importedItems = [];
@@ -234,7 +241,8 @@ class _CreateListScreenState extends State<CreateListScreen> {
           'name': itemName,
           'isDone': status,
         });
-        debugPrint("Imported item: Group ID = $groupId, Name = $itemName, Status = $status");
+        debugPrint(
+            "Imported item: Group ID = $groupId, Name = $itemName, Status = $status");
       }
     }
 
@@ -258,7 +266,8 @@ class _CreateListScreenState extends State<CreateListScreen> {
     if (_listNameController.text.trim().isEmpty ||
         _listNameController.text.trim().length < 3) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Der Name der Einkaufsliste muss mindestens 3 Zeichen lang sein.'),
+        content: Text(
+            'Der Name der Einkaufsliste muss mindestens 3 Zeichen lang sein.'),
         backgroundColor: Colors.red,
       ));
       return;
@@ -315,117 +324,343 @@ class _CreateListScreenState extends State<CreateListScreen> {
     );
   }
 
-@override
-Widget build(BuildContext context) {
-  return Scaffold(
-    appBar: AppBar(
-      title: const Text("Neue Einkaufsliste erstellen"),
-      backgroundColor: const Color(0xFF334B46),
-    ),
-    backgroundColor: const Color(0xFF334B46),
-    body: SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          TextField(
-            controller: _listNameController,
-            decoration: InputDecoration(
-              labelText: 'Name der Einkaufsliste',
-              filled: true,
-              fillColor: const Color(0xFF4A6963),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide.none,
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Neue Einkaufsliste erstellen"),
+        backgroundColor: Color.fromARGB(255, 255, 255, 255),
+      ),
+      backgroundColor: Color.fromARGB(255, 255, 255, 255),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            TextField(
+              controller: _listNameController,
+              cursorColor: Color.fromARGB(255, 37, 37, 37),
+              decoration: InputDecoration(
+                label: RichText(
+                  text: TextSpan(
+                    text: 'Name',
+                    style: const TextStyle(
+                      color: Color.fromARGB(
+                          255, 46, 46, 46), // Label-Farbe (Orange)
+                      fontSize: 16,
+                    ),
+                    children: const [
+                      TextSpan(
+                        text: ' *', // Sternchen hinzufügen
+                        style: TextStyle(
+                          color: Colors.red, // Sternchen-Farbe (Rot)
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                filled: true,
+                fillColor: Colors.white, // Weißer Hintergrund innen
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(
+                    color: Color(0xFFBDBDBD), // Grauer Rand
+                    width: 1,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(
+                    color: Color(
+                        0xFFBDBDBD), // Grauer Rand für nicht fokussierten Zustand
+                    width: 2,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(
+                    color: Color(
+                        0xFFE5A462), // Orangefarbener Rand für fokussierten Zustand
+                    width: 2, // Etwas dicker für den Fokus
+                  ),
+                ),
+              ),
+              style: const TextStyle(
+                color: Color.fromARGB(255, 26, 26, 26), // Dunkle Schriftfarbe
               ),
             ),
-            style: const TextStyle(color: Colors.white),
-          ),
-          const SizedBox(height: 20),
-          DropdownButton<String>(
-            value: _selectedTemplateId,
-            onChanged: (value) {
-              if (value != null) _applyTemplate(value);
-            },
-            items: _templateItems,
-            hint: const Text('Vorlage auswählen',
-                style: TextStyle(color: Colors.white)),
-            isExpanded: true,
-            dropdownColor: const Color(0xFF4A6963),
-          ),
-          const SizedBox(height: 20),
-          DropdownButton<String>(
-            value: _selectedImagePath,
-            onChanged: (value) {
-              setState(() {
-                _selectedImagePath = value;
-              });
-            },
-            items: imageNameToPath.keys.map((name) {
-              return DropdownMenuItem<String>(
-                value: imageNameToPath[name],
-                child: Text(name, style: const TextStyle(color: Colors.white)),
-              );
-            }).toList(),
-            hint: const Text('Bild auswählen',
-                style: TextStyle(color: Colors.white)),
-            isExpanded: true,
-            dropdownColor: const Color(0xFF4A6963),
-          ),
-          const SizedBox(height: 20),
-          if (_selectedImagePath != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 20.0),
-              child: Center(
-                child: Image.asset(
-                  _selectedImagePath!,
-                  width: 100,
-                  height: 100,
-                  fit: BoxFit.cover,
+            // DROPWDOWN BILD AUSWÄHLEN
+            const SizedBox(height: 20),
+            DropdownButtonFormField<String>(
+              value: _selectedImagePath,
+              onChanged: (value) {
+                setState(() {
+                  _selectedImagePath = value;
+                });
+              },
+              items: imageNameToPath.keys.map((name) {
+                return DropdownMenuItem<String>(
+                  value: imageNameToPath[name],
+                  child: Text(
+                    name,
+                    style: const TextStyle(
+                      color: Color(0xFF212121), // Dropdown-Textfarbe
+                    ),
+                  ),
+                );
+              }).toList(),
+              decoration: InputDecoration(
+                label: RichText(
+                  text: TextSpan(
+                    text: 'Bild auswählen',
+                    style: const TextStyle(
+                      color: Color.fromARGB(255, 52, 52, 52), // Orange Label
+                      fontSize: 16,
+                    ),
+                    children: const [
+                      TextSpan(
+                        text: ' *', // Sternchen hinzufügen
+                        style: TextStyle(
+                          color: Colors.red, // Sternchen-Farbe (Rot)
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                filled: true,
+                fillColor: Colors.white, // Hintergrundfarbe
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(
+                    color: Color(0xFFBDBDBD), // Grauer Rand
+                    width: 1,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(
+                    color: Color(
+                        0xFFBDBDBD), // Grauer Rand für nicht fokussierten Zustand
+                    width: 2,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(
+                    color: Color(
+                        0xFFE5A462), // Orange Rand für fokussierten Zustand
+                    width: 2,
+                  ),
+                ),
+              ),
+              dropdownColor: Colors.white, // Dropdown-Hintergrund
+              style: const TextStyle(
+                color: Color(0xFF212121), // Textfarbe im Dropdown
+              ),
+            ),
+
+            // DROPWDOWN VORLAGE
+            const SizedBox(height: 20),
+            DropdownButtonFormField<String>(
+              value: _selectedTemplateId,
+              onChanged: (value) {
+                if (value != null) _applyTemplate(value);
+              },
+              items: _templateItems,
+              decoration: InputDecoration(
+                label: RichText(
+                  text: TextSpan(
+                    text: 'Vorlage auswählen',
+                    style: const TextStyle(
+                      color: Color.fromARGB(255, 58, 58, 58), // Orange Label
+                      fontSize: 16, // Schriftgröße anpassen
+                    ),
+                    children: const [
+                      TextSpan(
+                        text: '', // Sternchen hinzufügen
+                        style: TextStyle(
+                          color: Colors.red, // Sternchen-Farbe
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                filled: true,
+                fillColor: Colors.white, // Hintergrundfarbe
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(
+                    color: Color(0xFFBDBDBD), // Grauer Rand
+                    width: 1,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(
+                    color: Color(
+                        0xFFBDBDBD), // Grauer Rand für nicht fokussierten Zustand
+                    width: 2,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(
+                    color: Color(
+                        0xFFE5A462), // Orange Rand für fokussierten Zustand
+                    width: 2,
+                  ),
+                ),
+              ),
+              dropdownColor: Colors.white, // Dropdown-Hintergrund
+              style: const TextStyle(
+                color: Color(0xFF212121), // Textfarbe im Dropdown
+                fontSize: 16, // Schriftgröße
+              ),
+            ),
+
+// Text "ODER"
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: Divider(
+                    color: Color(0xFFBDBDBD), // Farbe der Linie
+                    thickness: 1, // Dicke der Linie
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Text(
+                    'ODER',
+                    style: TextStyle(
+                      color: Color.fromARGB(255, 109, 108, 108), // Textfarbe
+                      fontSize: 22, // Schriftgröße
+                      fontWeight: FontWeight.w500, // Schriftstärke
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Divider(
+                    color: Color(0xFFBDBDBD), // Farbe der Linie
+                    thickness: 1, // Dicke der Linie
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+
+            //BUTTON LISTE IMPORTIEREN
+            const SizedBox(height: 10),
+            Center(
+              child: ElevatedButton.icon(
+                onPressed: () async {
+                  final result = await FilePicker.platform.pickFiles();
+                  if (result != null) {
+                    final file = File(result.files.single.path!);
+                    String csvContent;
+
+                    try {
+                      csvContent = await file.readAsString(encoding: utf8);
+                      await importList(csvContent);
+                    } catch (e) {
+                      debugPrint("UTF-8 decoding failed$e");
+                    }
+                  }
+                },
+                icon: const Icon(Icons.upload_file),
+                label: const Text(
+                  'Liste importieren',
+                  style: TextStyle(
+                      fontSize: 23, // Schriftgröße
+                      color: Color.fromARGB(255, 105, 105, 105),
+                      fontWeight: FontWeight.w600),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFD3D3D3),
+                  foregroundColor: const Color(0xFF4A4A4A),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+
+                  minimumSize: const Size.fromHeight(
+                      56), // Gleiche Größe wie bei Homepage-Buttons
                 ),
               ),
             ),
-          const SizedBox(height: 20),
-          Center(
-            child: ElevatedButton.icon(
-              onPressed: _createList,
-              icon: const Icon(Icons.add),
-              label: const Text('Neue Einkaufsliste erstellen'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF587A6F),
-                foregroundColor: Colors.white,
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Center(
-            child: ElevatedButton.icon(
-              onPressed: () async {
-                final result = await FilePicker.platform.pickFiles();
-                if (result != null) {
-                  final file = File(result.files.single.path!);
-                  String csvContent;
 
-                  try {
-                    csvContent = await file.readAsString(encoding: utf8);
-                    await importList(csvContent);
-                  } catch (e) {
-                    debugPrint("UTF-8 decoding failed$e");
-                  }
-                }
-              },
-              icon: const Icon(Icons.upload_file),
-              label: const Text('Liste importieren'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF587A6F),
-                foregroundColor: Colors.white,
-              ),
-            ),
-          ),
-        ],
+            // BUTTON WEITER
+            const SizedBox(height: 20),
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: SizedBox(
+                width: double.infinity,
+                child: 
+
+                ElevatedButton(
+  onPressed: (_listNameController.text.isNotEmpty && _selectedImagePath != null)
+      ? _createList
+      : null,
+  child: const Text(
+    'Weiter',
+    style: TextStyle(
+      fontSize: 23,
+      fontWeight: FontWeight.w700,
+    ),
+  ),
+  style: ButtonStyle(
+    // Hintergrundfarbe je nach Zustand
+    backgroundColor: MaterialStateProperty.resolveWith<Color>(
+      (Set<MaterialState> states) {
+        if (states.contains(MaterialState.disabled)) {
+          return Color.fromARGB(255, 255, 255, 255); // Heller Orange-Ton für disabled
+        }
+        return Colors.white; // Weißer Hintergrund für enabled
+      },
+    ),
+    // Textfarbe je nach Zustand
+    foregroundColor: MaterialStateProperty.resolveWith<Color>(
+      (Set<MaterialState> states) {
+        if (states.contains(MaterialState.disabled)) {
+          return Color.fromARGB(255, 249, 217, 169); // Abgeschwächtes Orange für disabled
+        }
+        return const Color(0xFFE5A462); // Starkes Orange für enabled
+      },
+    ),
+    // Randfarbe je nach Zustand
+    side: MaterialStateProperty.resolveWith<BorderSide>(
+      (Set<MaterialState> states) {
+        if (states.contains(MaterialState.disabled)) {
+          return const BorderSide(
+            color: Color.fromARGB(255, 255, 226, 182), // Abgeschwächter Rand für disabled
+            width: 3.0,
+          );
+        }
+        return const BorderSide(
+          color: Color(0xFFE5A462), // Starker orangefarbener Rand für enabled
+          width: 3.0,
+        );
+      },
+    ),
+    padding: MaterialStateProperty.all(
+      const EdgeInsets.symmetric(vertical: 16.0),
+    ),
+    shape: MaterialStateProperty.all(
+      RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12.0), // Abgerundete Ecken
       ),
     ),
-  );
-}
+  ),
+),
 
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

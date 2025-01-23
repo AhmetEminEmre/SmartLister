@@ -15,6 +15,7 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'dart:convert';
 import 'showAllList.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class HomePage extends StatefulWidget {
   final Isar isar;
@@ -35,7 +36,7 @@ class _HomePageState extends State<HomePage> {
 
   List<Einkaufsladen> _topShops = [];
   bool _loadingShops = true;
-  String _username = 'default'; //hier in zukunft namen setzen
+  final String _username = 'default'; //hier in zukunft namen setzen
 
   @override
   @override
@@ -75,52 +76,64 @@ class _HomePageState extends State<HomePage> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        backgroundColor: const Color(0xFF334B46),
-        title: const Text(
-          'Hallo xxxx!',
+ @override
+Widget build(BuildContext context) {
+  return Scaffold(
+    appBar: AppBar(
+      automaticallyImplyLeading: false,
+      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
+      title: const Padding(
+        padding: EdgeInsets.only(right: 100.0), // Linkes Padding für den Titel
+        child: Text(
+          'Guten Tag Herbert!',
           style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
+            fontSize: 33,
+            color: Color(0xFF222222),
+            fontWeight: FontWeight.w600,
           ),
         ),
-        actions: <Widget>[
+      ),
+      actions: <Widget>[
+          //   IconButton(
+          //    icon: const Icon(Icons.add_alert, color: Color(0xFF222222)),
+          //    onPressed: () => showNotificationDialog(context),
+          //    ),
+          //    IconButton(
+          //    icon: const Icon(Icons.attach_money, color: Color(0xFF222222)),
+          //     onPressed: () {
+          //        Navigator.push(
+          //          context,
+          //          MaterialPageRoute(
+          //           builder: (context) => const CurrencyConverterScreen(),
+          //           ),
+          //      );
+          //     },
+          //   ),
           IconButton(
-            icon: const Icon(Icons.add_alert, color: Colors.white),
-            onPressed: () => showNotificationDialog(context),
-          ),
-          IconButton(
-            icon: const Icon(Icons.attach_money, color: Colors.white),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const CurrencyConverterScreen(),
-                ),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings, color: Colors.white),
+            icon: const Icon(Icons.settings, color: Color(0xFF222222)),
             onPressed: () {
               // settings here in future
             },
           ),
         ],
       ),
-      backgroundColor: const Color(0xFF334B46),
+      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             const Padding(
-              padding: EdgeInsets.all(16.0),
+              padding: EdgeInsets.only(
+                  left: 16.0,
+                  right: 16.0,
+                  top: 16.0,
+                  bottom: 2.0), // Abstand unten verringern
               child: Text(
                 'Meine Listen',
-                style: TextStyle(fontSize: 18, color: Colors.white),
+                style: TextStyle(
+                    fontSize: 23,
+                    color: Color(0xFF222222),
+                    fontWeight: FontWeight.w500),
               ),
             ),
             StreamBuilder<void>(
@@ -132,6 +145,8 @@ class _HomePageState extends State<HomePage> {
                     if (snapshot.connectionState == ConnectionState.done &&
                         snapshot.hasData) {
                       return Column(
+                        crossAxisAlignment:
+                            CrossAxisAlignment.center, // Karten zentrieren
                         children: snapshot.data!
                             .map((itemlist) => _buildListCard(itemlist))
                             .toList(),
@@ -145,91 +160,107 @@ class _HomePageState extends State<HomePage> {
                 );
               },
             ),
-            Padding(
-  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-  child: ElevatedButton.icon(
-    onPressed: () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => AllListsScreen(isar: widget.isar),
-        ),
-      );
-    },
-    icon: const Icon(Icons.list),
-    label: const Text("Alle Listen anzeigen"),
-    style: ElevatedButton.styleFrom(
-      backgroundColor: const Color(0xFF587A6F),
-      foregroundColor: Colors.white,
-    ),
-  ),
-),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              child: Text(
-                'Meine Lieblingseinkaufsläden',
-                style: TextStyle(fontSize: 18, color: Colors.white),
-              ),
-            ),
-            _loadingShops
-                ? const Center(child: CircularProgressIndicator())
-                : SingleChildScrollView(
-                    scrollDirection: Axis.horizontal, // Horizontal Scrollbar
-                    child: Row(
-                      children: _topShops.map((shop) {
-                        return GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => EditStoreScreen(
-                                  storeId: shop.id.toString(),
-                                  storeName: shop.name,
-                                  isar: widget.isar,
-                                ),
-                              ),
-                            );
-                          },
-                          child: Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 4.0),
-                            child: Chip(
-                              label: Text(shop.name),
-                              backgroundColor: Colors.orange,
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
+
+            // BUTTON NEUE LISTE
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              child: ElevatedButton.icon(
-                onPressed: () => _createListDialog(context),
-                icon: const Icon(Icons.add),
-                label: const Text("Neue Einkaufsliste erstellen"),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF587A6F),
-                  foregroundColor: Colors.white,
+              child: SizedBox(
+                width: double.infinity, // Button über die gesamte Breite
+                child: ElevatedButton.icon(
+                  onPressed: () => _createListDialog(context),
+                  icon: const Icon(Icons.add),
+                  label: const Text(
+                    "Neue Einkaufsliste",
+                    style: TextStyle(fontSize: 23, fontWeight: FontWeight.w700),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor:
+                        const Color(0xFFEDF2D0), // Farbe des Buttons
+                    foregroundColor: const Color(0xFF94A047), // Textfarbe
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 16), // Vertikale Höhe
+                    shape: RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.circular(12), // Abgerundete Ecken
+                    ),
+                  ),
                 ),
               ),
             ),
+
+            //BUTTON ALLE LISTEN ANZEIGEN
+            // Padding(
+            //   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            //   child: ElevatedButton.icon(
+            //     onPressed: () {
+            //       Navigator.push(
+            //         context,
+            //         MaterialPageRoute(
+            //           builder: (context) => AllListsScreen(isar: widget.isar),
+            //         ),
+            //       );
+            //     },
+            //     icon: const Icon(Icons.list),
+            //     label: const Text("Alle Listen anzeigen"),
+            //     style: ElevatedButton.styleFrom(
+            //       backgroundColor: const Color(0xFF587A6F),
+            //       foregroundColor: Colors.white,
+            //     ),
+            //   ),
+            // ),
+          const Padding(
+  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+  child: Text(
+    'Meine Lieblingseinkaufsläden',
+    style: TextStyle(
+      fontSize: 23,
+      color: Color(0xFF222222),
+      fontWeight: FontWeight.w500,
+    ),
+  ),
+),
+_loadingShops
+    ? const Center(child: CircularProgressIndicator())
+    : SingleChildScrollView(
+        scrollDirection: Axis.horizontal, // Horizontal Scrollbar
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16), // Abstand links und rechts
+          child: Row(
+            children: _topShops.map((shop) => _buildShopCard(shop)).toList(),
+          ),
+        ),
+      ),
+
+            // BUTTON NEUER LADEN
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => AddStoreScreen(isar: widget.isar),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              child: SizedBox(
+                width: double.infinity, // Button über die gesamte Breite
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => AddStoreScreen(isar: widget.isar),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.add_business),
+                  label: const Text(
+                    "Neuer Einkaufsladen",
+                    style: TextStyle(fontSize: 23, fontWeight: FontWeight.w700),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor:
+                        const Color(0xFFEDF2D0), // Farbe des Buttons
+                    foregroundColor: const Color(0xFF94A047), // Textfarbe
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 16), // Vertikale Höhe
+                    shape: RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.circular(12), // Abgerundete Ecken
                     ),
-                  );
-                },
-                icon: const Icon(Icons.add_business),
-                label: const Text("Neuen Laden erstellen"),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF587A6F),
-                  foregroundColor: Colors.white,
+                  ),
                 ),
               ),
             ),
@@ -238,6 +269,61 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+Widget _buildShopCard(Einkaufsladen shop) {
+  String imagePath = shop.imagePath ??  'lib/img/default_image.png';
+ 
+  print('Shop: ${shop.name}, Image Path beim Aufrufen: $imagePath'); // Debugging-Print
+
+  return Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 4.0),
+    child: GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => EditStoreScreen(
+              storeId: shop.id.toString(),
+              storeName: shop.name,
+              isar: widget.isar,
+            ),
+          ),
+        );
+      },
+      child: Container(
+        width: 110, // Fixe Breite
+        height: 140, // Höhere Box
+        padding: const EdgeInsets.symmetric(
+            horizontal: 8, vertical: 10), // Padding innerhalb der Box
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12), // Abgerundete Ecken
+          image: DecorationImage(
+            image: AssetImage(imagePath),
+            fit: BoxFit.cover,
+            onError: (exception, stackTrace) {
+              print('Error loading image: $exception'); // Fehler-Handling
+            },
+            colorFilter: ColorFilter.mode(
+                Colors.black.withOpacity(0.3), BlendMode.darken),
+          ),
+        ),
+        child: Align(
+          alignment: Alignment.bottomLeft,
+          child: Text(
+            shop.name,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 22,
+              fontWeight: FontWeight.w600,
+            ),
+            maxLines: 2, // Maximal 2 Zeilen
+            overflow: TextOverflow.ellipsis, // Text abschneiden oder umbrechen
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
 
   Future<List<Itemlist>> _fetchLatestItemLists() async {
     final lists = await widget.isar.itemlists.where().findAll();
@@ -246,72 +332,117 @@ class _HomePageState extends State<HomePage> {
     return validLists.take(5).toList();
   }
 
+// LISTEN CARDS
   Widget _buildListCard(Itemlist itemlist) {
     String imagePath = itemlist.imagePath ?? 'lib/img/default_image.png';
 
     List<Map<String, dynamic>> items = itemlist.getItems();
 
-    return InkWell(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ItemListScreen(
-              listName: itemlist.name,
-              shoppingListId: itemlist.id.toString(),
-              items: [itemlist],
-              initialStoreId: itemlist.shopId,
-              isar: widget.isar,
-            ),
-          ),
-        );
-      },
-      child: Card(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            image: DecorationImage(
-              image: AssetImage(imagePath),
-              fit: BoxFit.cover,
-              colorFilter: ColorFilter.mode(
-                  Colors.black.withOpacity(0.4), BlendMode.darken),
-            ),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  itemlist.name,
-                  style: const TextStyle(fontSize: 20, color: Colors.white),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+          horizontal: 12.0, vertical: 8.0), // Gleiche Padding wie Buttons
+      child: Center(
+        child: InkWell(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ItemListScreen(
+                  listName: itemlist.name,
+                  shoppingListId: itemlist.id.toString(),
+                  items: [itemlist],
+                  initialStoreId: itemlist.shopId,
+                  isar: widget.isar,
                 ),
-                const SizedBox(height: 8),
-                Row(
+              ),
+            );
+          },
+          child: Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Container(
+              // Dynamische Breite: 90% der Bildschirmbreite
+              width: double.infinity,
+              height: 150, // Höhe der Card hier festlegen
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                image: DecorationImage(
+                  image: AssetImage(imagePath),
+                  fit: BoxFit.cover,
+                  colorFilter: ColorFilter.mode(
+                      Colors.black.withOpacity(0.1), BlendMode.darken),
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Stack(
                   children: [
-                    _buildTag('${items.length} Artikel'),
-                    const SizedBox(width: 5),
-                    FutureBuilder<String>(
-                      future: getShopName(itemlist.shopId),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.done &&
-                            snapshot.hasData) {
-                          return _buildTag(snapshot.data!);
-                        } else {
-                          return _buildTag("Unbekannt");
-                        }
-                      },
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Titel der Liste
+                        Text(
+                          itemlist.name,
+                          style: GoogleFonts.poppins(
+                            fontSize: 33,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500, // SemiBold Gewichtung
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            // Artikel-Tag mit den definierten Farben
+                            _buildTag(
+                              '${items.length} Artikel',
+                              const Color(0xFFF9F2BF), // Hintergrundfarbe
+                              Color.fromARGB(255, 144, 133, 54), // Textfarbe
+                            ),
+                            const SizedBox(width: 5),
+                            // Shop-Tag mit den definierten Farben
+                            FutureBuilder<String>(
+                              future: getShopName(itemlist.shopId),
+                              builder: (context, snapshot) {
+                                if (snapshot.connectionState ==
+                                        ConnectionState.done &&
+                                    snapshot.hasData) {
+                                  return _buildTag(
+                                    snapshot.data!,
+                                    const Color(0xFFF2E4D9), // Hintergrundfarbe
+                                    const Color(0xFF986224), // Textfarbe
+                                  );
+                                } else {
+                                  return _buildTag(
+                                    "Unbekannt",
+                                    const Color(0xFFF2E4D9), // Hintergrundfarbe
+                                    const Color(0xFF986224), // Textfarbe
+                                  );
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                    const Spacer(),
-                    _buildOptionsMenu(itemlist),
+                    // Drei Punkte: Etwas weiter rechts und höher positionieren
+                    Align(
+                      alignment: Alignment.bottomRight,
+                      child: Padding(
+                        padding: const EdgeInsets.only(
+                            bottom: 2.0, right: 1.0), // Etwas weiter rechts
+                        child: GestureDetector(
+                          behavior: HitTestBehavior
+                              .translucent, // Klickverhalten verbessern
+                          child: _buildOptionsMenu(itemlist), // Optionen-Menü
+                        ),
+                      ),
+                    ),
                   ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
@@ -319,16 +450,21 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildTag(String label) {
+// TAG-WIDGET: Dynamische Farben und Schriftart
+  Widget _buildTag(String label, Color backgroundColor, Color textColor) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.orange,
-        borderRadius: BorderRadius.circular(8),
+        color: backgroundColor, // Dynamische Hintergrundfarbe
+        borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
         label,
-        style: const TextStyle(color: Colors.white),
+        style: GoogleFonts.poppins(
+          color: textColor, // Dynamische Textfarbe
+          fontSize: 18, // Größerer Text
+          fontWeight: FontWeight.w600, // SemiBold Gewichtung
+        ),
       ),
     );
   }
@@ -388,12 +524,10 @@ class _HomePageState extends State<HomePage> {
         }
       }
       newPath = "$newPath/Download";
-      directory =
-          Directory(newPath);
+      directory = Directory(newPath);
     } else if (Platform.isIOS) {
       directory = await getApplicationDocumentsDirectory();
-      directory = Directory(
-          '${directory.path}/Downloads');
+      directory = Directory('${directory.path}/Downloads');
     }
 
     return directory!;

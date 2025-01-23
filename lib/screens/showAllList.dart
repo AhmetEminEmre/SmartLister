@@ -1,24 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
-import 'package:smart/objects/shop.dart';
-import 'package:smart/objects/template.dart';
-import 'package:smart/screens/shop_screen.dart';
-import 'package:smart/objects/productgroup.dart';
 import '../objects/itemlist.dart';
-import 'addlist_screen.dart';
-import 'currencyconverter_screen.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import '../utilities/notificationmanager.dart';
 import 'itemslist_screen.dart';
-import 'addshop_screen.dart';
-import 'dart:io';
-import 'package:path_provider/path_provider.dart';
-import 'dart:convert';
 
 class AllListsScreen extends StatelessWidget {
   final Isar isar;
 
-  const AllListsScreen({Key? key, required this.isar}) : super(key: key);
+  const AllListsScreen({super.key, required this.isar});
 
   Future<List<Itemlist>> _fetchAllLists() async {
     final lists = await isar.itemlists.where().findAll();
