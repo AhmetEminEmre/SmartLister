@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
 import 'package:smart/objects/shop.dart';
 import 'package:smart/objects/template.dart';
+import 'package:smart/objects/userinfo.dart';
 import 'package:smart/screens/shop_screen.dart';
 import 'package:smart/objects/productgroup.dart';
 import '../objects/itemlist.dart';
 import 'addlist_screen.dart';
-import 'currencyconverter_screen.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../utilities/notificationmanager.dart';
 import 'itemslist_screen.dart';
@@ -16,6 +16,8 @@ import 'package:path_provider/path_provider.dart';
 import 'dart:convert';
 import 'showAllList.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'nickname_screen.dart';
+
 
 class HomePage extends StatefulWidget {
   final Isar isar;
@@ -36,7 +38,7 @@ class _HomePageState extends State<HomePage> {
 
   List<Einkaufsladen> _topShops = [];
   bool _loadingShops = true;
-  final String _username = 'default'; //hier in zukunft namen setzen
+  String _nickname = ''; //hier in zukunft namen setzen
 
   @override
   @override
@@ -45,6 +47,7 @@ class _HomePageState extends State<HomePage> {
     _notificationManager.initNotification();
     _setupWatchers();
     _fetchTopShops();
+    _checkNickname();
   }
 
   void _setupWatchers() {
@@ -75,17 +78,38 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  @override
+   Future<void> _checkNickname() async {
+    final storedUser = await widget.isar.userinfos.where().findFirst();
+    if (storedUser == null || storedUser.nickname.isEmpty) {
+      _navigateToNicknameScreen();
+    } else {
+      setState(() {
+        _nickname = storedUser.nickname;
+      });
+    }
+  }
+
+   void _navigateToNicknameScreen() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => NicknameScreen(isar: widget.isar),
+        ),
+      );
+    });
+  }
+
  @override
 Widget build(BuildContext context) {
   return Scaffold(
     appBar: AppBar(
       automaticallyImplyLeading: false,
       backgroundColor: const Color.fromARGB(255, 255, 255, 255),
-      title: const Padding(
+      title: Padding(
         padding: EdgeInsets.only(right: 100.0), // Linkes Padding für den Titel
         child: Text(
-          'Guten Tag Herbert!',
+          _nickname.isNotEmpty ? 'Guten Tag $_nickname!' : 'Loading...',
           style: TextStyle(
             fontSize: 33,
             color: Color(0xFF222222),
@@ -94,21 +118,6 @@ Widget build(BuildContext context) {
         ),
       ),
       actions: <Widget>[
-          //   IconButton(
-          //    icon: const Icon(Icons.add_alert, color: Color(0xFF222222)),
-          //    onPressed: () => showNotificationDialog(context),
-          //    ),
-          //    IconButton(
-          //    icon: const Icon(Icons.attach_money, color: Color(0xFF222222)),
-          //     onPressed: () {
-          //        Navigator.push(
-          //          context,
-          //          MaterialPageRoute(
-          //           builder: (context) => const CurrencyConverterScreen(),
-          //           ),
-          //      );
-          //     },
-          //   ),
           IconButton(
             icon: const Icon(Icons.settings, color: Color(0xFF222222)),
             onPressed: () {

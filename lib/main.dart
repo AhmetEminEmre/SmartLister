@@ -6,6 +6,7 @@ import 'package:smart/objects/itemlist.dart';
 import 'package:smart/objects/shop.dart';
 import 'package:smart/objects/productgroup.dart';
 import 'package:smart/objects/template.dart';
+import 'package:smart/objects/userinfo.dart';
 import 'package:smart/screens/homepage_screen.dart';
 
 void main() async {
@@ -13,7 +14,7 @@ void main() async {
 
   final dir = await getApplicationDocumentsDirectory();
   final isar = await Isar.open(
-    [ItemlistSchema, EinkaufsladenSchema, ProductgroupSchema, TemplateSchema],
+    [ItemlistSchema, EinkaufsladenSchema, ProductgroupSchema, TemplateSchema, UserinfoSchema],
     directory: dir.path,
   );
 

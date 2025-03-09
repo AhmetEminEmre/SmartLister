@@ -17,13 +17,8 @@ const UserinfoSchema = CollectionSchema(
   name: r'Userinfo',
   id: 3792781582977013544,
   properties: {
-    r'email': PropertySchema(
-      id: 0,
-      name: r'email',
-      type: IsarType.string,
-    ),
     r'nickname': PropertySchema(
-      id: 1,
+      id: 0,
       name: r'nickname',
       type: IsarType.string,
     )
@@ -48,7 +43,6 @@ int _userinfoEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
-  bytesCount += 3 + object.email.length * 3;
   bytesCount += 3 + object.nickname.length * 3;
   return bytesCount;
 }
@@ -59,8 +53,7 @@ void _userinfoSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeString(offsets[0], object.email);
-  writer.writeString(offsets[1], object.nickname);
+  writer.writeString(offsets[0], object.nickname);
 }
 
 Userinfo _userinfoDeserialize(
@@ -70,8 +63,7 @@ Userinfo _userinfoDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = Userinfo(
-    email: reader.readString(offsets[0]),
-    nickname: reader.readString(offsets[1]),
+    nickname: reader.readString(offsets[0]),
   );
   object.id = id;
   return object;
@@ -85,8 +77,6 @@ P _userinfoDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readString(offset)) as P;
-    case 1:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -182,136 +172,6 @@ extension UserinfoQueryWhere on QueryBuilder<Userinfo, Userinfo, QWhereClause> {
 
 extension UserinfoQueryFilter
     on QueryBuilder<Userinfo, Userinfo, QFilterCondition> {
-  QueryBuilder<Userinfo, Userinfo, QAfterFilterCondition> emailEqualTo(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'email',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<Userinfo, Userinfo, QAfterFilterCondition> emailGreaterThan(
-    String value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'email',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<Userinfo, Userinfo, QAfterFilterCondition> emailLessThan(
-    String value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'email',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<Userinfo, Userinfo, QAfterFilterCondition> emailBetween(
-    String lower,
-    String upper, {
-    bool includeLower = true,
-    bool includeUpper = true,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'email',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<Userinfo, Userinfo, QAfterFilterCondition> emailStartsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'email',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<Userinfo, Userinfo, QAfterFilterCondition> emailEndsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'email',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<Userinfo, Userinfo, QAfterFilterCondition> emailContains(
-      String value,
-      {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'email',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<Userinfo, Userinfo, QAfterFilterCondition> emailMatches(
-      String pattern,
-      {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'email',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<Userinfo, Userinfo, QAfterFilterCondition> emailIsEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'email',
-        value: '',
-      ));
-    });
-  }
-
-  QueryBuilder<Userinfo, Userinfo, QAfterFilterCondition> emailIsNotEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'email',
-        value: '',
-      ));
-    });
-  }
-
   QueryBuilder<Userinfo, Userinfo, QAfterFilterCondition> idEqualTo(Id value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -502,18 +362,6 @@ extension UserinfoQueryLinks
     on QueryBuilder<Userinfo, Userinfo, QFilterCondition> {}
 
 extension UserinfoQuerySortBy on QueryBuilder<Userinfo, Userinfo, QSortBy> {
-  QueryBuilder<Userinfo, Userinfo, QAfterSortBy> sortByEmail() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'email', Sort.asc);
-    });
-  }
-
-  QueryBuilder<Userinfo, Userinfo, QAfterSortBy> sortByEmailDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'email', Sort.desc);
-    });
-  }
-
   QueryBuilder<Userinfo, Userinfo, QAfterSortBy> sortByNickname() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'nickname', Sort.asc);
@@ -529,18 +377,6 @@ extension UserinfoQuerySortBy on QueryBuilder<Userinfo, Userinfo, QSortBy> {
 
 extension UserinfoQuerySortThenBy
     on QueryBuilder<Userinfo, Userinfo, QSortThenBy> {
-  QueryBuilder<Userinfo, Userinfo, QAfterSortBy> thenByEmail() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'email', Sort.asc);
-    });
-  }
-
-  QueryBuilder<Userinfo, Userinfo, QAfterSortBy> thenByEmailDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'email', Sort.desc);
-    });
-  }
-
   QueryBuilder<Userinfo, Userinfo, QAfterSortBy> thenById() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.asc);
@@ -568,13 +404,6 @@ extension UserinfoQuerySortThenBy
 
 extension UserinfoQueryWhereDistinct
     on QueryBuilder<Userinfo, Userinfo, QDistinct> {
-  QueryBuilder<Userinfo, Userinfo, QDistinct> distinctByEmail(
-      {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'email', caseSensitive: caseSensitive);
-    });
-  }
-
   QueryBuilder<Userinfo, Userinfo, QDistinct> distinctByNickname(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -588,12 +417,6 @@ extension UserinfoQueryProperty
   QueryBuilder<Userinfo, int, QQueryOperations> idProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'id');
-    });
-  }
-
-  QueryBuilder<Userinfo, String, QQueryOperations> emailProperty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'email');
     });
   }
 

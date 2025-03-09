@@ -17,8 +17,13 @@ const EinkaufsladenSchema = CollectionSchema(
   name: r'Einkaufsladen',
   id: 2745446697380321082,
   properties: {
-    r'name': PropertySchema(
+    r'imagePath': PropertySchema(
       id: 0,
+      name: r'imagePath',
+      type: IsarType.string,
+    ),
+    r'name': PropertySchema(
+      id: 1,
       name: r'name',
       type: IsarType.string,
     )
@@ -43,6 +48,12 @@ int _einkaufsladenEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
+  {
+    final value = object.imagePath;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.name.length * 3;
   return bytesCount;
 }
@@ -53,7 +64,8 @@ void _einkaufsladenSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeString(offsets[0], object.name);
+  writer.writeString(offsets[0], object.imagePath);
+  writer.writeString(offsets[1], object.name);
 }
 
 Einkaufsladen _einkaufsladenDeserialize(
@@ -63,7 +75,8 @@ Einkaufsladen _einkaufsladenDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = Einkaufsladen(
-    name: reader.readString(offsets[0]),
+    imagePath: reader.readStringOrNull(offsets[0]),
+    name: reader.readString(offsets[1]),
   );
   object.id = id;
   return object;
@@ -77,6 +90,8 @@ P _einkaufsladenDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
+      return (reader.readStringOrNull(offset)) as P;
+    case 1:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -233,6 +248,160 @@ extension EinkaufsladenQueryFilter
     });
   }
 
+  QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterFilterCondition>
+      imagePathIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'imagePath',
+      ));
+    });
+  }
+
+  QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterFilterCondition>
+      imagePathIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'imagePath',
+      ));
+    });
+  }
+
+  QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterFilterCondition>
+      imagePathEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'imagePath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterFilterCondition>
+      imagePathGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'imagePath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterFilterCondition>
+      imagePathLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'imagePath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterFilterCondition>
+      imagePathBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'imagePath',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterFilterCondition>
+      imagePathStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'imagePath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterFilterCondition>
+      imagePathEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'imagePath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterFilterCondition>
+      imagePathContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'imagePath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterFilterCondition>
+      imagePathMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'imagePath',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterFilterCondition>
+      imagePathIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'imagePath',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterFilterCondition>
+      imagePathIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'imagePath',
+        value: '',
+      ));
+    });
+  }
+
   QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterFilterCondition> nameEqualTo(
     String value, {
     bool caseSensitive = true,
@@ -377,6 +546,19 @@ extension EinkaufsladenQueryLinks
 
 extension EinkaufsladenQuerySortBy
     on QueryBuilder<Einkaufsladen, Einkaufsladen, QSortBy> {
+  QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterSortBy> sortByImagePath() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'imagePath', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterSortBy>
+      sortByImagePathDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'imagePath', Sort.desc);
+    });
+  }
+
   QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterSortBy> sortByName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'name', Sort.asc);
@@ -404,6 +586,19 @@ extension EinkaufsladenQuerySortThenBy
     });
   }
 
+  QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterSortBy> thenByImagePath() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'imagePath', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterSortBy>
+      thenByImagePathDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'imagePath', Sort.desc);
+    });
+  }
+
   QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterSortBy> thenByName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'name', Sort.asc);
@@ -419,6 +614,13 @@ extension EinkaufsladenQuerySortThenBy
 
 extension EinkaufsladenQueryWhereDistinct
     on QueryBuilder<Einkaufsladen, Einkaufsladen, QDistinct> {
+  QueryBuilder<Einkaufsladen, Einkaufsladen, QDistinct> distinctByImagePath(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'imagePath', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<Einkaufsladen, Einkaufsladen, QDistinct> distinctByName(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -432,6 +634,12 @@ extension EinkaufsladenQueryProperty
   QueryBuilder<Einkaufsladen, int, QQueryOperations> idProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'id');
+    });
+  }
+
+  QueryBuilder<Einkaufsladen, String?, QQueryOperations> imagePathProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'imagePath');
     });
   }
 
