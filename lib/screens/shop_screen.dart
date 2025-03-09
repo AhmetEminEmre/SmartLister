@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
+import 'package:smart/objects/itemlist.dart';
 import '../objects/productgroup.dart';
 import '../objects/shop.dart';
 
@@ -65,7 +66,7 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
       'Süßwaren & Snacks',
       'Konserven & Fertiggerichte',
       'Getreide, Reis & Nudeln'
-      'Käse & Feinkost',
+          'Käse & Feinkost',
       'Milchprodukte'
     ];
 
@@ -120,18 +121,20 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
           actions: <Widget>[
             TextButton(
               style: TextButton.styleFrom(
-                backgroundColor:
-                    const  Color.fromARGB(255, 239, 141, 37), // Orangener Hintergrund
+                backgroundColor: const Color.fromARGB(
+                    255, 239, 141, 37), // Orangener Hintergrund
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12), // Abgerundete Ecken
                 ),
                 padding:
                     const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-                    
               ),
               child: const Text(
                 'Hinzufügen',
-                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600), // Weiße Schrift
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600), // Weiße Schrift
               ),
               onPressed: () {
                 Navigator.of(context).pop();
@@ -149,8 +152,9 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
               ),
               child: const Text(
                 'Überspringen',
-                style:
-                    TextStyle(color: Color(0xFF4A4A4A), fontSize: 18), // Dunkelgraue Schrift
+                style: TextStyle(
+                    color: Color(0xFF4A4A4A),
+                    fontSize: 18), // Dunkelgraue Schrift
               ),
               onPressed: () {
                 Navigator.of(context).pop();
@@ -237,143 +241,115 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
 
   void _showAddProductGroupDialog() {
     TextEditingController groupNameController = TextEditingController();
-  showDialog(
-  context: context,
-  builder: (BuildContext context) {
-    return Dialog(
-      child: Container(
-        width: MediaQuery.of(context).size.width * 10.0, // 90% der Bildschirmbreite
-        height: MediaQuery.of(context).size.height * 0.24, // 60% der Bildschirmhöhe
-        padding: const EdgeInsets.all(16.0),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16), // Abgerundete Ecken
-        ),
-      child: Column(
-  mainAxisSize: MainAxisSize.min,
-  crossAxisAlignment: CrossAxisAlignment.start,
-  children: [
-    const Text(
-      'Neue Warengruppe hinzufügen',
-      style: TextStyle(
-        color: Color.fromARGB(255, 92, 91, 91),
-        fontSize: 23,
-        fontWeight: FontWeight.w600,
-      ),
-    ),
-    const SizedBox(height: 35), // Abstand zwischen Text und Textfeld
-    TextField(
-      controller: groupNameController,
-      decoration: InputDecoration(
-        labelText: 'Name der Warengruppe',
-        labelStyle: const TextStyle(
-          color: Color.fromARGB(255, 54, 54, 54),
-          fontSize: 16,
-        ),
-        filled: true,
-        fillColor: Colors.white,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(
-            color: Color(0xFFBDBDBD),
-            width: 1,
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16), // Abgerundete Ecken
           ),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(
-            color: Color(0xFFBDBDBD),
-            width: 2,
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(
-            color: Color(0xFFE5A462),
-            width: 2,
-          ),
-        ),
-      ),
-      style: const TextStyle(
-        color: Color.fromARGB(255, 26, 26, 26),
-      ),
-    ),
-    const SizedBox(height: 30), // Abstand zwischen Textfeld und Buttons
-    Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        TextButton(
-          style: TextButton.styleFrom(
-            backgroundColor: const Color.fromARGB(255, 239, 141, 37), // Orangener Hintergrund
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12), // Abgerundete Ecken
-            ),
-            padding: const EdgeInsets.symmetric(
-              vertical: 10,
-              horizontal: 12,
-            ),
-          ),
-          child: const Text(
-            'Hinzufügen',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-            ), // Weiße Schrift
-          ),
-          onPressed: () {
-            if (groupNameController.text.isNotEmpty) {
-              _addProductGroupIfNotExists(groupNameController.text);
-              Navigator.of(context).pop();
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Der Name der Warengruppe darf nicht leer sein.'),
-                  backgroundColor: Colors.red,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min, // Passt sich dem Inhalt an
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Neue Warengruppe hinzufügen',
+                  style: TextStyle(
+                    color: Color.fromARGB(255, 92, 91, 91),
+                    fontSize: 23,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              );
-            }
-          },
-        ),
-        const SizedBox(width: 8), // Abstand zwischen den Buttons
-        TextButton(
-          style: TextButton.styleFrom(
-            backgroundColor: const Color(0xFFD3D3D3), // Grauer Hintergrund
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12), // Abgerundete Ecken
-            ),
-            padding: const EdgeInsets.symmetric(
-              vertical: 10,
-              horizontal: 12,
+                const SizedBox(
+                    height: 20), // Abstand zwischen Text und Textfeld
+                TextField(
+                  controller: groupNameController,
+                  decoration: InputDecoration(
+                    labelText: 'Name der Warengruppe',
+                    labelStyle: const TextStyle(
+                      color: Color.fromARGB(255, 54, 54, 54),
+                      fontSize: 16,
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(
+                        color: Color(0xFFBDBDBD),
+                        width: 1,
+                      ),
+                    ),
+                  ),
+                  style: const TextStyle(
+                    color: Color.fromARGB(255, 26, 26, 26),
+                  ),
+                ),
+                const SizedBox(
+                    height: 20), // Abstand zwischen Textfeld und Buttons
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      style: TextButton.styleFrom(
+                        backgroundColor:
+                            const Color.fromARGB(255, 239, 141, 37),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 10,
+                          horizontal: 12,
+                        ),
+                      ),
+                      child: const Text(
+                        'Hinzufügen',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      onPressed: () {
+                        if (groupNameController.text.trim().isNotEmpty) {
+                          _addProductGroupIfNotExists(
+                              groupNameController.text.trim());
+                          Navigator.of(context).pop();
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Der Name der Warengruppe darf nicht leer sein!',
+                                textAlign: TextAlign.center,
+                              ),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                    const SizedBox(width: 8), // Abstand zwischen den Buttons
+                    TextButton(
+                      child: const Text(
+                        'Abbrechen',
+                        style: TextStyle(
+                          color: Color(0xFF4A4A4A),
+                          fontSize: 18,
+                        ),
+                      ),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-          child: const Text(
-            'Überspringen',
-            style: TextStyle(
-              color: Color(0xFF4A4A4A),
-              fontSize: 18,
-            ), // Dunkelgraue Schrift
-          ),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
-        ),
-      ],
-    ),
-  ],
-),
-
-      ),
+        );
+      },
     );
-  },
-);
-
-
-
-
-
-    
-  
   }
 
   Future<void> _addProductGroupIfNotExists(String name) async {
@@ -421,6 +397,89 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
     _fetchProductGroups();
   }
 
+  void _deleteStore() async {
+    final storeId = widget.storeId;
+    final assignedLists =
+        await widget.isar.itemlists.filter().shopIdEqualTo(storeId).findAll();
+
+    if (assignedLists.isNotEmpty) {
+      // Falls der Laden mit Listen verbunden ist
+      bool confirmDelete = await showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Laden und zugehörige Listen löschen?'),
+            content: Text(
+                'Dieser Laden ist noch mit ${assignedLists.length} Einkaufsliste(n) verknüpft. '
+                'Möchtest du den Laden und alle zugehörigen Listen wirklich löschen?'),
+            actions: [
+              TextButton(
+                child: const Text('Nein'),
+                onPressed: () => Navigator.of(context).pop(false),
+              ),
+              TextButton(
+                child: const Text('Ja, alles löschen'),
+                onPressed: () => Navigator.of(context).pop(true),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (!confirmDelete) {
+        return; // Falls der Nutzer "Nein" wählt, abbrechen
+      }
+
+      // Alle Listen, die mit dem Laden verknüpft sind, löschen
+      await widget.isar.writeTxn(() async {
+        for (final list in assignedLists) {
+          await widget.isar.itemlists.delete(list.id);
+        }
+        await widget.isar.einkaufsladens.delete(int.parse(storeId));
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Laden und zugehörige Listen gelöscht')),
+      );
+
+      Navigator.of(context).pop(); //back
+      return;
+    }
+
+    // Falls der Laden keine Listen hat, einfach löschen
+    bool confirmDelete = await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Laden löschen?'),
+          content: const Text('Möchtest du diesen Laden wirklich löschen?'),
+          actions: [
+            TextButton(
+              child: const Text('Nein'),
+              onPressed: () => Navigator.of(context).pop(false),
+            ),
+            TextButton(
+              child: const Text('Ja'),
+              onPressed: () => Navigator.of(context).pop(true),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmDelete) {
+      await widget.isar.writeTxn(() async {
+        await widget.isar.einkaufsladens.delete(int.parse(storeId));
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Laden erfolgreich gelöscht')),
+      );
+
+      Navigator.of(context).pop(); //back
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -455,70 +514,93 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
       backgroundColor: Colors.white,
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _productGroups.isEmpty
-              ? const Center(
-                  child: Text("Keine Produktgruppen verfügbar.",
-                      style: TextStyle(color: Colors.white)))
-              : ReorderableListView(
-                  onReorder: _onReorder,
-                  children: _productGroups.map((group) {
-                    return Container(
-                      key: ValueKey(group.id),
-                      decoration: const BoxDecoration(
-                        //hintergrund von warengruppen
-                        color: Color.fromARGB(255, 255, 255, 255),
-                        border: Border(
-                          //linien zw warengruppen
-                          bottom: BorderSide(
-                              color: Color.fromRGBO(126, 126, 126, 0.284),
-                              width: 1),
+          : Column(
+              children: [
+                Expanded(
+                  child: _productGroups.isEmpty
+                      ? const Center(
+                          child: Text("Keine Produktgruppen verfügbar.",
+                              style: TextStyle(color: Colors.black)))
+                      : ReorderableListView(
+                          onReorder: _onReorder,
+                          children: _productGroups.map((group) {
+                            return Container(
+                              key: ValueKey(group.id),
+                              decoration: const BoxDecoration(
+                                color: Color.fromARGB(255, 255, 255, 255),
+                                border: Border(
+                                  bottom: BorderSide(
+                                      color:
+                                          Color.fromRGBO(126, 126, 126, 0.284),
+                                      width: 1),
+                                ),
+                              ),
+                              child: ListTile(
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 35.0, vertical: 4),
+                                title: Text(
+                                  group.name,
+                                  style: const TextStyle(
+                                    color: Color.fromARGB(255, 31, 31, 31),
+                                    fontSize: 20,
+                                  ),
+                                ),
+                                trailing: _isEditMode
+                                    ? IconButton(
+                                        icon: const Icon(Icons.delete,
+                                            color: Color.fromARGB(
+                                                255, 239, 141, 37)),
+                                        onPressed: () =>
+                                            _deleteProductGroup(group),
+                                      )
+                                    : ReorderableDragStartListener(
+                                        index: _productGroups.indexOf(group),
+                                        child: const Icon(Icons.reorder,
+                                            color: Color.fromARGB(
+                                                255, 239, 141, 37)),
+                                      ),
+                              ),
+                            );
+                          }).toList(),
                         ),
-                      ),
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 35.0,
-                            vertical: 4), // Abstand links und rechts
-                        title: Text(
-                          group.name,
-                          style: const TextStyle(
-                            color: Color.fromARGB(255, 31, 31, 31),
-                            fontSize: 20,
+                ),
+                // PLUS- UND LÖSCHEN-BUTTON FEST UNTEN RECHTS
+                // PLUS- UND LÖSCHEN-BUTTON FEST UNTEN RECHTS
+                Padding(
+                  padding: const EdgeInsets.only(right: 20.0, bottom: 20.0),
+                  child: Row(
+                    mainAxisAlignment:
+                        MainAxisAlignment.end, // Buttons nach rechts schieben
+                    children: [
+                      if (!_isEditMode) // "+" nur anzeigen, wenn NICHT im Edit-Modus
+                        FloatingActionButton(
+                          onPressed: _showAddProductGroupDialog,
+                          backgroundColor:
+                              const Color.fromARGB(255, 239, 141, 37),
+                          foregroundColor: Colors.white,
+                          child: const Icon(Icons.add, size: 36),
+                          tooltip: 'Warengruppe hinzufügen',
+                        ),
+                      if (_isEditMode) // "Laden löschen" nur im Edit-Modus anzeigen
+                        ElevatedButton.icon(
+                          onPressed: _deleteStore,
+                          icon: const Icon(Icons.delete, color: Colors.white),
+                          label: const Text("Laden löschen"),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 12, horizontal: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                         ),
-                        trailing: _isEditMode
-                            ? IconButton(
-                                icon: const Icon(Icons.delete,
-                                    color: Color.fromARGB(255, 239, 141, 37)),
-                                onPressed: () => _deleteProductGroup(group),
-                              )
-                            : ReorderableDragStartListener(
-                                index: _productGroups.indexOf(group),
-                                child: const Icon(Icons.reorder,
-                                    color: Color.fromARGB(255, 239, 141, 37)),
-                              ),
-                      ),
-                    );
-                  }).toList(),
+                    ],
+                  ),
                 ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(
-            right: 16.0, bottom: 16.0), // Abstand rechts und unten
-        child: SizedBox(
-          height: 80, // Höhe des Buttons
-          width: 80, // Breite des Buttons
-          child: FloatingActionButton(
-            onPressed: _showAddProductGroupDialog,
-            backgroundColor:
-                Color.fromARGB(255, 239, 141, 37), // Hintergrundfarbe
-            foregroundColor: Colors.white, // Icon-Farbe
-            child: const Icon(Icons.add, size: 36), // Größeres Icon
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(40), // Eckenradius
+              ],
             ),
-            tooltip: 'Warengruppe hinzufügen',
-          ),
-        ),
-      ),
     );
   }
 }
