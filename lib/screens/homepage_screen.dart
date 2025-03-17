@@ -107,10 +107,10 @@ Widget build(BuildContext context) {
       automaticallyImplyLeading: false,
       backgroundColor: const Color.fromARGB(255, 255, 255, 255),
       title: Padding(
-        padding: EdgeInsets.only(right: 100.0), // Linkes Padding für den Titel
+        padding: const EdgeInsets.only(right: 100.0), // Linkes Padding für den Titel
         child: Text(
           _nickname.isNotEmpty ? 'Guten Tag $_nickname!' : 'Loading...',
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 33,
             color: Color(0xFF222222),
             fontWeight: FontWeight.w600,
@@ -408,7 +408,7 @@ Widget _buildShopCard(Einkaufsladen shop) {
                             _buildTag(
                               '${items.length} Artikel',
                               const Color(0xFFF9F2BF), // Hintergrundfarbe
-                              Color.fromARGB(255, 144, 133, 54), // Textfarbe
+                              const Color.fromARGB(255, 144, 133, 54), // Textfarbe
                             ),
                             const SizedBox(width: 5),
                             // Shop-Tag mit den definierten Farben

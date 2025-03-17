@@ -33,38 +33,64 @@ class _NicknameScreenState extends State<NicknameScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Nickname eingeben"),
-        backgroundColor: Colors.white,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "Wie möchtest du genannt werden?",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.center, //zentriert meinen Text
+        children: [
+          SizedBox(
+            width: double.infinity,
+            height: 500, // Höhe vom Bild
+            child: Image.asset(
+              'lib/img3/NickNameScreen.png',
+              fit: BoxFit.cover, // Breite vom Bild
             ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: _nicknameController,
-              decoration: InputDecoration(
-                hintText: "Dein Nickname",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
+          ),
+          const SizedBox(height: 20), // Abstand zum Text
+          //Text
+          const Text(
+            "SmartLister",
+            style: TextStyle(fontSize: 44, fontWeight: FontWeight.w600),
+          ),
+            const SizedBox(height: 7), //Abstand
+          const Text(
+            "Dein smarter Begleiter\nfür jeden Einkauf",
+            style: TextStyle(fontSize: 18), 
+            textAlign: TextAlign.center, 
+          ),
+          const SizedBox(height: 40), //Abstand
+
+          // Textfield & Button in Padding für besseren Abstand
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Column(
+              children: [
+                TextField(
+                  controller: _nicknameController,
+                  decoration: InputDecoration(
+                    hintText: "Dein Name",
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
                 ),
-              ),
+                const SizedBox(height: 20), //Abstand
+                SizedBox(
+                  width: double.infinity, // Button auf volle Breite
+                  child: ElevatedButton(
+                    onPressed: _saveNickname,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    child: const Text(
+                      "Los geht's",
+                      style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 20),
-            Center(
-              child: ElevatedButton(
-                onPressed: _saveNickname,
-                child: const Text("Speichern"),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
