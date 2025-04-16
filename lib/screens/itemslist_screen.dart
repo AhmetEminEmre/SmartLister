@@ -489,6 +489,7 @@ class _ItemListScreenState extends State<ItemListScreen> {
     final productGroups = await widget.isar.productgroups
         .filter()
         .storeIdEqualTo(widget.initialStoreId!)
+        .sortByOrder()
         .findAll();
 
     List<DropdownMenuItem<String>> groupItems = productGroups.map((group) {
