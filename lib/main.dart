@@ -10,6 +10,12 @@ import 'package:smart/objects/userinfo.dart';
 import 'package:smart/screens/homepage_screen.dart';
 import 'package:smart/screens/nickname_screen.dart';
 
+import 'package:smart/services/itemlist_service.dart';
+import 'package:smart/services/productgroup_service.dart';
+import 'package:smart/services/shop_service.dart';
+import 'package:smart/services/template_service.dart';
+import 'package:smart/services/userinfo_service.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -19,13 +25,38 @@ void main() async {
     directory: dir.path,
   );
 
-  runApp(MyApp(isar: isar));
+    // ✅ Services initialisieren
+  final itemListService = ItemListService(isar);
+  final shopService = ShopService(isar);
+  final userinfoService = NicknameService(isar);
+  final productGroupService = ProductGroupService(isar);
+  final templateService = TemplateService(isar);
+
+  runApp(MyApp(
+    itemListService: itemListService,
+    shopService: shopService,
+    userinfoService: userinfoService,
+    productGroupService: productGroupService,
+    templateService: templateService,
+  ));
 }
 
-class MyApp extends StatelessWidget {
-  final Isar isar;
 
-  const MyApp({super.key, required this.isar});
+class MyApp extends StatelessWidget {
+  final ItemListService itemListService;
+  final ShopService shopService;
+  final NicknameService userinfoService;
+  final ProductGroupService productGroupService;
+  final TemplateService templateService;
+
+  const MyApp({
+    super.key,
+    required this.itemListService,
+    required this.shopService,
+    required this.userinfoService,
+    required this.productGroupService,
+    required this.templateService,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -35,15 +66,15 @@ class MyApp extends StatelessWidget {
         textTheme:
             GoogleFonts.poppinsTextTheme(), // Poppins als Standard-Schriftart
         checkboxTheme: CheckboxThemeData(
-          fillColor: MaterialStateProperty.resolveWith<Color>(
-            (Set<MaterialState> states) {
-              if (states.contains(MaterialState.selected)) {
+          fillColor: WidgetStateProperty.resolveWith<Color>(
+            (Set<WidgetState> states) {
+              if (states.contains(WidgetState.selected)) {
                 return const Color(0xFFF2E8DC); // Farbe, wenn die Checkbox ausgewählt ist
               }
               return const Color.fromARGB(255, 255, 255, 255); // Standardfarbe
             },
           ),
-          checkColor: MaterialStateProperty.all(Colors.deepOrange), // Farbe des Hakens
+          checkColor: WidgetStateProperty.all(Colors.deepOrange), // Farbe des Hakens
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8.0), // Runde Checkbox
           ),
@@ -54,7 +85,13 @@ class MyApp extends StatelessWidget {
           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap, // Verkleinerung des Interaktionsbereichs
         ),
       ),
-      home: HomePage(isar: isar),
+         home: HomePage(
+        itemListService: itemListService,
+        shopService: shopService,
+        userinfoService: userinfoService,
+        productGroupService: productGroupService,
+        templateService: templateService,
+      ),
     );
   }
 }

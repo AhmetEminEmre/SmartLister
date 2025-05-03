@@ -1,33 +1,44 @@
 import 'package:flutter/material.dart';
-import 'package:isar/isar.dart';
+import 'package:smart/screens/addlist_screen.dart';
+import 'package:smart/screens/itemslist_screen.dart';
+import 'package:smart/screens/addshop_screen.dart';
+import 'package:smart/screens/nickname_screen.dart';
+import 'package:smart/screens/shop_screen.dart';
+import 'package:smart/services/itemlist_service.dart';
+import 'package:smart/services/shop_service.dart';
+import 'package:smart/services/userinfo_service.dart';
+import 'package:smart/services/productgroup_service.dart';
+import 'package:smart/services/template_service.dart';
+import 'package:smart/objects/itemlist.dart';
 import 'package:smart/objects/shop.dart';
 import 'package:smart/objects/template.dart';
-import 'package:smart/objects/userinfo.dart';
-import 'package:smart/screens/shop_screen.dart';
-import 'package:smart/objects/productgroup.dart';
-import '../objects/itemlist.dart';
-import 'addlist_screen.dart';
-import 'itemslist_screen.dart';
-import 'addshop_screen.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'dart:convert';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
-import 'dart:convert';
-import 'showAllList.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'nickname_screen.dart';
-
+import 'package:smart/screens/settings_screen.dart';
 
 class HomePage extends StatefulWidget {
-  final Isar isar;
+  final ItemListService itemListService;
+  final ShopService shopService;
+  final NicknameService userinfoService;
+  final ProductGroupService productGroupService;
+  final TemplateService templateService;
 
-  const HomePage({super.key, required this.isar});
+  const HomePage({
+    super.key,
+    required this.itemListService,
+    required this.shopService,
+    required this.userinfoService,
+    required this.productGroupService,
+    required this.templateService,
+  });
 
   @override
   _HomePageState createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-
   late Stream<void> _itemListStream;
   late Stream<void> _shopStream;
 
@@ -35,7 +46,6 @@ class _HomePageState extends State<HomePage> {
   bool _loadingShops = true;
   String _nickname = ''; //hier in zukunft namen setzen
 
-  @override
   @override
   void initState() {
     super.initState();
@@ -46,8 +56,8 @@ class _HomePageState extends State<HomePage> {
 
   void _setupWatchers() {
     //boardacast as streams caused error "Stream has already been listened to" error
-    _itemListStream = widget.isar.itemlists.watchLazy().asBroadcastStream();
-    _shopStream = widget.isar.einkaufsladens.watchLazy().asBroadcastStream();
+    _itemListStream = widget.itemListService.watchItemLists();
+    _shopStream = widget.shopService.watchShops();
 
     _itemListStream.listen((_) {
       _fetchLatestItemLists();
@@ -59,63 +69,189 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  Future<void> _fetchTopShops() async {
-    setState(() {
-      _loadingShops = true;
-    });
-
-    final allShops = await widget.isar.einkaufsladens.where().findAll();
-
-    setState(() {
-      _topShops = allShops;
-      _loadingShops = false;
-    });
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _checkNickname();
   }
 
-   Future<void> _checkNickname() async {
-    final storedUser = await widget.isar.userinfos.where().findFirst();
-    if (storedUser == null || storedUser.nickname.isEmpty) {
+  Future<void> _checkNickname() async {
+    final username = await widget.userinfoService.getNickname();
+    if (username == null || username.isEmpty) {
       _navigateToNicknameScreen();
     } else {
       setState(() {
-        _nickname = storedUser.nickname;
+        _nickname = username;
       });
     }
   }
 
-   void _navigateToNicknameScreen() {
+  void _navigateToNicknameScreen() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => NicknameScreen(isar: widget.isar),
+          builder: (context) => NicknameScreen(
+            nicknameService: widget.userinfoService,
+            productGroupService: widget.productGroupService,
+            shopService: widget.shopService,
+            itemListService: widget.itemListService,
+            templateService: widget.templateService,
+          ),
         ),
       );
     });
   }
 
- @override
-Widget build(BuildContext context) {
-  return Scaffold(
-    appBar: AppBar(
-      automaticallyImplyLeading: false,
-      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
-      title: Padding(
-        padding: const EdgeInsets.only(right: 100.0), // Linkes Padding für den Titel
-        child: Text(
-          _nickname.isNotEmpty ? 'Guten Tag $_nickname!' : 'Loading...',
-          style: const TextStyle(
-            fontSize: 33,
-            color: Color(0xFF222222),
-            fontWeight: FontWeight.w600,
+  Future<void> _fetchTopShops() async {
+    setState(() => _loadingShops = true);
+    final shops = await widget.shopService.fetchShops();
+    setState(() {
+      _topShops = shops;
+      _loadingShops = false;
+    });
+  }
+
+  Future<List<Itemlist>> _fetchLatestItemLists() async {
+    final lists = await widget.itemListService.fetchAllItemLists();
+    final valid = lists.where((l) => l.shopId.isNotEmpty).toList();
+    valid.sort((a, b) => b.creationDate.compareTo(a.creationDate));
+    return valid.take(5).toList();
+  }
+
+  void _renameList(Itemlist itemlist) {
+    TextEditingController nameController =
+        TextEditingController(text: itemlist.name);
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Listennamen ändern'),
+          content: TextField(
+            controller: nameController,
+            decoration:
+                const InputDecoration(hintText: 'Neuer Listennamen eingeben'),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Abbrechen'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            TextButton(
+              child: const Text('Speichern'),
+              onPressed: () async {
+                if (nameController.text.isNotEmpty) {
+                  itemlist.name = nameController.text.trim();
+                  final navigator = Navigator.of(context);
+                  await widget.itemListService.updateItemList(itemlist);
+                  if (!mounted) return;
+                  navigator.pop();
+                  setState(() {
+                    _fetchLatestItemLists();
+                  });
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _deleteList(Itemlist itemlist) async {
+    await widget.itemListService.deleteItemList(itemlist.id);
+    setState(() {
+      _fetchLatestItemLists();
+      _fetchTopShops();
+    });
+  }
+
+  Future<List<String>> getAllProductGroups(String shopId) async {
+    final groups = await widget.productGroupService.fetchProductGroups(shopId);
+    return groups.map((group) => group.name.trim()).toList();
+  }
+
+  Future<String> getGroupName(String groupId) async {
+    final group =
+        await widget.productGroupService.fetchGroupById(int.parse(groupId));
+    return group?.name ?? "Unbekannt";
+  }
+
+  Future<String> getShopName(String groupId) async {
+    if (groupId.isEmpty) return "Unbekannt";
+
+    final parsedId = int.tryParse(groupId);
+    if (parsedId == null) return "Unbekannt";
+
+    final shop = await widget.shopService.fetchShopById(parsedId);
+    return shop?.name ?? "Unbekannt";
+  }
+
+  void _saveListAsTemplate(Itemlist itemlist) async {
+    final newTemplate = Template(
+      name: itemlist.name,
+      items: itemlist.getItems(),
+      imagePath: itemlist.imagePath!,
+      storeId: itemlist.shopId,
+    );
+
+    await widget.templateService.addTemplate(newTemplate);
+
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      content: Text('Liste als Vorlage gespeichert!'),
+    ));
+  }
+
+  void _createListDialog(BuildContext context) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CreateListScreen(
+            itemListService: widget.itemListService,
+            shopService: widget.shopService,
+            productGroupService: widget.productGroupService,
+            templateService: widget.templateService),
+      ),
+    );
+
+    if (result == true) {
+      setState(() {
+        _fetchLatestItemLists();
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        backgroundColor: const Color.fromARGB(255, 255, 255, 255),
+        title: Padding(
+          padding: const EdgeInsets.only(
+              right: 100.0), // Linkes Padding für den Titel
+          child: Text(
+            _nickname.isNotEmpty ? 'Guten Tag $_nickname!' : 'Loading...',
+            style: const TextStyle(
+              fontSize: 33,
+              color: Color(0xFF222222),
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
-      ),
-      actions: <Widget>[
+        actions: <Widget>[
           IconButton(
             icon: const Icon(Icons.settings, color: Color(0xFF222222)),
-            onPressed: () {
-              // settings here in future
+            onPressed: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => SettingsScreen(
+                    nicknameService: widget.userinfoService,
+                  ),
+                ),
+              );
+              _checkNickname();
             },
           ),
         ],
@@ -191,48 +327,31 @@ Widget build(BuildContext context) {
               ),
             ),
 
-            //BUTTON ALLE LISTEN ANZEIGEN
-            // Padding(
-            //   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            //   child: ElevatedButton.icon(
-            //     onPressed: () {
-            //       Navigator.push(
-            //         context,
-            //         MaterialPageRoute(
-            //           builder: (context) => AllListsScreen(isar: widget.isar),
-            //         ),
-            //       );
-            //     },
-            //     icon: const Icon(Icons.list),
-            //     label: const Text("Alle Listen anzeigen"),
-            //     style: ElevatedButton.styleFrom(
-            //       backgroundColor: const Color(0xFF587A6F),
-            //       foregroundColor: Colors.white,
-            //     ),
-            //   ),
-            // ),
-          const Padding(
-  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-  child: Text(
-    'Meine Lieblingseinkaufsläden',
-    style: TextStyle(
-      fontSize: 23,
-      color: Color(0xFF222222),
-      fontWeight: FontWeight.w500,
-    ),
-  ),
-),
-_loadingShops
-    ? const Center(child: CircularProgressIndicator())
-    : SingleChildScrollView(
-        scrollDirection: Axis.horizontal, // Horizontal Scrollbar
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16), // Abstand links und rechts
-          child: Row(
-            children: _topShops.map((shop) => _buildShopCard(shop)).toList(),
-          ),
-        ),
-      ),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              child: Text(
+                'Meine Lieblingseinkaufsläden',
+                style: TextStyle(
+                  fontSize: 23,
+                  color: Color(0xFF222222),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            _loadingShops
+                ? const Center(child: CircularProgressIndicator())
+                : SingleChildScrollView(
+                    scrollDirection: Axis.horizontal, // Horizontal Scrollbar
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16), // Abstand links und rechts
+                      child: Row(
+                        children: _topShops
+                            .map((shop) => _buildShopCard(shop))
+                            .toList(),
+                      ),
+                    ),
+                  ),
 
             // BUTTON NEUER LADEN
             Padding(
@@ -244,7 +363,9 @@ _loadingShops
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => AddStoreScreen(isar: widget.isar),
+                        builder: (context) => AddStoreScreen(
+                          shopService: widget.shopService,
+                        ),
                       ),
                     );
                   },
@@ -272,67 +393,63 @@ _loadingShops
       ),
     );
   }
-Widget _buildShopCard(Einkaufsladen shop) {
-  String imagePath = shop.imagePath ??  'lib/img/default_image.png';
- 
-  print('Shop: ${shop.name}, Image Path beim Aufrufen: $imagePath'); // Debugging-Print
 
-  return Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 4.0),
-    child: GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => EditStoreScreen(
-              storeId: shop.id.toString(),
-              storeName: shop.name,
-              isar: widget.isar,
+  Widget _buildShopCard(Einkaufsladen shop) {
+    String imagePath = shop.imagePath ?? 'lib/img/default_image.png';
+
+    print(
+        'Shop: ${shop.name}, Image Path beim Aufrufen: $imagePath'); // Debugging-Print
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+      child: GestureDetector(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => EditStoreScreen(
+                  storeId: shop.id.toString(),
+                  storeName: shop.name,
+                  shopService: widget.shopService,
+                  itemListService: widget.itemListService,
+                  productGroupService: widget.productGroupService),
+            ),
+          );
+        },
+        child: Container(
+          width: 110, // Fixe Breite
+          height: 140, // Höhere Box
+          padding: const EdgeInsets.symmetric(
+              horizontal: 8, vertical: 10), // Padding innerhalb der Box
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12), // Abgerundete Ecken
+            image: DecorationImage(
+              image: AssetImage(imagePath),
+              fit: BoxFit.cover,
+              onError: (exception, stackTrace) {
+                print('Error loading image: $exception'); // Fehler-Handling
+              },
+              colorFilter: ColorFilter.mode(
+                  Colors.black.withOpacity(0.3), BlendMode.darken),
             ),
           ),
-        );
-      },
-      child: Container(
-        width: 110, // Fixe Breite
-        height: 140, // Höhere Box
-        padding: const EdgeInsets.symmetric(
-            horizontal: 8, vertical: 10), // Padding innerhalb der Box
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12), // Abgerundete Ecken
-          image: DecorationImage(
-            image: AssetImage(imagePath),
-            fit: BoxFit.cover,
-            onError: (exception, stackTrace) {
-              print('Error loading image: $exception'); // Fehler-Handling
-            },
-            colorFilter: ColorFilter.mode(
-                Colors.black.withOpacity(0.3), BlendMode.darken),
-          ),
-        ),
-        child: Align(
-          alignment: Alignment.bottomLeft,
-          child: Text(
-            shop.name,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 22,
-              fontWeight: FontWeight.w600,
+          child: Align(
+            alignment: Alignment.bottomLeft,
+            child: Text(
+              shop.name,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 22,
+                fontWeight: FontWeight.w600,
+              ),
+              maxLines: 2, // Maximal 2 Zeilen
+              overflow:
+                  TextOverflow.ellipsis, // Text abschneiden oder umbrechen
             ),
-            maxLines: 2, // Maximal 2 Zeilen
-            overflow: TextOverflow.ellipsis, // Text abschneiden oder umbrechen
           ),
         ),
       ),
-    ),
-  );
-}
-
-
-  Future<List<Itemlist>> _fetchLatestItemLists() async {
-    final lists = await widget.isar.itemlists.where().findAll();
-    final validLists = lists.where((list) => list.shopId.isNotEmpty).toList();
-    validLists.sort((a, b) => b.creationDate.compareTo(a.creationDate));
-    return validLists.take(5).toList();
+    );
   }
 
 // LISTEN CARDS
@@ -355,7 +472,9 @@ Widget _buildShopCard(Einkaufsladen shop) {
                   shoppingListId: itemlist.id.toString(),
                   items: [itemlist],
                   initialStoreId: itemlist.shopId,
-                  isar: widget.isar,
+                  itemListService: widget.itemListService,
+                  productGroupService: widget.productGroupService,
+                  shopService: widget.shopService,
                 ),
               ),
             );
@@ -402,7 +521,8 @@ Widget _buildShopCard(Einkaufsladen shop) {
                             _buildTag(
                               '${items.length} Artikel',
                               const Color(0xFFF9F2BF), // Hintergrundfarbe
-                              const Color.fromARGB(255, 144, 133, 54), // Textfarbe
+                              const Color.fromARGB(
+                                  255, 144, 133, 54), // Textfarbe
                             ),
                             const SizedBox(width: 5),
                             // Shop-Tag mit den definierten Farben
@@ -613,126 +733,4 @@ Widget _buildShopCard(Einkaufsladen shop) {
           content: Text('Datei erfolgreich im Downloads-Ordner gespeichert.')),
     );
   }
-
-  Future<List<String>> getAllProductGroups(String shopId) async {
-    final productGroups = await widget.isar.productgroups
-        .filter()
-        .storeIdEqualTo(shopId)
-        .sortByOrder()
-        .findAll();
-
-    return productGroups.map((group) => group.name.trim()).toList();
-  }
-
-  Future<String> getGroupName(String groupId) async {
-    final productGroup = await widget.isar.productgroups
-        .filter()
-        .idEqualTo(int.parse(groupId))
-        .findFirst();
-    return productGroup?.name ?? "Unbekannt";
-  }
-
-  Future<String> getShopName(String groupId) async {
-    if (groupId.isEmpty) {
-      return "Unbekannt";
-    }
-
-    final parsedGroupId = int.tryParse(groupId);
-    if (parsedGroupId == null) {
-      return "Unbekannt";
-    }
-
-    final shop = await widget.isar.einkaufsladens
-        .filter()
-        .idEqualTo(parsedGroupId)
-        .findFirst();
-    if (shop != null) {
-      return shop.name;
-    } else {
-      return "Unbekannt";
-    }
-  }
-
-  void _renameList(Itemlist itemlist) {
-    TextEditingController nameController =
-        TextEditingController(text: itemlist.name);
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Listennamen ändern'),
-          content: TextField(
-            controller: nameController,
-            decoration:
-                const InputDecoration(hintText: 'Neuer Listennamen eingeben'),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Abbrechen'),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            TextButton(
-              child: const Text('Speichern'),
-              onPressed: () async {
-                if (nameController.text.isNotEmpty) {
-                  itemlist.name = nameController.text.trim();
-                  await widget.isar.writeTxn(() async {
-                    await widget.isar.itemlists.put(itemlist);
-                  });
-                  Navigator.of(context).pop();
-                  setState(() {
-                    _fetchLatestItemLists();
-                  });
-                }
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _deleteList(Itemlist itemlist) async {
-    await widget.isar.writeTxn(() async {
-      await widget.isar.itemlists.delete(itemlist.id);
-    });
-
-    setState(() {
-      _fetchLatestItemLists();
-      _fetchTopShops();
-    });
-  }
-
-  void _saveListAsTemplate(Itemlist itemlist) async {
-    final newTemplate = Template(
-      name: itemlist.name,
-      items: itemlist.getItems(),
-      imagePath: itemlist.imagePath!,
-      storeId: itemlist.shopId,
-    );
-
-    await widget.isar.writeTxn(() async {
-      await widget.isar.templates.put(newTemplate);
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-      content: Text('Liste als Vorlage gespeichert!'),
-    ));
-  }
-
-  void _createListDialog(BuildContext context) async {
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => CreateListScreen(isar: widget.isar),
-      ),
-    );
-
-    if (result == true) { 
-      setState(() {
-        _fetchLatestItemLists();
-      });
-    }
-  }
-
 }

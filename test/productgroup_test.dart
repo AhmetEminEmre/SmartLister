@@ -47,7 +47,7 @@ void main() {
     final group = Productgroup(name: 'Joghurt', storeId: '1', order: 0)..id = 99;
     await service.addProductGroup(group);
 
-    final result = await service.fetchProductGroupById(99);
+    final result = await service.fetchGroupById(99);
 
     expect(result?.name, 'Joghurt');
     expect(result?.id, 99);

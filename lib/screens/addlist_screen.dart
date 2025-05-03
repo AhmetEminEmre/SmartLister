@@ -10,13 +10,27 @@ import 'package:smart/objects/productgroup.dart';
 import '../objects/shop.dart';
 import 'dart:convert';
 
-class CreateListScreen extends StatefulWidget {
-  final Isar isar;
+import 'package:smart/services/itemlist_service.dart';
+import 'package:smart/services/productgroup_service.dart';
+import 'package:smart/services/shop_service.dart';
+import 'package:smart/services/template_service.dart';
 
-  const CreateListScreen({super.key, required this.isar});
+class CreateListScreen extends StatefulWidget {
+  final ItemListService itemListService;
+  final ShopService shopService;
+  final ProductGroupService productGroupService;
+  final TemplateService templateService;
+
+  const CreateListScreen({
+    super.key,
+    required this.itemListService,
+    required this.shopService,
+    required this.productGroupService,
+    required this.templateService,
+  });
 
   @override
-  _CreateListScreenState createState() => _CreateListScreenState();
+  State<CreateListScreen> createState() => _CreateListScreenState();
 }
 
 class _CreateListScreenState extends State<CreateListScreen> {
@@ -42,7 +56,7 @@ class _CreateListScreenState extends State<CreateListScreen> {
     'lib/img/bild3.png': 'Drogerie',
     'lib/img/bild4.png': 'Gardening',
     'lib/img/bild5.png': 'Party',
-    'lib/img/bild6.png': 'Bür0',
+    'lib/img/bild6.png': 'Büro',
   };
 
   @override
@@ -52,7 +66,7 @@ class _CreateListScreenState extends State<CreateListScreen> {
   }
 
   Future<void> _loadTemplates() async {
-    final templates = await widget.isar.templates.where().findAll();
+    final templates = await widget.templateService.fetchAllTemplates();
     setState(() {
       _templateItems = templates.map((template) {
         return DropdownMenuItem<String>(
@@ -64,220 +78,27 @@ class _CreateListScreenState extends State<CreateListScreen> {
   }
 
   Future<void> _applyTemplate(String templateId) async {
-    final template = await widget.isar.templates
-        .where()
-        .idEqualTo(int.parse(templateId))
-        .findFirst();
-
+    final template =
+        await widget.templateService.fetchTemplateById(int.parse(templateId));
     if (template != null) {
-      _listNameController.text = template.name;
-      _selectedImagePath = template.imagePath;
-      _items = template.getItems();
-
       setState(() {
+        _listNameController.text = template.name;
+        _selectedImagePath = template.imagePath;
+        _items = template.getItems();
         _selectedTemplateId = templateId;
       });
     }
   }
 
-  Future<String> createUniqueShop(String shopName) async {
-    String uniqueName = shopName;
-    int counter = 1;
-
-    while (true) {
-      final existingShop = await widget.isar.einkaufsladens
-          .filter()
-          .nameEqualTo(uniqueName)
-          .findFirst();
-
-      if (existingShop == null) {
-        return uniqueName;
-      } else {
-        uniqueName = "$shopName($counter)";
-        counter++;
-      }
-    }
-  }
-
-  Future<bool> isProductGroupOrderMatching(
-      String shopName, List<String> importedGroupNames) async {
-    final existingShop = await widget.isar.einkaufsladens
-        .filter()
-        .nameEqualTo(shopName)
-        .findFirst();
-
-    if (existingShop != null) {
-      final existingGroups = await widget.isar.productgroups
-          .filter()
-          .storeIdEqualTo(existingShop.id.toString())
-          .sortByOrder()
-          .findAll();
-
-      List<String> existingGroupNames =
-          existingGroups.map((group) => group.name.trim()).toList();
-      List<String> normalizedImportedGroupNames =
-          importedGroupNames.map((name) => name.trim()).toList();
-
-      debugPrint(
-          "Comparing imported groups with existing shop (order preserved)...");
-      debugPrint("Shop Name: $shopName");
-      debugPrint(
-          "Imported Groups (order-preserved): $normalizedImportedGroupNames");
-      debugPrint("Existing Shop Groups (order-preserved): $existingGroupNames");
-
-      if (_deepEquals(existingGroupNames, normalizedImportedGroupNames)) {
-        debugPrint(
-            "Exact match found for shop: $shopName with correct group order.");
-        return true;
-      } else {
-        debugPrint("No exact match found. Group order or names do not match.");
-      }
-    } else {
-      debugPrint("No shop found with the name: $shopName");
-    }
-    return false;
-  }
-
-  bool _deepEquals(List<String> list1, List<String> list2) {
-    if (list1.length != list2.length) return false;
-    for (int i = 0; i < list1.length; i++) {
-      if (list1[i] != list2[i]) return false;
-    }
-    return true;
-  }
-
-  Future<void> importList(String csvContent) async {
-    List<String> lines = csvContent.split('\n');
-    if (lines.isEmpty) return;
-
-    String listName = lines[0].split(';')[0].trim();
-    String imagepath = lines[0].split(';')[1].trim();
-    String shopName = lines[0].split(';')[2].trim();
-
-    debugPrint("Starting import for list: $listName, with shop: $shopName");
-
-    List<String> importedGroupNames = lines[0]
-        .split(';')
-        .skip(3)
-        .where((groupName) => groupName.isNotEmpty)
-        .map((name) => name.trim())
-        .toList();
-
-    debugPrint("Imported Group Names (normalized): $importedGroupNames");
-
-    int shopId = -1;
-    Map<String, String> groupNameToId = {};
-
-    bool matchingOrder =
-        await isProductGroupOrderMatching(shopName, importedGroupNames);
-    if (matchingOrder) {
-      final existingShop = await widget.isar.einkaufsladens
-          .filter()
-          .nameEqualTo(shopName)
-          .findFirst();
-      shopId = existingShop?.id ?? -1;
-
-      debugPrint(
-          'Found existing shop: Name = ${existingShop?.name}, ID = $shopId');
-
-      if (shopId != -1) {
-        for (String groupName in importedGroupNames) {
-          final existingGroup = await widget.isar.productgroups
-              .filter()
-              .nameEqualTo(groupName)
-              .storeIdEqualTo(shopId.toString())
-              .findFirst();
-          if (existingGroup != null) {
-            groupNameToId[groupName] = existingGroup.id.toString();
-            debugPrint(
-                "Found existing group: Name = ${existingGroup.name}, ID = ${existingGroup.id}");
-          } else {
-            debugPrint("Group not found in existing shop: $groupName");
-          }
-        }
-      } else {
-        debugPrint("Shop ID retrieval failed for shop: $shopName");
-      }
-    } else {
-      debugPrint(
-          "No matching shop with correct group order. Creating a new shop.");
-
-      // if shops don't match
-      shopName = await createUniqueShop(shopName);
-      final newShop = Einkaufsladen(name: shopName);
-      await widget.isar.writeTxn(() async {
-        shopId = await widget.isar.einkaufsladens.put(newShop);
-        for (int i = 0; i < importedGroupNames.length; i++) {
-          final groupName = importedGroupNames[i];
-          final productGroup = Productgroup(
-            name: groupName,
-            storeId: shopId.toString(),
-            order: i,
-          );
-          final groupId = await widget.isar.productgroups.put(productGroup);
-          groupNameToId[groupName] = groupId.toString();
-          debugPrint(
-              "Created new group in new shop: Name = $groupName, ID = $groupId");
-        }
-      });
-      debugPrint(
-          "Created new shop with name: $shopName, ID: $shopId, and groups: $groupNameToId");
-    }
-
-    List<Map<String, dynamic>> importedItems = [];
-    for (int i = 1; i < lines.length; i++) {
-      var line = lines[i].trim();
-      if (line.isEmpty) continue;
-
-      var fields = line.split(';');
-      if (fields.length >= 3) {
-        final groupName = fields[0].trim();
-        final groupId = groupNameToId[groupName] ?? "0";
-        final itemName = fields[1].trim();
-        final status = fields[2] == 'true';
-
-        importedItems.add({
-          'groupId': groupId,
-          'name': itemName,
-          'isDone': status,
-        });
-        debugPrint(
-            "Imported item: Group ID = $groupId, Name = $itemName, Status = $status");
-      }
-    }
-
-    debugPrint("Final imported items: $importedItems");
-
-    final newList = Itemlist(
-      name: listName,
-      imagePath: imagepath,
-      shopId: shopId.toString(),
-      items: importedItems,
-      creationDate: DateTime.now(),
-    );
-
-    await widget.isar.writeTxn(() async {
-      await widget.isar.itemlists.put(newList);
-    });
-    Navigator.popUntil(context, (route) => route.isFirst);
-  }
-
   Future<void> _createList() async {
-    if (_listNameController.text.trim().isEmpty ||
-        _listNameController.text.trim().length < 3) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text(
-            'Der Name der Einkaufsliste muss mindestens 3 Zeichen lang sein.'),
-        backgroundColor: Colors.red,
-      ));
-      return;
-    }
-
-    if (_selectedImagePath == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Bitte wählen Sie ein Bild aus.'),
-        backgroundColor: Colors.red,
-      ));
+    if (_listNameController.text.trim().length < 3 ||
+        _selectedImagePath == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Bitte Namen (mind. 3 Zeichen) und Bild wählen.'),
+          backgroundColor: Colors.red,
+        ),
+      );
       return;
     }
 
@@ -289,9 +110,7 @@ class _CreateListScreenState extends State<CreateListScreen> {
       creationDate: DateTime.now(),
     );
 
-    await widget.isar.writeTxn(() async {
-      await widget.isar.itemlists.put(newList);
-    });
+    await widget.itemListService.addItemList(newList);
 
     Navigator.push(
       context,
@@ -299,12 +118,13 @@ class _CreateListScreenState extends State<CreateListScreen> {
         builder: (context) => StoreScreen(
           listId: newList.id.toString(),
           listName: newList.name,
-          isar: widget.isar,
+          itemListService: widget.itemListService,
+          shopService: widget.shopService,
+          productGroupService: widget.productGroupService,
+
           onStoreSelected: (selectedStoreId) async {
             newList.shopId = selectedStoreId;
-            await widget.isar.writeTxn(() async {
-              await widget.isar.itemlists.put(newList);
-            });
+            await widget.itemListService.updateItemList(newList);
 
             Navigator.pushReplacement(
               context,
@@ -314,7 +134,9 @@ class _CreateListScreenState extends State<CreateListScreen> {
                   shoppingListId: newList.id.toString(),
                   items: [newList],
                   initialStoreId: selectedStoreId,
-                  isar: widget.isar,
+                  itemListService: widget.itemListService,
+                  shopService: widget.shopService,
+                  productGroupService: widget.productGroupService,
                 ),
               ),
             );
@@ -322,6 +144,161 @@ class _CreateListScreenState extends State<CreateListScreen> {
         ),
       ),
     );
+  }
+
+Future<void> importList(String csvContent) async {
+  List<String> lines = csvContent.split('\n');
+  if (lines.isEmpty) return;
+
+  String listName = lines[0].split(';')[0].trim();
+  String imagepath = lines[0].split(';')[1].trim();
+  String shopName = lines[0].split(';')[2].trim();
+
+  debugPrint("Starting import for list: $listName, with shop: $shopName");
+
+  List<String> importedGroupNames = lines[0]
+      .split(';')
+      .skip(3)
+      .where((groupName) => groupName.isNotEmpty)
+      .map((name) => name.trim())
+      .toList();
+
+  debugPrint("Imported Group Names (normalized): $importedGroupNames");
+
+  int shopId = -1;
+  Map<String, String> groupNameToId = {};
+
+  bool matchingOrder = await isProductGroupOrderMatching(shopName, importedGroupNames);
+  if (matchingOrder) {
+    final existingShop = await widget.shopService.fetchShopByName(shopName);
+    shopId = existingShop?.id ?? -1;
+
+    debugPrint('Found existing shop: Name = ${existingShop?.name}, ID = $shopId');
+
+    if (shopId != -1) {
+      for (String groupName in importedGroupNames) {
+        final existingGroup = await widget.productGroupService
+            .fetchByNameAndShop(groupName, shopId.toString());
+        if (existingGroup != null) {
+          groupNameToId[groupName] = existingGroup.id.toString();
+          debugPrint(
+              "Found existing group: Name = ${existingGroup.name}, ID = ${existingGroup.id}");
+        } else {
+          debugPrint("Group not found in existing shop: $groupName");
+        }
+      }
+    } else {
+      debugPrint("Shop ID retrieval failed for shop: $shopName");
+    }
+  } else {
+    debugPrint("No matching shop with correct group order. Creating a new shop.");
+
+    shopName = await createUniqueShop(shopName);
+    final newShop = Einkaufsladen(name: shopName);
+    shopId = await widget.shopService.addShop(newShop);
+
+    for (int i = 0; i < importedGroupNames.length; i++) {
+      final groupName = importedGroupNames[i];
+      final productGroup = Productgroup(
+        name: groupName,
+        storeId: shopId.toString(),
+        order: i,
+      );
+      final groupId = await widget.productGroupService.addProductGroup(productGroup);
+      groupNameToId[groupName] = groupId.toString();
+      debugPrint("Created new group in new shop: Name = $groupName, ID = $groupId");
+    }
+
+    debugPrint("Created new shop with name: $shopName, ID: $shopId, and groups: $groupNameToId");
+  }
+
+  List<Map<String, dynamic>> importedItems = [];
+  for (int i = 1; i < lines.length; i++) {
+    var line = lines[i].trim();
+    if (line.isEmpty) continue;
+
+    var fields = line.split(';');
+    if (fields.length >= 3) {
+      final groupName = fields[0].trim();
+      final groupId = groupNameToId[groupName] ?? "0";
+      final itemName = fields[1].trim();
+      final status = fields[2] == 'true';
+
+      importedItems.add({
+        'groupId': groupId,
+        'name': itemName,
+        'isDone': status,
+      });
+      debugPrint("Imported item: Group ID = $groupId, Name = $itemName, Status = $status");
+    }
+  }
+
+  debugPrint("Final imported items: $importedItems");
+
+  final newList = Itemlist(
+    name: listName,
+    imagePath: imagepath,
+    shopId: shopId.toString(),
+    items: importedItems,
+    creationDate: DateTime.now(),
+  );
+
+  await widget.itemListService.addItemList(newList);
+  Navigator.popUntil(context, (route) => route.isFirst);
+}
+ Future<String> createUniqueShop(String shopName) async {
+  String uniqueName = shopName;
+  int counter = 1;
+
+  while (true) {
+    final existingShop = await widget.shopService.fetchShopByName(uniqueName);
+
+    if (existingShop == null) {
+      return uniqueName;
+    } else {
+      uniqueName = "$shopName($counter)";
+      counter++;
+    }
+  }
+}
+
+
+Future<bool> isProductGroupOrderMatching(
+    String shopName, List<String> importedGroupNames) async {
+  final existingShop = await widget.shopService.fetchShopByName(shopName);
+
+  if (existingShop != null) {
+    final existingGroups = await widget.productGroupService
+        .fetchProductGroupsByStoreIdSorted(existingShop.id.toString());
+
+    List<String> existingGroupNames =
+        existingGroups.map((g) => g.name.trim()).toList();
+    List<String> normalizedImported = importedGroupNames.map((n) => n.trim()).toList();
+
+    debugPrint("Comparing imported groups with existing shop (order preserved)...");
+    debugPrint("Shop Name: $shopName");
+    debugPrint("Imported Groups: $normalizedImported");
+    debugPrint("Existing Groups: $existingGroupNames");
+
+    if (_deepEquals(existingGroupNames, normalizedImported)) {
+      debugPrint("Exact match found for shop: $shopName");
+      return true;
+    } else {
+      debugPrint("No exact match found.");
+    }
+  } else {
+    debugPrint("Shop not found: $shopName");
+  }
+
+  return false;
+}
+
+  bool _deepEquals(List<String> list1, List<String> list2) {
+    if (list1.length != list2.length) return false;
+    for (int i = 0; i < list1.length; i++) {
+      if (list1[i] != list2[i]) return false;
+    }
+    return true;
   }
 
   @override
@@ -598,64 +575,68 @@ class _CreateListScreenState extends State<CreateListScreen> {
               alignment: Alignment.bottomCenter,
               child: SizedBox(
                 width: double.infinity,
-                child: 
-
-                ElevatedButton(
-  onPressed: (_listNameController.text.isNotEmpty && _selectedImagePath != null)
-      ? _createList
-      : null,
-  child: const Text(
-    'Weiter',
-    style: TextStyle(
-      fontSize: 23,
-      fontWeight: FontWeight.w700,
-    ),
-  ),
-  style: ButtonStyle(
-    // Hintergrundfarbe je nach Zustand
-    backgroundColor: MaterialStateProperty.resolveWith<Color>(
-      (Set<MaterialState> states) {
-        if (states.contains(MaterialState.disabled)) {
-          return Color.fromARGB(255, 255, 255, 255); // Heller Orange-Ton für disabled
-        }
-        return Colors.white; // Weißer Hintergrund für enabled
-      },
-    ),
-    // Textfarbe je nach Zustand
-    foregroundColor: MaterialStateProperty.resolveWith<Color>(
-      (Set<MaterialState> states) {
-        if (states.contains(MaterialState.disabled)) {
-          return Color.fromARGB(255, 249, 217, 169); // Abgeschwächtes Orange für disabled
-        }
-        return const Color(0xFFE5A462); // Starkes Orange für enabled
-      },
-    ),
-    // Randfarbe je nach Zustand
-    side: MaterialStateProperty.resolveWith<BorderSide>(
-      (Set<MaterialState> states) {
-        if (states.contains(MaterialState.disabled)) {
-          return const BorderSide(
-            color: Color.fromARGB(255, 255, 226, 182), // Abgeschwächter Rand für disabled
-            width: 3.0,
-          );
-        }
-        return const BorderSide(
-          color: Color(0xFFE5A462), // Starker orangefarbener Rand für enabled
-          width: 3.0,
-        );
-      },
-    ),
-    padding: MaterialStateProperty.all(
-      const EdgeInsets.symmetric(vertical: 16.0),
-    ),
-    shape: MaterialStateProperty.all(
-      RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12.0), // Abgerundete Ecken
-      ),
-    ),
-  ),
-),
-
+                child: ElevatedButton(
+                  onPressed: (_listNameController.text.isNotEmpty &&
+                          _selectedImagePath != null)
+                      ? _createList
+                      : null,
+                  child: const Text(
+                    'Weiter',
+                    style: TextStyle(
+                      fontSize: 23,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  style: ButtonStyle(
+                    // Hintergrundfarbe je nach Zustand
+                    backgroundColor: MaterialStateProperty.resolveWith<Color>(
+                      (Set<MaterialState> states) {
+                        if (states.contains(MaterialState.disabled)) {
+                          return Color.fromARGB(255, 255, 255,
+                              255); // Heller Orange-Ton für disabled
+                        }
+                        return Colors.white; // Weißer Hintergrund für enabled
+                      },
+                    ),
+                    // Textfarbe je nach Zustand
+                    foregroundColor: MaterialStateProperty.resolveWith<Color>(
+                      (Set<MaterialState> states) {
+                        if (states.contains(MaterialState.disabled)) {
+                          return Color.fromARGB(255, 249, 217,
+                              169); // Abgeschwächtes Orange für disabled
+                        }
+                        return const Color(
+                            0xFFE5A462); // Starkes Orange für enabled
+                      },
+                    ),
+                    // Randfarbe je nach Zustand
+                    side: MaterialStateProperty.resolveWith<BorderSide>(
+                      (Set<MaterialState> states) {
+                        if (states.contains(MaterialState.disabled)) {
+                          return const BorderSide(
+                            color: Color.fromARGB(255, 255, 226,
+                                182), // Abgeschwächter Rand für disabled
+                            width: 3.0,
+                          );
+                        }
+                        return const BorderSide(
+                          color: Color(
+                              0xFFE5A462), // Starker orangefarbener Rand für enabled
+                          width: 3.0,
+                        );
+                      },
+                    ),
+                    padding: MaterialStateProperty.all(
+                      const EdgeInsets.symmetric(vertical: 16.0),
+                    ),
+                    shape: MaterialStateProperty.all(
+                      RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.circular(12.0), // Abgerundete Ecken
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ),
           ],

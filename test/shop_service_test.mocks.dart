@@ -3,14 +3,14 @@
 // Do not manually edit this file.
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
-import 'dart:async' as _i4;
+import 'dart:async' as _i3;
 import 'dart:typed_data' as _i7;
 
-import 'package:isar/isar.dart' as _i3;
+import 'package:isar/isar.dart' as _i2;
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:mockito/src/dummies.dart' as _i6;
-import 'package:smart/objects/shop.dart' as _i2;
-import 'package:smart/services/shop_service.dart' as _i5;
+import 'package:smart/objects/shop.dart' as _i5;
+import 'package:smart/services/shop_service.dart' as _i4;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -25,8 +25,8 @@ import 'package:smart/services/shop_service.dart' as _i5;
 // ignore_for_file: camel_case_types
 // ignore_for_file: subtype_of_sealed_class
 
-class _FakeEinkaufsladen_0 extends _i1.SmartFake implements _i2.Einkaufsladen {
-  _FakeEinkaufsladen_0(
+class _FakeIsar_0 extends _i1.SmartFake implements _i2.Isar {
+  _FakeIsar_0(
     Object parent,
     Invocation parentInvocation,
   ) : super(
@@ -35,8 +35,9 @@ class _FakeEinkaufsladen_0 extends _i1.SmartFake implements _i2.Einkaufsladen {
         );
 }
 
-class _FakeIsar_1 extends _i1.SmartFake implements _i3.Isar {
-  _FakeIsar_1(
+class _FakeCollectionSchema_1<OBJ1> extends _i1.SmartFake
+    implements _i2.CollectionSchema<OBJ1> {
+  _FakeCollectionSchema_1(
     Object parent,
     Invocation parentInvocation,
   ) : super(
@@ -45,9 +46,9 @@ class _FakeIsar_1 extends _i1.SmartFake implements _i3.Isar {
         );
 }
 
-class _FakeCollectionSchema_2<OBJ1> extends _i1.SmartFake
-    implements _i3.CollectionSchema<OBJ1> {
-  _FakeCollectionSchema_2(
+class _FakeQueryBuilder_2<OBJ1, R, S> extends _i1.SmartFake
+    implements _i2.QueryBuilder<OBJ1, R, S> {
+  _FakeQueryBuilder_2(
     Object parent,
     Invocation parentInvocation,
   ) : super(
@@ -56,9 +57,8 @@ class _FakeCollectionSchema_2<OBJ1> extends _i1.SmartFake
         );
 }
 
-class _FakeQueryBuilder_3<OBJ1, R, S> extends _i1.SmartFake
-    implements _i3.QueryBuilder<OBJ1, R, S> {
-  _FakeQueryBuilder_3(
+class _FakeQuery_3<T> extends _i1.SmartFake implements _i2.Query<T> {
+  _FakeQuery_3(
     Object parent,
     Invocation parentInvocation,
   ) : super(
@@ -67,8 +67,8 @@ class _FakeQueryBuilder_3<OBJ1, R, S> extends _i1.SmartFake
         );
 }
 
-class _FakeQuery_4<T> extends _i1.SmartFake implements _i3.Query<T> {
-  _FakeQuery_4(
+class _FakeFuture_4<T1> extends _i1.SmartFake implements _i3.Future<T1> {
+  _FakeFuture_4(
     Object parent,
     Invocation parentInvocation,
   ) : super(
@@ -77,19 +77,9 @@ class _FakeQuery_4<T> extends _i1.SmartFake implements _i3.Query<T> {
         );
 }
 
-class _FakeFuture_5<T1> extends _i1.SmartFake implements _i4.Future<T1> {
-  _FakeFuture_5(
-    Object parent,
-    Invocation parentInvocation,
-  ) : super(
-          parent,
-          parentInvocation,
-        );
-}
-
-class _FakeIsarCollection_6<OBJ> extends _i1.SmartFake
-    implements _i3.IsarCollection<OBJ> {
-  _FakeIsarCollection_6(
+class _FakeIsarCollection_5<OBJ> extends _i1.SmartFake
+    implements _i2.IsarCollection<OBJ> {
+  _FakeIsarCollection_5(
     Object parent,
     Invocation parentInvocation,
   ) : super(
@@ -101,84 +91,111 @@ class _FakeIsarCollection_6<OBJ> extends _i1.SmartFake
 /// A class which mocks [ShopService].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockShopService extends _i1.Mock implements _i5.ShopService {
+class MockShopService extends _i1.Mock implements _i4.ShopService {
   MockShopService() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i4.Future<List<_i2.Einkaufsladen>> fetchShops() => (super.noSuchMethod(
+  _i3.Future<List<_i5.Einkaufsladen>> fetchShops() => (super.noSuchMethod(
         Invocation.method(
           #fetchShops,
           [],
         ),
         returnValue:
-            _i4.Future<List<_i2.Einkaufsladen>>.value(<_i2.Einkaufsladen>[]),
-      ) as _i4.Future<List<_i2.Einkaufsladen>>);
+            _i3.Future<List<_i5.Einkaufsladen>>.value(<_i5.Einkaufsladen>[]),
+      ) as _i3.Future<List<_i5.Einkaufsladen>>);
 
   @override
-  _i4.Future<_i2.Einkaufsladen> addShop(_i2.Einkaufsladen? shop) =>
-      (super.noSuchMethod(
+  _i3.Future<int> addShop(_i5.Einkaufsladen? shop) => (super.noSuchMethod(
         Invocation.method(
           #addShop,
           [shop],
         ),
-        returnValue: _i4.Future<_i2.Einkaufsladen>.value(_FakeEinkaufsladen_0(
-          this,
-          Invocation.method(
-            #addShop,
-            [shop],
-          ),
-        )),
-      ) as _i4.Future<_i2.Einkaufsladen>);
+        returnValue: _i3.Future<int>.value(0),
+      ) as _i3.Future<int>);
 
   @override
-  _i4.Future<void> deleteShop(int? shopId) => (super.noSuchMethod(
+  _i3.Future<void> deleteShop(int? shopId) => (super.noSuchMethod(
         Invocation.method(
           #deleteShop,
           [shopId],
         ),
-        returnValue: _i4.Future<void>.value(),
-        returnValueForMissingStub: _i4.Future<void>.value(),
-      ) as _i4.Future<void>);
+        returnValue: _i3.Future<void>.value(),
+        returnValueForMissingStub: _i3.Future<void>.value(),
+      ) as _i3.Future<void>);
 
   @override
-  _i4.Future<_i2.Einkaufsladen?> fetchShopById(int? shopId) =>
+  _i3.Future<_i5.Einkaufsladen?> fetchShopById(int? shopId) =>
       (super.noSuchMethod(
         Invocation.method(
           #fetchShopById,
           [shopId],
         ),
-        returnValue: _i4.Future<_i2.Einkaufsladen?>.value(),
-      ) as _i4.Future<_i2.Einkaufsladen?>);
+        returnValue: _i3.Future<_i5.Einkaufsladen?>.value(),
+      ) as _i3.Future<_i5.Einkaufsladen?>);
+
+  @override
+  _i3.Future<_i5.Einkaufsladen?> fetchShopByName(String? name) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #fetchShopByName,
+          [name],
+        ),
+        returnValue: _i3.Future<_i5.Einkaufsladen?>.value(),
+      ) as _i3.Future<_i5.Einkaufsladen?>);
+
+  @override
+  _i3.Stream<void> watchShops() => (super.noSuchMethod(
+        Invocation.method(
+          #watchShops,
+          [],
+        ),
+        returnValue: _i3.Stream<void>.empty(),
+      ) as _i3.Stream<void>);
+
+  @override
+  _i3.Future<String> createUniqueShop(String? shopName) => (super.noSuchMethod(
+        Invocation.method(
+          #createUniqueShop,
+          [shopName],
+        ),
+        returnValue: _i3.Future<String>.value(_i6.dummyValue<String>(
+          this,
+          Invocation.method(
+            #createUniqueShop,
+            [shopName],
+          ),
+        )),
+      ) as _i3.Future<String>);
 }
 
 /// A class which mocks [IsarCollection].
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockIsarCollection<OBJ> extends _i1.Mock
-    implements _i3.IsarCollection<OBJ> {
+    implements _i2.IsarCollection<OBJ> {
   MockIsarCollection() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i3.Isar get isar => (super.noSuchMethod(
+  _i2.Isar get isar => (super.noSuchMethod(
         Invocation.getter(#isar),
-        returnValue: _FakeIsar_1(
+        returnValue: _FakeIsar_0(
           this,
           Invocation.getter(#isar),
         ),
-      ) as _i3.Isar);
+      ) as _i2.Isar);
 
   @override
-  _i3.CollectionSchema<OBJ> get schema => (super.noSuchMethod(
+  _i2.CollectionSchema<OBJ> get schema => (super.noSuchMethod(
         Invocation.getter(#schema),
-        returnValue: _FakeCollectionSchema_2<OBJ>(
+        returnValue: _FakeCollectionSchema_1<OBJ>(
           this,
           Invocation.getter(#schema),
         ),
-      ) as _i3.CollectionSchema<OBJ>);
+      ) as _i2.CollectionSchema<OBJ>);
 
   @override
   String get name => (super.noSuchMethod(
@@ -190,13 +207,13 @@ class MockIsarCollection<OBJ> extends _i1.Mock
       ) as String);
 
   @override
-  _i4.Future<OBJ?> get(int? id) => (super.noSuchMethod(
+  _i3.Future<OBJ?> get(int? id) => (super.noSuchMethod(
         Invocation.method(
           #get,
           [id],
         ),
-        returnValue: _i4.Future<OBJ?>.value(),
-      ) as _i4.Future<OBJ?>);
+        returnValue: _i3.Future<OBJ?>.value(),
+      ) as _i3.Future<OBJ?>);
 
   @override
   OBJ? getSync(int? id) => (super.noSuchMethod(Invocation.method(
@@ -205,13 +222,13 @@ class MockIsarCollection<OBJ> extends _i1.Mock
       )) as OBJ?);
 
   @override
-  _i4.Future<List<OBJ?>> getAll(List<int>? ids) => (super.noSuchMethod(
+  _i3.Future<List<OBJ?>> getAll(List<int>? ids) => (super.noSuchMethod(
         Invocation.method(
           #getAll,
           [ids],
         ),
-        returnValue: _i4.Future<List<OBJ?>>.value(<OBJ?>[]),
-      ) as _i4.Future<List<OBJ?>>);
+        returnValue: _i3.Future<List<OBJ?>>.value(<OBJ?>[]),
+      ) as _i3.Future<List<OBJ?>>);
 
   @override
   List<OBJ?> getAllSync(List<int>? ids) => (super.noSuchMethod(
@@ -223,7 +240,7 @@ class MockIsarCollection<OBJ> extends _i1.Mock
       ) as List<OBJ?>);
 
   @override
-  _i4.Future<OBJ?> getByIndex(
+  _i3.Future<OBJ?> getByIndex(
     String? indexName,
     List<Object?>? key,
   ) =>
@@ -235,8 +252,8 @@ class MockIsarCollection<OBJ> extends _i1.Mock
             key,
           ],
         ),
-        returnValue: _i4.Future<OBJ?>.value(),
-      ) as _i4.Future<OBJ?>);
+        returnValue: _i3.Future<OBJ?>.value(),
+      ) as _i3.Future<OBJ?>);
 
   @override
   OBJ? getByIndexSync(
@@ -252,7 +269,7 @@ class MockIsarCollection<OBJ> extends _i1.Mock
       )) as OBJ?);
 
   @override
-  _i4.Future<List<OBJ?>> getAllByIndex(
+  _i3.Future<List<OBJ?>> getAllByIndex(
     String? indexName,
     List<List<Object?>>? keys,
   ) =>
@@ -264,8 +281,8 @@ class MockIsarCollection<OBJ> extends _i1.Mock
             keys,
           ],
         ),
-        returnValue: _i4.Future<List<OBJ?>>.value(<OBJ?>[]),
-      ) as _i4.Future<List<OBJ?>>);
+        returnValue: _i3.Future<List<OBJ?>>.value(<OBJ?>[]),
+      ) as _i3.Future<List<OBJ?>>);
 
   @override
   List<OBJ?> getAllByIndexSync(
@@ -284,13 +301,13 @@ class MockIsarCollection<OBJ> extends _i1.Mock
       ) as List<OBJ?>);
 
   @override
-  _i4.Future<int> put(OBJ? object) => (super.noSuchMethod(
+  _i3.Future<int> put(OBJ? object) => (super.noSuchMethod(
         Invocation.method(
           #put,
           [object],
         ),
-        returnValue: _i4.Future<int>.value(0),
-      ) as _i4.Future<int>);
+        returnValue: _i3.Future<int>.value(0),
+      ) as _i3.Future<int>);
 
   @override
   int putSync(
@@ -307,13 +324,13 @@ class MockIsarCollection<OBJ> extends _i1.Mock
       ) as int);
 
   @override
-  _i4.Future<List<int>> putAll(List<OBJ>? objects) => (super.noSuchMethod(
+  _i3.Future<List<int>> putAll(List<OBJ>? objects) => (super.noSuchMethod(
         Invocation.method(
           #putAll,
           [objects],
         ),
-        returnValue: _i4.Future<List<int>>.value(<int>[]),
-      ) as _i4.Future<List<int>>);
+        returnValue: _i3.Future<List<int>>.value(<int>[]),
+      ) as _i3.Future<List<int>>);
 
   @override
   List<int> putAllSync(
@@ -330,7 +347,7 @@ class MockIsarCollection<OBJ> extends _i1.Mock
       ) as List<int>);
 
   @override
-  _i4.Future<int> putByIndex(
+  _i3.Future<int> putByIndex(
     String? indexName,
     OBJ? object,
   ) =>
@@ -342,8 +359,8 @@ class MockIsarCollection<OBJ> extends _i1.Mock
             object,
           ],
         ),
-        returnValue: _i4.Future<int>.value(0),
-      ) as _i4.Future<int>);
+        returnValue: _i3.Future<int>.value(0),
+      ) as _i3.Future<int>);
 
   @override
   int putByIndexSync(
@@ -364,7 +381,7 @@ class MockIsarCollection<OBJ> extends _i1.Mock
       ) as int);
 
   @override
-  _i4.Future<List<int>> putAllByIndex(
+  _i3.Future<List<int>> putAllByIndex(
     String? indexName,
     List<OBJ>? objects,
   ) =>
@@ -376,8 +393,8 @@ class MockIsarCollection<OBJ> extends _i1.Mock
             objects,
           ],
         ),
-        returnValue: _i4.Future<List<int>>.value(<int>[]),
-      ) as _i4.Future<List<int>>);
+        returnValue: _i3.Future<List<int>>.value(<int>[]),
+      ) as _i3.Future<List<int>>);
 
   @override
   List<int> putAllByIndexSync(
@@ -398,13 +415,13 @@ class MockIsarCollection<OBJ> extends _i1.Mock
       ) as List<int>);
 
   @override
-  _i4.Future<bool> delete(int? id) => (super.noSuchMethod(
+  _i3.Future<bool> delete(int? id) => (super.noSuchMethod(
         Invocation.method(
           #delete,
           [id],
         ),
-        returnValue: _i4.Future<bool>.value(false),
-      ) as _i4.Future<bool>);
+        returnValue: _i3.Future<bool>.value(false),
+      ) as _i3.Future<bool>);
 
   @override
   bool deleteSync(int? id) => (super.noSuchMethod(
@@ -416,13 +433,13 @@ class MockIsarCollection<OBJ> extends _i1.Mock
       ) as bool);
 
   @override
-  _i4.Future<int> deleteAll(List<int>? ids) => (super.noSuchMethod(
+  _i3.Future<int> deleteAll(List<int>? ids) => (super.noSuchMethod(
         Invocation.method(
           #deleteAll,
           [ids],
         ),
-        returnValue: _i4.Future<int>.value(0),
-      ) as _i4.Future<int>);
+        returnValue: _i3.Future<int>.value(0),
+      ) as _i3.Future<int>);
 
   @override
   int deleteAllSync(List<int>? ids) => (super.noSuchMethod(
@@ -434,7 +451,7 @@ class MockIsarCollection<OBJ> extends _i1.Mock
       ) as int);
 
   @override
-  _i4.Future<bool> deleteByIndex(
+  _i3.Future<bool> deleteByIndex(
     String? indexName,
     List<Object?>? key,
   ) =>
@@ -446,8 +463,8 @@ class MockIsarCollection<OBJ> extends _i1.Mock
             key,
           ],
         ),
-        returnValue: _i4.Future<bool>.value(false),
-      ) as _i4.Future<bool>);
+        returnValue: _i3.Future<bool>.value(false),
+      ) as _i3.Future<bool>);
 
   @override
   bool deleteByIndexSync(
@@ -466,7 +483,7 @@ class MockIsarCollection<OBJ> extends _i1.Mock
       ) as bool);
 
   @override
-  _i4.Future<int> deleteAllByIndex(
+  _i3.Future<int> deleteAllByIndex(
     String? indexName,
     List<List<Object?>>? keys,
   ) =>
@@ -478,8 +495,8 @@ class MockIsarCollection<OBJ> extends _i1.Mock
             keys,
           ],
         ),
-        returnValue: _i4.Future<int>.value(0),
-      ) as _i4.Future<int>);
+        returnValue: _i3.Future<int>.value(0),
+      ) as _i3.Future<int>);
 
   @override
   int deleteAllByIndexSync(
@@ -498,14 +515,14 @@ class MockIsarCollection<OBJ> extends _i1.Mock
       ) as int);
 
   @override
-  _i4.Future<void> clear() => (super.noSuchMethod(
+  _i3.Future<void> clear() => (super.noSuchMethod(
         Invocation.method(
           #clear,
           [],
         ),
-        returnValue: _i4.Future<void>.value(),
-        returnValueForMissingStub: _i4.Future<void>.value(),
-      ) as _i4.Future<void>);
+        returnValue: _i3.Future<void>.value(),
+        returnValueForMissingStub: _i3.Future<void>.value(),
+      ) as _i3.Future<void>);
 
   @override
   void clearSync() => super.noSuchMethod(
@@ -517,15 +534,15 @@ class MockIsarCollection<OBJ> extends _i1.Mock
       );
 
   @override
-  _i4.Future<void> importJsonRaw(_i7.Uint8List? jsonBytes) =>
+  _i3.Future<void> importJsonRaw(_i7.Uint8List? jsonBytes) =>
       (super.noSuchMethod(
         Invocation.method(
           #importJsonRaw,
           [jsonBytes],
         ),
-        returnValue: _i4.Future<void>.value(),
-        returnValueForMissingStub: _i4.Future<void>.value(),
-      ) as _i4.Future<void>);
+        returnValue: _i3.Future<void>.value(),
+        returnValueForMissingStub: _i3.Future<void>.value(),
+      ) as _i3.Future<void>);
 
   @override
   void importJsonRawSync(_i7.Uint8List? jsonBytes) => super.noSuchMethod(
@@ -537,15 +554,15 @@ class MockIsarCollection<OBJ> extends _i1.Mock
       );
 
   @override
-  _i4.Future<void> importJson(List<Map<String, dynamic>>? json) =>
+  _i3.Future<void> importJson(List<Map<String, dynamic>>? json) =>
       (super.noSuchMethod(
         Invocation.method(
           #importJson,
           [json],
         ),
-        returnValue: _i4.Future<void>.value(),
-        returnValueForMissingStub: _i4.Future<void>.value(),
-      ) as _i4.Future<void>);
+        returnValue: _i3.Future<void>.value(),
+        returnValueForMissingStub: _i3.Future<void>.value(),
+      ) as _i3.Future<void>);
 
   @override
   void importJsonSync(List<Map<String, dynamic>>? json) => super.noSuchMethod(
@@ -557,9 +574,9 @@ class MockIsarCollection<OBJ> extends _i1.Mock
       );
 
   @override
-  _i3.QueryBuilder<OBJ, OBJ, _i3.QWhere> where({
+  _i2.QueryBuilder<OBJ, OBJ, _i2.QWhere> where({
     bool? distinct = false,
-    _i3.Sort? sort = _i3.Sort.asc,
+    _i2.Sort? sort = _i2.Sort.asc,
   }) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -570,7 +587,7 @@ class MockIsarCollection<OBJ> extends _i1.Mock
             #sort: sort,
           },
         ),
-        returnValue: _FakeQueryBuilder_3<OBJ, OBJ, _i3.QWhere>(
+        returnValue: _FakeQueryBuilder_2<OBJ, OBJ, _i2.QWhere>(
           this,
           Invocation.method(
             #where,
@@ -581,32 +598,32 @@ class MockIsarCollection<OBJ> extends _i1.Mock
             },
           ),
         ),
-      ) as _i3.QueryBuilder<OBJ, OBJ, _i3.QWhere>);
+      ) as _i2.QueryBuilder<OBJ, OBJ, _i2.QWhere>);
 
   @override
-  _i3.QueryBuilder<OBJ, OBJ, _i3.QFilterCondition> filter() =>
+  _i2.QueryBuilder<OBJ, OBJ, _i2.QFilterCondition> filter() =>
       (super.noSuchMethod(
         Invocation.method(
           #filter,
           [],
         ),
-        returnValue: _FakeQueryBuilder_3<OBJ, OBJ, _i3.QFilterCondition>(
+        returnValue: _FakeQueryBuilder_2<OBJ, OBJ, _i2.QFilterCondition>(
           this,
           Invocation.method(
             #filter,
             [],
           ),
         ),
-      ) as _i3.QueryBuilder<OBJ, OBJ, _i3.QFilterCondition>);
+      ) as _i2.QueryBuilder<OBJ, OBJ, _i2.QFilterCondition>);
 
   @override
-  _i3.Query<R> buildQuery<R>({
-    List<_i3.WhereClause>? whereClauses = const [],
+  _i2.Query<R> buildQuery<R>({
+    List<_i2.WhereClause>? whereClauses = const [],
     bool? whereDistinct = false,
-    _i3.Sort? whereSort = _i3.Sort.asc,
-    _i3.FilterOperation? filter,
-    List<_i3.SortProperty>? sortBy = const [],
-    List<_i3.DistinctProperty>? distinctBy = const [],
+    _i2.Sort? whereSort = _i2.Sort.asc,
+    _i2.FilterOperation? filter,
+    List<_i2.SortProperty>? sortBy = const [],
+    List<_i2.DistinctProperty>? distinctBy = const [],
     int? offset,
     int? limit,
     String? property,
@@ -627,7 +644,7 @@ class MockIsarCollection<OBJ> extends _i1.Mock
             #property: property,
           },
         ),
-        returnValue: _FakeQuery_4<R>(
+        returnValue: _FakeQuery_3<R>(
           this,
           Invocation.method(
             #buildQuery,
@@ -645,16 +662,16 @@ class MockIsarCollection<OBJ> extends _i1.Mock
             },
           ),
         ),
-      ) as _i3.Query<R>);
+      ) as _i2.Query<R>);
 
   @override
-  _i4.Future<int> count() => (super.noSuchMethod(
+  _i3.Future<int> count() => (super.noSuchMethod(
         Invocation.method(
           #count,
           [],
         ),
-        returnValue: _i4.Future<int>.value(0),
-      ) as _i4.Future<int>);
+        returnValue: _i3.Future<int>.value(0),
+      ) as _i3.Future<int>);
 
   @override
   int countSync() => (super.noSuchMethod(
@@ -666,7 +683,7 @@ class MockIsarCollection<OBJ> extends _i1.Mock
       ) as int);
 
   @override
-  _i4.Future<int> getSize({
+  _i3.Future<int> getSize({
     bool? includeIndexes = false,
     bool? includeLinks = false,
   }) =>
@@ -679,8 +696,8 @@ class MockIsarCollection<OBJ> extends _i1.Mock
             #includeLinks: includeLinks,
           },
         ),
-        returnValue: _i4.Future<int>.value(0),
-      ) as _i4.Future<int>);
+        returnValue: _i3.Future<int>.value(0),
+      ) as _i3.Future<int>);
 
   @override
   int getSizeSync({
@@ -700,18 +717,18 @@ class MockIsarCollection<OBJ> extends _i1.Mock
       ) as int);
 
   @override
-  _i4.Stream<void> watchLazy({bool? fireImmediately = false}) =>
+  _i3.Stream<void> watchLazy({bool? fireImmediately = false}) =>
       (super.noSuchMethod(
         Invocation.method(
           #watchLazy,
           [],
           {#fireImmediately: fireImmediately},
         ),
-        returnValue: _i4.Stream<void>.empty(),
-      ) as _i4.Stream<void>);
+        returnValue: _i3.Stream<void>.empty(),
+      ) as _i3.Stream<void>);
 
   @override
-  _i4.Stream<OBJ?> watchObject(
+  _i3.Stream<OBJ?> watchObject(
     int? id, {
     bool? fireImmediately = false,
   }) =>
@@ -721,11 +738,11 @@ class MockIsarCollection<OBJ> extends _i1.Mock
           [id],
           {#fireImmediately: fireImmediately},
         ),
-        returnValue: _i4.Stream<OBJ?>.empty(),
-      ) as _i4.Stream<OBJ?>);
+        returnValue: _i3.Stream<OBJ?>.empty(),
+      ) as _i3.Stream<OBJ?>);
 
   @override
-  _i4.Stream<void> watchObjectLazy(
+  _i3.Stream<void> watchObjectLazy(
     int? id, {
     bool? fireImmediately = false,
   }) =>
@@ -735,21 +752,21 @@ class MockIsarCollection<OBJ> extends _i1.Mock
           [id],
           {#fireImmediately: fireImmediately},
         ),
-        returnValue: _i4.Stream<void>.empty(),
-      ) as _i4.Stream<void>);
+        returnValue: _i3.Stream<void>.empty(),
+      ) as _i3.Stream<void>);
 
   @override
-  _i4.Future<void> verify(List<OBJ>? objects) => (super.noSuchMethod(
+  _i3.Future<void> verify(List<OBJ>? objects) => (super.noSuchMethod(
         Invocation.method(
           #verify,
           [objects],
         ),
-        returnValue: _i4.Future<void>.value(),
-        returnValueForMissingStub: _i4.Future<void>.value(),
-      ) as _i4.Future<void>);
+        returnValue: _i3.Future<void>.value(),
+        returnValueForMissingStub: _i3.Future<void>.value(),
+      ) as _i3.Future<void>);
 
   @override
-  _i4.Future<void> verifyLink(
+  _i3.Future<void> verifyLink(
     String? linkName,
     List<int>? sourceIds,
     List<int>? targetIds,
@@ -763,15 +780,15 @@ class MockIsarCollection<OBJ> extends _i1.Mock
             targetIds,
           ],
         ),
-        returnValue: _i4.Future<void>.value(),
-        returnValueForMissingStub: _i4.Future<void>.value(),
-      ) as _i4.Future<void>);
+        returnValue: _i3.Future<void>.value(),
+        returnValueForMissingStub: _i3.Future<void>.value(),
+      ) as _i3.Future<void>);
 }
 
 /// A class which mocks [Isar].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockIsar extends _i1.Mock implements _i3.Isar {
+class MockIsar extends _i1.Mock implements _i2.Isar {
   MockIsar() {
     _i1.throwOnMissingStub(this);
   }
@@ -801,7 +818,7 @@ class MockIsar extends _i1.Mock implements _i3.Isar {
       );
 
   @override
-  _i4.Future<T> txn<T>(_i4.Future<T> Function()? callback) =>
+  _i3.Future<T> txn<T>(_i3.Future<T> Function()? callback) =>
       (super.noSuchMethod(
         Invocation.method(
           #txn,
@@ -815,20 +832,20 @@ class MockIsar extends _i1.Mock implements _i3.Isar {
                   [callback],
                 ),
               ),
-              (T v) => _i4.Future<T>.value(v),
+              (T v) => _i3.Future<T>.value(v),
             ) ??
-            _FakeFuture_5<T>(
+            _FakeFuture_4<T>(
               this,
               Invocation.method(
                 #txn,
                 [callback],
               ),
             ),
-      ) as _i4.Future<T>);
+      ) as _i3.Future<T>);
 
   @override
-  _i4.Future<T> writeTxn<T>(
-    _i4.Future<T> Function()? callback, {
+  _i3.Future<T> writeTxn<T>(
+    _i3.Future<T> Function()? callback, {
     bool? silent = false,
   }) =>
       (super.noSuchMethod(
@@ -846,9 +863,9 @@ class MockIsar extends _i1.Mock implements _i3.Isar {
                   {#silent: silent},
                 ),
               ),
-              (T v) => _i4.Future<T>.value(v),
+              (T v) => _i3.Future<T>.value(v),
             ) ??
-            _FakeFuture_5<T>(
+            _FakeFuture_4<T>(
               this,
               Invocation.method(
                 #writeTxn,
@@ -856,7 +873,7 @@ class MockIsar extends _i1.Mock implements _i3.Isar {
                 {#silent: silent},
               ),
             ),
-      ) as _i4.Future<T>);
+      ) as _i3.Future<T>);
 
   @override
   T txnSync<T>(T Function()? callback) => (super.noSuchMethod(
@@ -895,7 +912,7 @@ class MockIsar extends _i1.Mock implements _i3.Isar {
       ) as T);
 
   @override
-  void attachCollections(Map<Type, _i3.IsarCollection<dynamic>>? collections) =>
+  void attachCollections(Map<Type, _i2.IsarCollection<dynamic>>? collections) =>
       super.noSuchMethod(
         Invocation.method(
           #attachCollections,
@@ -905,36 +922,36 @@ class MockIsar extends _i1.Mock implements _i3.Isar {
       );
 
   @override
-  _i3.IsarCollection<T> collection<T>() => (super.noSuchMethod(
+  _i2.IsarCollection<T> collection<T>() => (super.noSuchMethod(
         Invocation.method(
           #collection,
           [],
         ),
-        returnValue: _FakeIsarCollection_6<T>(
+        returnValue: _FakeIsarCollection_5<T>(
           this,
           Invocation.method(
             #collection,
             [],
           ),
         ),
-      ) as _i3.IsarCollection<T>);
+      ) as _i2.IsarCollection<T>);
 
   @override
-  _i3.IsarCollection<dynamic>? getCollectionByNameInternal(String? name) =>
+  _i2.IsarCollection<dynamic>? getCollectionByNameInternal(String? name) =>
       (super.noSuchMethod(Invocation.method(
         #getCollectionByNameInternal,
         [name],
-      )) as _i3.IsarCollection<dynamic>?);
+      )) as _i2.IsarCollection<dynamic>?);
 
   @override
-  _i4.Future<void> clear() => (super.noSuchMethod(
+  _i3.Future<void> clear() => (super.noSuchMethod(
         Invocation.method(
           #clear,
           [],
         ),
-        returnValue: _i4.Future<void>.value(),
-        returnValueForMissingStub: _i4.Future<void>.value(),
-      ) as _i4.Future<void>);
+        returnValue: _i3.Future<void>.value(),
+        returnValueForMissingStub: _i3.Future<void>.value(),
+      ) as _i3.Future<void>);
 
   @override
   void clearSync() => super.noSuchMethod(
@@ -946,7 +963,7 @@ class MockIsar extends _i1.Mock implements _i3.Isar {
       );
 
   @override
-  _i4.Future<int> getSize({
+  _i3.Future<int> getSize({
     bool? includeIndexes = false,
     bool? includeLinks = false,
   }) =>
@@ -959,8 +976,8 @@ class MockIsar extends _i1.Mock implements _i3.Isar {
             #includeLinks: includeLinks,
           },
         ),
-        returnValue: _i4.Future<int>.value(0),
-      ) as _i4.Future<int>);
+        returnValue: _i3.Future<int>.value(0),
+      ) as _i3.Future<int>);
 
   @override
   int getSizeSync({
@@ -980,41 +997,41 @@ class MockIsar extends _i1.Mock implements _i3.Isar {
       ) as int);
 
   @override
-  _i4.Future<void> copyToFile(String? targetPath) => (super.noSuchMethod(
+  _i3.Future<void> copyToFile(String? targetPath) => (super.noSuchMethod(
         Invocation.method(
           #copyToFile,
           [targetPath],
         ),
-        returnValue: _i4.Future<void>.value(),
-        returnValueForMissingStub: _i4.Future<void>.value(),
-      ) as _i4.Future<void>);
+        returnValue: _i3.Future<void>.value(),
+        returnValueForMissingStub: _i3.Future<void>.value(),
+      ) as _i3.Future<void>);
 
   @override
-  _i4.Future<bool> close({bool? deleteFromDisk = false}) => (super.noSuchMethod(
+  _i3.Future<bool> close({bool? deleteFromDisk = false}) => (super.noSuchMethod(
         Invocation.method(
           #close,
           [],
           {#deleteFromDisk: deleteFromDisk},
         ),
-        returnValue: _i4.Future<bool>.value(false),
-      ) as _i4.Future<bool>);
+        returnValue: _i3.Future<bool>.value(false),
+      ) as _i3.Future<bool>);
 
   @override
-  _i4.Future<void> verify() => (super.noSuchMethod(
+  _i3.Future<void> verify() => (super.noSuchMethod(
         Invocation.method(
           #verify,
           [],
         ),
-        returnValue: _i4.Future<void>.value(),
-        returnValueForMissingStub: _i4.Future<void>.value(),
-      ) as _i4.Future<void>);
+        returnValue: _i3.Future<void>.value(),
+        returnValueForMissingStub: _i3.Future<void>.value(),
+      ) as _i3.Future<void>);
 }
 
 /// A class which mocks [QueryBuilder].
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockQueryBuilder<OBJ, R, S> extends _i1.Mock
-    implements _i3.QueryBuilder<OBJ, R, S> {
+    implements _i2.QueryBuilder<OBJ, R, S> {
   MockQueryBuilder() {
     _i1.throwOnMissingStub(this);
   }

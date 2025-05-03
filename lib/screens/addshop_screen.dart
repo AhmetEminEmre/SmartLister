@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
 import '../objects/shop.dart';
+import '../services/shop_service.dart';
 
 class AddStoreScreen extends StatefulWidget {
-  final Isar isar;
+  final ShopService shopService;
 
-  const AddStoreScreen({super.key, required this.isar});
+  const AddStoreScreen({
+    super.key,
+    required this.shopService,
+  });
 
   @override
   _AddStoreScreenState createState() => _AddStoreScreenState();
 }
+
 
 class _AddStoreScreenState extends State<AddStoreScreen> {
   final TextEditingController _storeNameController = TextEditingController();
@@ -216,37 +221,32 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
     );
   }
 
-  Future<void> _addStore() async {
-    if (_storeNameController.text.isEmpty || _selectedImagePath == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Bitte geben Sie den Namen und ein Bild ein.'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-      // Debugging-Print, um den Wert des Bildpfads zu überprüfen
-  print('Selected Image Path beim Speichern: $_selectedImagePath');
-
-    // Speichere den neuen Laden in der Isar-Datenbank
-    final newShop = Einkaufsladen(
-      name: _storeNameController.text,
-      imagePath: _selectedImagePath!,
-    );
-
-    await widget.isar.writeTxn(() async {
-      await widget.isar.einkaufsladens.put(newShop);
-    });
-
+Future<void> _addStore() async {
+  if (_storeNameController.text.isEmpty || _selectedImagePath == null) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Laden erfolgreich hinzugefügt!'),
-        backgroundColor: Colors.green,
+        content: Text('Bitte geben Sie den Namen und ein Bild ein.'),
+        backgroundColor: Colors.red,
       ),
     );
-
-    Navigator.pop(context); // Schließe den Screen
+    return;
   }
+
+  final newShop = Einkaufsladen(
+    name: _storeNameController.text.trim(),
+    imagePath: _selectedImagePath!,
+  );
+
+  await widget.shopService.addShop(newShop);
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text('Laden erfolgreich hinzugefügt!'),
+      backgroundColor: Colors.green,
+    ),
+  );
+
+  Navigator.pop(context);
+}
+
 }

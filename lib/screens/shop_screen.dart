@@ -4,20 +4,25 @@ import 'package:smart/objects/itemlist.dart';
 import '../objects/productgroup.dart';
 import '../objects/shop.dart';
 import 'package:smart/services/productgroup_service.dart';
-
+import 'package:smart/services/shop_service.dart';
+import 'package:smart/services/itemlist_service.dart';
 
 class EditStoreScreen extends StatefulWidget {
   final String storeId;
   final String storeName;
   final bool isNewStore;
-  final Isar isar;
+  final ProductGroupService productGroupService;
+  final ShopService shopService;
+  final ItemListService itemListService;
 
   const EditStoreScreen({
     super.key,
     required this.storeId,
     required this.storeName,
     this.isNewStore = false,
-    required this.isar,
+    required this.productGroupService,
+    required this.shopService,
+    required this.itemListService,
   });
 
   @override
@@ -30,34 +35,29 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
   bool _isEditMode = false;
   late TextEditingController _storeNameController;
   late String storename;
-  late ProductGroupService _productGroupService;
 
+  @override
+  void initState() {
+    super.initState();
+    _storeNameController = TextEditingController(text: widget.storeName);
+    storename = widget.storeName;
+    _fetchProductGroups();
 
- @override
-void initState() {
-  super.initState();
-  _storeNameController = TextEditingController(text: widget.storeName);
-  storename = widget.storeName;
+    if (widget.isNewStore) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _promptAddDefaultProductGroups();
+      });
+    }
+  }
 
-  _productGroupService = ProductGroupService(widget.isar);
-
-  _fetchProductGroups();
-
-  if (widget.isNewStore) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _promptAddDefaultProductGroups();
+  Future<void> _fetchProductGroups() async {
+    final productGroups =
+        await widget.productGroupService.fetchProductGroups(widget.storeId);
+    setState(() {
+      _productGroups = productGroups;
+      _isLoading = false;
     });
   }
-}
-
-
- Future<void> _fetchProductGroups() async {
-  final productGroups = await _productGroupService.fetchProductGroups(widget.storeId);
-  setState(() {
-    _productGroups = productGroups;
-    _isLoading = false;
-  });
-}
 
   Future<void> _addDefaultProductGroups() async {
     final defaultGroups = [
@@ -68,40 +68,32 @@ void initState() {
       'Tiefkühlprodukte',
       'Süßwaren & Snacks',
       'Konserven & Fertiggerichte',
-      'Getreide, Reis & Nudeln'
-          'Käse & Feinkost',
+      'Getreide, Reis & Nudeln',
+      'Käse & Feinkost',
       'Milchprodukte'
     ];
 
-    final existingGroups = await widget.isar.productgroups
-        .filter()
-        .storeIdEqualTo(widget.storeId)
-        .findAll();
+    final existingGroups =
+        await widget.productGroupService.fetchProductGroups(widget.storeId);
     Set<String> existingNames = existingGroups.map((g) => g.name).toSet();
 
-    try {
-      await widget.isar.writeTxn(() async {
-        for (var groupName in defaultGroups) {
-          if (!existingNames.contains(groupName)) {
-            final productGroup = Productgroup(
-              name: groupName,
-              storeId: widget.storeId,
-              order: defaultGroups.indexOf(groupName),
-            );
-            await widget.isar.productgroups.put(productGroup);
-          }
-        }
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Fehlende Standard Warengruppen hinzugefügt.'),
-        backgroundColor: Colors.green,
-      ));
-
-      _fetchProductGroups();
-    } catch (e) {
-      print("Error adding product groups: $e");
+    for (var groupName in defaultGroups) {
+      if (!existingNames.contains(groupName)) {
+        final productGroup = Productgroup(
+          name: groupName,
+          storeId: widget.storeId,
+          order: defaultGroups.indexOf(groupName),
+        );
+        await widget.productGroupService.addProductGroup(productGroup);
+      }
     }
+
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      content: Text('Fehlende Standard Warengruppen hinzugefügt.'),
+      backgroundColor: Colors.green,
+    ));
+
+    _fetchProductGroups();
   }
 
   void _promptAddDefaultProductGroups() {
@@ -168,45 +160,38 @@ void initState() {
       },
     );
   }
+Future<void> _saveStoreName() async {
+  final newStoreName = _storeNameController.text.trim();
 
-  Future<void> _saveStoreName() async {
-    final newStoreName = _storeNameController.text.trim();
-
-    if (newStoreName.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Der Name des Ladens darf nicht leer sein.'),
-        backgroundColor: Colors.red,
-      ));
-      return;
-    } else if (newStoreName == storename) {
-      setState(() {
-        _isEditMode = false;
-      });
-      return;
-    }
-
-    await widget.isar.writeTxn(() async {
-      final shop = await widget.isar.einkaufsladens
-          .filter()
-          .idEqualTo(int.parse(widget.storeId))
-          .findFirst();
-      if (shop != null) {
-        shop.name = newStoreName;
-        storename = newStoreName;
-        await widget.isar.einkaufsladens.put(shop);
-      }
-    });
-
+  if (newStoreName.isEmpty) {
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-      content: Text('Ladenname erfolgreich geändert.'),
-      backgroundColor: Colors.green,
+      content: Text('Der Name des Ladens darf nicht leer sein.'),
+      backgroundColor: Colors.red,
     ));
-
+    return;
+  } else if (newStoreName == storename) {
     setState(() {
       _isEditMode = false;
     });
+    return;
   }
 
+  final shop = await widget.shopService.fetchShopById(int.parse(widget.storeId));
+  if (shop != null) {
+    shop.name = newStoreName;
+    storename = newStoreName;
+    await widget.shopService.addShop(shop);
+  }
+
+  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+    content: Text('Ladenname erfolgreich geändert.'),
+    backgroundColor: Colors.green,
+  ));
+
+  setState(() {
+    _isEditMode = false;
+  });
+}
   void _toggleEditMode() {
     setState(() {
       _isEditMode = !_isEditMode;
@@ -228,19 +213,19 @@ void initState() {
     _updateProductGroupOrder();
   }
 
-  void _updateProductGroupOrder() async {
-    await widget.isar.writeTxn(() async {
-      for (int i = 0; i < _productGroups.length; i++) {
-        _productGroups[i].order = i;
-        await widget.isar.productgroups.put(_productGroups[i]);
-      }
-    });
 
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-      content: Text('Produktgruppenreihenfolge aktualisiert.'),
-      backgroundColor: Colors.green,
-    ));
+void _updateProductGroupOrder() async {
+  for (int i = 0; i < _productGroups.length; i++) {
+    _productGroups[i].order = i;
   }
+  await widget.productGroupService.updateProductGroupOrder(_productGroups);
+
+  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+    content: Text('Produktgruppenreihenfolge aktualisiert.'),
+    backgroundColor: Colors.green,
+  ));
+}
+
 
   void _showAddProductGroupDialog() {
     TextEditingController groupNameController = TextEditingController();
@@ -355,133 +340,111 @@ void initState() {
     );
   }
 
-  Future<void> _addProductGroupIfNotExists(String name) async {
-    final existingGroup = await widget.isar.productgroups
-        .filter()
-        .nameEqualTo(name)
-        .storeIdEqualTo(widget.storeId)
-        .findFirst();
+Future<void> _addProductGroupIfNotExists(String name) async {
+  final existingGroup = await widget.productGroupService.fetchByNameAndShop(name, widget.storeId);
 
-    if (existingGroup == null) {
-      await widget.isar.writeTxn(() async {
-        final newOrder = _productGroups.length;
-        final productGroup = Productgroup(
-          name: name,
-          storeId: widget.storeId,
-          order: newOrder,
-        );
-        await widget.isar.productgroups.put(productGroup);
-      });
+  if (existingGroup == null) {
+    final newOrder = _productGroups.length;
+    final productGroup = Productgroup(
+      name: name,
+      storeId: widget.storeId,
+      order: newOrder,
+    );
+    await widget.productGroupService.addProductGroup(productGroup);
 
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Warengruppe hinzugefügt.'),
-        backgroundColor: Colors.green,
-      ));
-
-      _fetchProductGroups();
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Warengruppe existiert bereits.'),
-        backgroundColor: Colors.red,
-      ));
-    }
-  }
-
-  void _deleteProductGroup(Productgroup group) async {
-    await widget.isar.writeTxn(() async {
-      await widget.isar.productgroups.delete(group.id);
-    });
-    //hier service aufrufen und dann die produgrkuppe löschen
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-      content: Text('Warengruppe gelöscht.'),
+      content: Text('Warengruppe hinzugefügt.'),
       backgroundColor: Colors.green,
     ));
 
     _fetchProductGroups();
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      content: Text('Warengruppe existiert bereits.'),
+      backgroundColor: Colors.red,
+    ));
   }
+}
 
-  void _deleteStore() async {
-    final storeId = widget.storeId;
-    final assignedLists =
-        await widget.isar.itemlists.filter().shopIdEqualTo(storeId).findAll();
 
-    if (assignedLists.isNotEmpty) {
-      // Falls der Laden mit Listen verbunden ist
-      bool confirmDelete = await showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text('Laden und zugehörige Listen löschen?'),
-            content: Text(
-                'Dieser Laden ist noch mit ${assignedLists.length} Einkaufsliste(n) verknüpft. '
-                'Möchtest du den Laden und alle zugehörigen Listen wirklich löschen?'),
-            actions: [
-              TextButton(
-                child: const Text('Nein'),
-                onPressed: () => Navigator.of(context).pop(false),
-              ),
-              TextButton(
-                child: const Text('Ja, alles löschen'),
-                onPressed: () => Navigator.of(context).pop(true),
-              ),
-            ],
-          );
-        },
-      );
+void _deleteProductGroup(Productgroup group) async {
+  await widget.productGroupService.deleteProductGroup(group.id);
 
-      if (!confirmDelete) {
-        return; // Falls der Nutzer "Nein" wählt, abbrechen
-      }
+  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+    content: Text('Warengruppe gelöscht.'),
+    backgroundColor: Colors.green,
+  ));
 
-      // Alle Listen, die mit dem Laden verknüpft sind, löschen
-      await widget.isar.writeTxn(() async {
-        for (final list in assignedLists) {
-          await widget.isar.itemlists.delete(list.id);
-        }
-        await widget.isar.einkaufsladens.delete(int.parse(storeId));
-      });
+  _fetchProductGroups();
+}
+Future<void> _deleteStore() async {
+  final storeId = widget.storeId;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Laden und zugehörige Listen gelöscht')),
-      );
+  final assignedLists =
+      await widget.itemListService.fetchItemListsByShopId(storeId);
 
-      Navigator.of(context).pop(); //back
-      return;
-    }
-
-    // Falls der Laden keine Listen hat, einfach löschen
-    bool confirmDelete = await showDialog(
+  if (assignedLists.isNotEmpty) {
+    final confirmDelete = await showDialog<bool>(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Laden löschen?'),
-          content: const Text('Möchtest du diesen Laden wirklich löschen?'),
-          actions: [
-            TextButton(
-              child: const Text('Nein'),
-              onPressed: () => Navigator.of(context).pop(false),
-            ),
-            TextButton(
-              child: const Text('Ja'),
-              onPressed: () => Navigator.of(context).pop(true),
-            ),
-          ],
-        );
-      },
+      builder: (context) => AlertDialog(
+        title: const Text('Laden und zugehörige Listen löschen?'),
+        content: const Text(
+          'Dieser Laden ist noch mit \${assignedLists.length} Einkaufsliste(n) verknüpft. '
+          'Möchtest du den Laden und alle zugehörigen Listen wirklich löschen?',
+        ),
+        actions: [
+          TextButton(
+            child: const Text('Nein'),
+            onPressed: () => Navigator.of(context).pop(false),
+          ),
+          TextButton(
+            child: const Text('Ja, alles löschen'),
+            onPressed: () => Navigator.of(context).pop(true),
+          ),
+        ],
+      ),
     );
 
-    if (confirmDelete) {
-      await widget.isar.writeTxn(() async {
-        await widget.isar.einkaufsladens.delete(int.parse(storeId));
-      });
+    if (confirmDelete != true) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Laden erfolgreich gelöscht')),
-      );
-
-      Navigator.of(context).pop(); //back
+    for (final list in assignedLists) {
+      await widget.itemListService.deleteItemList(list.id);
     }
+    await widget.shopService.deleteShop(int.parse(storeId));
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Laden und zugehörige Listen gelöscht')),
+    );
+    Navigator.of(context).pop();
+    return;
   }
+
+  final confirmDelete = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('Laden löschen?'),
+      content: const Text('Möchtest du diesen Laden wirklich löschen?'),
+      actions: [
+        TextButton(
+          child: const Text('Nein'),
+          onPressed: () => Navigator.of(context).pop(false),
+        ),
+        TextButton(
+          child: const Text('Ja'),
+          onPressed: () => Navigator.of(context).pop(true),
+        ),
+      ],
+    ),
+  );
+
+  if (confirmDelete == true) {
+    await widget.shopService.deleteShop(int.parse(storeId));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Laden erfolgreich gelöscht')),
+    );
+    Navigator.of(context).pop();
+  }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -508,7 +471,7 @@ void initState() {
             onPressed: _promptAddDefaultProductGroups,
           ),
           IconButton(
-            icon: Icon(_isEditMode ? Icons.check : Icons.edit,
+            icon: Icon(_isEditMode ? Icons.close : Icons.edit,
                 color: const Color.fromARGB(255, 31, 31, 31)),
             onPressed: _toggleEditMode,
           ),

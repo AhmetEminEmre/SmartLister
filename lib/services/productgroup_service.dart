@@ -1,3 +1,4 @@
+
 import 'package:isar/isar.dart';
 import '../objects/productgroup.dart';
 import 'package:smart/fakeDBs/productgroup_fake.dart';
@@ -23,17 +24,38 @@ class ProductGroupService {
         .findAll();
   }
 
-  Future<Productgroup?> fetchProductGroupById(int groupId) async {
-    if (_fakeDb != null) return await _fakeDb.get(groupId);
-    return await _isar!.productgroups.get(groupId);
+  Future<Productgroup?> fetchLastGroupByStoreId(String storeId) async {
+  if (_fakeDb != null) {
+    final all = await _fakeDb.getFilteredSorted(storeId);
+    return all.isNotEmpty ? all.last : null;
   }
 
-  Future<void> addProductGroup(Productgroup group) async {
-    if (_fakeDb != null) return await _fakeDb.add(group);
+  return await _isar!.productgroups
+      .filter()
+      .storeIdEqualTo(storeId)
+      .sortByOrderDesc()
+      .findFirst();
+}
 
-    await _isar!.writeTxn(() async {
-      await _isar!.productgroups.put(group);
+
+  Future<Productgroup?> fetchGroupById(int groupId) async {
+    if (_fakeDb != null) return await _fakeDb.get(groupId);
+    return await _isar!.productgroups
+        .filter()
+        .idEqualTo(groupId)
+        .findFirst();
+  }
+
+  Future<int> addProductGroup(Productgroup group) async {
+    if (_fakeDb != null) {
+      await _fakeDb.add(group);
+      return group.id;
+    }
+
+    final id = await _isar!.writeTxn(() async {
+      return await _isar!.productgroups.put(group);
     });
+    return id;
   }
 
   Future<void> deleteProductGroup(int groupId) async {
@@ -56,8 +78,25 @@ class ProductGroupService {
     await _isar!.writeTxn(() async {
       for (int i = 0; i < productGroups.length; i++) {
         productGroups[i].order = i;
-        await _isar.productgroups.put(productGroups[i]);
+        await _isar!.productgroups.put(productGroups[i]);
       }
     });
+  }
+
+  Future<List<Productgroup>> fetchProductGroupsByStoreIdSorted(String storeId) async {
+    return await _isar!.productgroups
+        .filter()
+        .storeIdEqualTo(storeId)
+        .sortByOrder()
+        .findAll();
+  }
+
+  Future<Productgroup?> fetchByNameAndShop(String name, String storeId) async {
+    if (_fakeDb != null) return await _fakeDb.getByNameAndShop(name, storeId);
+    return await _isar!.productgroups
+        .filter()
+        .nameEqualTo(name)
+        .storeIdEqualTo(storeId)
+        .findFirst();
   }
 }

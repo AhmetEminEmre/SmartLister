@@ -1,21 +1,28 @@
 import 'package:flutter/material.dart';
-import 'package:isar/isar.dart';
 import '../objects/itemlist.dart';
 import '../objects/shop.dart';
-import 'itemslist_screen.dart';
+import '../screens/itemslist_screen.dart';
+import '../services/itemlist_service.dart';
+import '../services/shop_service.dart';
+import '../services/productgroup_service.dart';
+
 
 class StoreScreen extends StatefulWidget {
   final String listId;
   final String listName;
-  final Isar isar;
+  final ItemListService itemListService;
+  final ShopService shopService;
   final Function(String storeId) onStoreSelected;
+  final ProductGroupService productGroupService;
 
   const StoreScreen({
     super.key,
     required this.listId,
     required this.listName,
-    required this.isar,
+    required this.itemListService,
+    required this.shopService,
     required this.onStoreSelected,
+    required this.productGroupService,
   });
 
   @override
@@ -32,24 +39,22 @@ class _StoreScreenState extends State<StoreScreen> {
     _loadStores();
   }
 
-  void _loadStores() async {
-    final stores = await widget.isar.einkaufsladens.where().findAll();
+  Future<void> _loadStores() async {
+    final stores = await widget.shopService.fetchShops();
     setState(() {
       _stores = stores;
     });
   }
 
   Future<bool> _isStoreAssignedToList(String storeId) async {
-    final listsWithStore =
-        await widget.isar.itemlists.filter().shopIdEqualTo(storeId).findAll();
-    return listsWithStore.isNotEmpty;
+    final lists = await widget.itemListService.fetchItemListsByShopId(storeId);
+    return lists.isNotEmpty;
   }
 
   Future<List<Itemlist>> _fetchItemsForList(String listId) async {
-    return await widget.isar.itemlists
-        .filter()
-        .idEqualTo(int.parse(listId))
-        .findAll();
+    final item =
+        await widget.itemListService.fetchItemListById(int.parse(listId));
+    return item != null ? [item] : [];
   }
 
   Future<void> _deleteStore(String storeId) async {
@@ -65,11 +70,9 @@ class _StoreScreenState extends State<StoreScreen> {
       return;
     }
 
-    await widget.isar.writeTxn(() async {
-      await widget.isar.einkaufsladens.delete(int.parse(storeId));
-    });
+    await widget.shopService.deleteShop(int.parse(storeId));
 
-    _loadStores();
+    await _loadStores(); 
     setState(() {});
   }
 
@@ -209,9 +212,7 @@ class _StoreScreenState extends State<StoreScreen> {
             const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
-              child: 
-              
-              ElevatedButton(
+              child: ElevatedButton(
                 onPressed: _selectedStoreId != null
                     ? () async {
                         final items = await _fetchItemsForList(widget.listId);
@@ -225,7 +226,10 @@ class _StoreScreenState extends State<StoreScreen> {
                               shoppingListId: widget.listId,
                               items: items,
                               initialStoreId: _selectedStoreId!,
-                              isar: widget.isar,
+                              itemListService: widget.itemListService,
+                              productGroupService: widget.productGroupService,
+                              shopService: widget.shopService,
+
                             ),
                           ),
                         );
@@ -240,9 +244,9 @@ class _StoreScreenState extends State<StoreScreen> {
                   ),
                 ),
                 style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.resolveWith<Color>(
-                    (Set<MaterialState> states) {
-                      if (states.contains(MaterialState.disabled)) {
+                  backgroundColor: WidgetStateProperty.resolveWith<Color>(
+                    (Set<WidgetState> states) {
+                      if (states.contains(WidgetState.disabled)) {
                         return const Color(
                             0xFFFFD9B3); // Helles Orange für disabled Zustand
                       }
@@ -250,15 +254,15 @@ class _StoreScreenState extends State<StoreScreen> {
                           0xFFE5A462); // Starkes Orange für enabled Zustand
                     },
                   ),
-                  padding: MaterialStateProperty.all(
+                  padding: WidgetStateProperty.all(
                     const EdgeInsets.symmetric(vertical: 16),
                   ),
-                  shape: MaterialStateProperty.all(
+                  shape: WidgetStateProperty.all(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  minimumSize: MaterialStateProperty.all(
+                  minimumSize: WidgetStateProperty.all(
                     const Size.fromHeight(56),
                   ),
                 ),

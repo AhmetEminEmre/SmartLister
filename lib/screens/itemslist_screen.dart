@@ -7,12 +7,18 @@ import 'package:printing/printing.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pdf_wd;
 
+import '../services/itemlist_service.dart';
+import '../services/productgroup_service.dart';
+import '../services/shop_service.dart';
+
 class ItemListScreen extends StatefulWidget {
   final String listName;
   final String shoppingListId;
   final List<Itemlist>? items;
   final String? initialStoreId;
-  final Isar isar;
+  final ItemListService itemListService;
+  final ProductGroupService productGroupService;
+  final ShopService shopService;
 
   const ItemListScreen({
     super.key,
@@ -20,7 +26,9 @@ class ItemListScreen extends StatefulWidget {
     required this.shoppingListId,
     this.items,
     this.initialStoreId,
-    required this.isar,
+    required this.itemListService,
+    required this.productGroupService,
+    required this.shopService,
   });
 
   @override
@@ -56,180 +64,68 @@ class _ItemListScreenState extends State<ItemListScreen> {
     });
   }
 
-  void deleteSelectedItems() async {
-    if (selectedItems.isEmpty && selectedGroups.isEmpty) {
-      setState(() {
-        _isDeleteMode = false;
-      });
-      return;
-    }
-    //check if all selected
-    bool allItemsSelected = itemsByGroup.values
-        .expand((groupItems) => groupItems)
-        .every((item) => selectedItems.contains(item['name']));
+  void deleteProductGroup(String groupName) async {
+    final list = await widget.itemListService
+        .fetchItemListById(int.parse(widget.shoppingListId));
+    if (list == null) return;
 
-    if (allItemsSelected) {
-      await showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            backgroundColor: const Color(0xFF96b17c),
-            title: const Text(
-              'Liste löschen?',
-              style: TextStyle(color: Colors.white),
-            ),
-            content: const Text(
-              'Mit diesem Schritt löschen Sie die gesamte Einkaufsliste. Möchten Sie fortfahren?',
-              style: TextStyle(color: Colors.white),
-            ),
-            actions: <Widget>[
-              TextButton(
-                child: const Text('Abbrechen',
-                    style: TextStyle(color: Colors.white)),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-              TextButton(
-                child: const Text('Löschen',
-                    style: TextStyle(color: Colors.white)),
-                onPressed: () async {
-                  await widget.isar.writeTxn(() async {
-                    await widget.isar.itemlists
-                        .delete(int.parse(widget.shoppingListId));
-                  });
-                  Navigator.popUntil(context, (route) => route.isFirst);
-                },
-              ),
-            ],
-          );
-        },
-      );
-      return;
-    }
+    final currentItems = list.getItems();
+    final remainingItems = currentItems.where((item) {
+      final group = itemsByGroup[groupName];
+      return group == null ||
+          !group.any((element) => element['name'] == item['name']);
+    }).toList();
 
-    await showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: const Color(0xFF96b17c),
-          title:
-              const Text('Bestätigen', style: TextStyle(color: Colors.white)),
-          content: const Text(
-            'Möchten Sie das/die ausgewählte(n) Element wirklich löschen?',
-            style: TextStyle(color: Colors.white),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Abbrechen',
-                  style: TextStyle(color: Colors.white)),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            TextButton(
-              child:
-                  const Text('Löschen', style: TextStyle(color: Colors.white)),
-              onPressed: () async {
-                Navigator.of(context).pop();
+    list.setItems(remainingItems);
+    await widget.itemListService.updateItemList(list);
 
-                try {
-                  await widget.isar.writeTxn(() async {
-                    final listToUpdate = await widget.isar.itemlists
-                        .filter()
-                        .idEqualTo(int.parse(widget.shoppingListId))
-                        .findFirst();
+    setState(() {
+      itemsByGroup.remove(groupName);
+    });
+  }
 
-                    if (listToUpdate == null) {
-                      debugPrint("Fehler: Die Liste wurde nicht gefunden.");
-                      return;
-                    }
+  void deleteItem(String groupName, String itemName) async {
+    final list = await widget.itemListService
+        .fetchItemListById(int.parse(widget.shoppingListId));
+    if (list == null) return;
 
-                    for (String groupId in itemsByGroup.keys.toList()) {
-                      List<Map<String, dynamic>> itemsInGroup =
-                          itemsByGroup[groupId]!;
-                      itemsInGroup.removeWhere(
-                          (item) => selectedItems.contains(item['name']));
+    final currentItems = list.getItems();
+    final updatedItems =
+        currentItems.where((item) => item['name'] != itemName).toList();
 
-                      if (itemsInGroup.isEmpty) {
-                        itemsByGroup.remove(groupId);
-                      } else {
-                        itemsByGroup[groupId] = itemsInGroup;
-                      }
-                    }
+    list.setItems(updatedItems);
+    await widget.itemListService.updateItemList(list);
 
-                    List<Map<String, dynamic>> currentItems = [];
-                    itemsByGroup.forEach((_, items) {
-                      currentItems.addAll(items);
-                    });
-
-                    listToUpdate.setItems(currentItems);
-                    await widget.isar.itemlists.put(listToUpdate);
-
-                    await loadItems();
-                  });
-                } catch (e) {
-                  debugPrint("Error during deletion: $e");
-                }
-
-                toggleDeleteMode();
-                await loadItems();
-              },
-            ),
-          ],
-        );
-      },
-    );
+    setState(() {
+      itemsByGroup[groupName]?.removeWhere((item) => item['name'] == itemName);
+      if (itemsByGroup[groupName]?.isEmpty ?? false) {
+        itemsByGroup.remove(groupName);
+      }
+    });
   }
 
   Future<void> loadItems() async {
-    print('🚀 loadItems() wurde aufgerufen!');
+    if (_selectedShopId == null) return;
 
-    // Überprüfung, ob ein Shop ausgewählt wurde
-    if (_selectedShopId == null) {
-      print('❌ Kein Shop ausgewählt. Abbruch.');
-      return;
-    }
+    final productGroups =
+        await widget.productGroupService.fetchProductGroups(_selectedShopId!);
 
-    final allGroups = await widget.isar.productgroups.where().findAll();
-    print(
-        '🌍 ALLE Gruppen-IDs in DB: ${allGroups.map((g) => '${g.id} → ${g.name}').toList()}');
-
-    final productGroups = await widget.isar.productgroups
-        .filter()
-        .storeIdEqualTo(_selectedShopId!)
-        .sortByOrder() 
-        .findAll();
-
-    print(
-        '📦 Geladene Warengruppen: ${productGroups.map((pg) => pg.name).toList()}');
-
-    Itemlist? savedList = await widget.isar.itemlists
-        .filter()
-        .idEqualTo(
-            int.parse(widget.shoppingListId))
-        .findFirst();
+    final savedList = await widget.itemListService
+        .fetchItemListById(int.parse(widget.shoppingListId));
 
     if (savedList != null) {
-      List<Map<String, dynamic>> savedItems = savedList.getItems();
-      print('🧐 Geladene Artikel in der Liste: $savedItems');
+      final savedItems = savedList.getItems();
 
-      // Artikel gruppieren basierend auf den Warengruppen
       Map<String, List<Map<String, dynamic>>> groupedItems = {};
       for (var singleItem in savedItems) {
         final groupName = productGroups
-            .firstWhere((group) => group.id.toString() == singleItem['groupId']
-                ,
-                orElse: () => Productgroup( //prob needs better solution
-                  name: 'Unbekannt',
-                  storeId: '0',
-                  order: 0,
-                ),
-                )
+            .firstWhere((g) => g.id.toString() == singleItem['groupId'],
+                orElse: () =>
+                    Productgroup(name: 'Unbekannt', storeId: '0', order: 0))
             .name;
-
         groupedItems.putIfAbsent(groupName, () => []).add(singleItem);
       }
 
-      print('🔄 Gruppierte Artikel: $groupedItems');
-
-      // Artikel in der Reihenfolge der Warengruppen sortieren
       Map<String, List<Map<String, dynamic>>> orderedGroupedItems = {};
       for (var group in productGroups) {
         if (groupedItems.containsKey(group.name)) {
@@ -237,21 +133,9 @@ class _ItemListScreenState extends State<ItemListScreen> {
         }
       }
 
-      // State aktualisieren und sortierte Artikel speichern
       setState(() {
         itemsByGroup = orderedGroupedItems;
       });
-
-      // Debug-Ausgabe der finalen gruppierten Artikel
-      debugPrint('==== Sortierte und gruppierte Artikel ====');
-      for (var group in itemsByGroup.keys) {
-        for (var item in itemsByGroup[group]!) {
-          print('📋 Artikel: ${item['name']}, Erledigt: ${item['isDone']}');
-        }
-      }
-      debugPrint('==========================================');
-    } else {
-      print('❌ Keine gespeicherte Liste gefunden.');
     }
   }
 
@@ -265,20 +149,15 @@ class _ItemListScreenState extends State<ItemListScreen> {
   }
 
   void loadShops() async {
-    // Lade alle verfügbaren Shops aus der Isar-Datenbank
-    final shops =
-        await widget.isar.collection<Einkaufsladen>().where().findAll();
+    final shops = await widget.shopService.fetchShops();
 
-    // Lade die Einkaufsliste mit der gespeicherten Shop-ID
-    final list = await widget.isar.itemlists
-        .filter()
-        .idEqualTo(int.parse(widget.shoppingListId))
-        .findFirst();
+    final list = await widget.itemListService
+        .fetchItemListById(int.parse(widget.shoppingListId));
 
     setState(() {
-      _availableShops = shops; // Speichert alle Shops für das Dropdown
+      _availableShops = shops;
       if (list != null) {
-        _selectedShopId = list.shopId; // Speichert die Shop-ID der Liste
+        _selectedShopId = list.shopId;
         _selectedShopName = shops
             .firstWhere(
               (shop) => shop.id.toString() == list.shopId,
@@ -296,65 +175,58 @@ class _ItemListScreenState extends State<ItemListScreen> {
     final newShop =
         _availableShops.firstWhere((shop) => shop.id.toString() == newShopId);
 
-    await widget.isar.writeTxn(() async {
-      final list = await widget.isar.itemlists
-          .filter()
-          .idEqualTo(int.parse(widget.shoppingListId))
-          .findFirst();
+    final list = await widget.itemListService
+        .fetchItemListById(int.parse(widget.shoppingListId));
+    if (list == null) return;
 
-      if (list == null) return;
+    final currentItems = list.getItems();
 
-      List<Map<String, dynamic>> currentItems = list.getItems();
+    final allGroups = await widget.productGroupService
+        .fetchProductGroups(widget.initialStoreId!);
+    final newShopGroups =
+        await widget.productGroupService.fetchProductGroups(newShopId);
 
-      final allGroups = await widget.isar.productgroups.where().findAll();
+    final Map<String, Productgroup> nameToGroup = {
+      for (var group in newShopGroups) group.name: group
+    };
 
-      final newShopGroups = await widget.isar.productgroups
-          .filter()
-          .storeIdEqualTo(newShopId)
-          .findAll();
+    final existingGroupNames = nameToGroup.keys.toSet();
+    final usedGroupNames = currentItems
+        .map((item) => _getGroupNameById(item['groupId'], allGroups))
+        .toSet();
 
-      final Map<String, Productgroup> nameToGroup = {
-        for (var group in newShopGroups) group.name: group
-      };
+    final missingGroupNames =
+        usedGroupNames.difference(existingGroupNames).toList()..sort();
 
-      Set<String> existingGroupNames = nameToGroup.keys.toSet();
-      Set<String> usedGroupNames = currentItems
-          .map((item) => _getGroupNameById(item['groupId'], allGroups))
-          .toSet();
+    int maxOrder = newShopGroups.isEmpty
+        ? 0
+        : newShopGroups.map((g) => g.order).reduce((a, b) => a > b ? a : b);
 
-      List<String> missingGroupNames =
-          usedGroupNames.difference(existingGroupNames).toList()..sort();
+    for (var i = 0; i < missingGroupNames.length; i++) {
+      final newGroup = Productgroup(
+        name: missingGroupNames[i],
+        storeId: newShopId,
+        order: maxOrder + i + 1,
+      );
 
-      // 5. Neue Gruppen anlegen mit passender Order (am Ende)
-      int maxOrder = newShopGroups.isEmpty
-          ? 0
-          : newShopGroups.map((g) => g.order).reduce((a, b) => a > b ? a : b);
+      final newGroupId =
+          await widget.productGroupService.addProductGroup(newGroup);
+      nameToGroup[missingGroupNames[i]] = newGroup..id = newGroupId;
+    }
 
-      for (var i = 0; i < missingGroupNames.length; i++) {
-        final newGroup = Productgroup(
-          name: missingGroupNames[i],
-          storeId: newShopId,
-          order: maxOrder + i + 1,
-        );
-        final newGroupId = await widget.isar.productgroups.put(newGroup);
-        nameToGroup[missingGroupNames[i]] = newGroup..id = newGroupId;
+    for (var item in currentItems) {
+      final originalGroupName = _getGroupNameById(item['groupId'], allGroups);
+      final newGroup = nameToGroup[originalGroupName];
+      if (newGroup != null) {
+        item['groupId'] = newGroup.id.toString();
       }
+    }
 
-      // 6. Artikel aktualisieren mit neuen Gruppen-IDs
-      for (var item in currentItems) {
-        final originalGroupName =
-            _getGroupNameById(item['groupId'], allGroups);
-        final newGroup = nameToGroup[originalGroupName];
-        if (newGroup != null) {
-          item['groupId'] = newGroup.id.toString();
-        }
-      }
+    list.shopId = newShopId;
+    list.setItems(currentItems);
 
-      // 7. Speichern
-      list.shopId = newShopId;
-      list.setItems(currentItems);
-      await widget.isar.itemlists.put(list);
-    });
+    // ✅ ersetzt durch Service
+    await widget.itemListService.updateItemList(list);
 
     setState(() {
       _selectedShopId = newShopId;
@@ -365,112 +237,41 @@ class _ItemListScreenState extends State<ItemListScreen> {
   }
 
   Future<void> toggleItemDone(String groupName, int itemIndex) async {
-    if (itemsByGroup.containsKey(groupName) &&
-        itemIndex < itemsByGroup[groupName]!.length) {
-      setState(() {
-        var itemDetails = itemsByGroup[groupName]![itemIndex];
-        itemDetails['isDone'] = !(itemDetails['isDone'] ?? false);
-      });
+    final itemDetails = itemsByGroup[groupName]![itemIndex];
+    setState(() {
+      itemDetails['isDone'] = !(itemDetails['isDone'] ?? false);
+    });
 
-      await widget.isar.writeTxn(() async {
-        Itemlist? listToUpdate = await widget.isar.itemlists
-            .filter()
-            .idEqualTo(int.parse(widget.shoppingListId))
-            .findFirst();
+    final list = await widget.itemListService
+        .fetchItemListById(int.parse(widget.shoppingListId));
+    if (list != null) {
+      final currentItems = list.getItems();
+      final itemToUpdate = currentItems.firstWhere(
+        (item) => item['name'] == itemDetails['name'],
+        orElse: () => {},
+      );
 
-        if (listToUpdate != null) {
-          List<Map<String, dynamic>> currentItems = listToUpdate.getItems();
+      if (itemToUpdate.isNotEmpty) {
+        itemToUpdate['isDone'] = itemDetails['isDone'];
+        list.setItems(currentItems);
 
-          var itemToUpdate = currentItems.firstWhere(
-              (item) =>
-                  item['name'] == itemsByGroup[groupName]![itemIndex]['name'],
-              orElse: () => {});
-
-          if (itemToUpdate.isNotEmpty) {
-            itemToUpdate['isDone'] =
-                itemsByGroup[groupName]![itemIndex]['isDone'];
-
-            listToUpdate.setItems(currentItems);
-            await widget.isar.itemlists.put(listToUpdate);
-
-            debugPrint(
-                '==== Current List Contents (after toggleItemDone) ====');
-            for (var i = 0; i < currentItems.length; i++) {
-              debugPrint(
-                  'Item $i: ${currentItems[i]['name']}, isDone: ${currentItems[i]['isDone']}');
-            }
-            debugPrint('===============================');
-
-            debugPrint("List successfully updated.");
-          } else {
-            debugPrint('Item not found in the current list.');
-          }
-        }
-      });
+        await widget.itemListService.updateItemList(list);
+      }
     }
   }
 
   void _addItemToList(String itemName, String groupId) async {
-    if (items.isEmpty) {
-      debugPrint('Es gibt keine Listen.');
-      return;
-    }
+    final list = await widget.itemListService
+        .fetchItemListById(int.parse(widget.shoppingListId));
+    if (list == null) return;
 
-    final listToAddTo = items.firstWhere(
-      (list) => list.id.toString() == widget.shoppingListId,
-      orElse: () {
-        debugPrint(
-            'Keine passende Liste gefunden für shoppingListId: ${widget.shoppingListId}');
-        return Itemlist(
-          name: 'Unbekannte Liste',
-          shopId: 'unknown',
-          items: [],
-          creationDate: DateTime.now(),
-        );
-      },
-    );
+    final currentItems = List<Map<String, dynamic>>.from(list.getItems());
+    currentItems.add({'name': itemName, 'isDone': false, 'groupId': groupId});
+    list.setItems(currentItems);
 
-    if (listToAddTo.name == 'Unbekannte Liste') {
-      debugPrint(
-          'Artikel kann nicht hinzugefügt werden, da keine Liste gefunden wurde.');
-      return;
-    }
+    await widget.itemListService.updateItemList(list);
 
-    await widget.isar.writeTxn(() async {
-      Itemlist? listToUpdate = await widget.isar.itemlists
-          .filter()
-          .idEqualTo(int.parse(widget.shoppingListId))
-          .findFirst();
-
-      if (listToUpdate != null) {
-        List<Map<String, dynamic>> currentItems =
-            List.from(listToUpdate.getItems());
-
-        for (var i = 0; i < currentItems.length; i++) {
-          debugPrint(
-              'Item $i: ${currentItems[i]['name']}, isDone: ${currentItems[i]['isDone']}');
-        }
-
-        currentItems
-            .add({'name': itemName, 'isDone': false, 'groupId': groupId});
-
-        listToUpdate.setItems(currentItems);
-        await widget.isar.itemlists.put(listToUpdate);
-
-        debugPrint('==== List after adding a new item ====');
-        for (var i = 0; i < currentItems.length; i++) {
-          debugPrint(
-              'Item $i: ${currentItems[i]['name']}, isDone: ${currentItems[i]['isDone']}');
-        }
-        debugPrint('=====================================');
-
-        debugPrint("List successfully updated.");
-      }
-    });
-
-    setState(() {
-      loadItems();
-    });
+    await loadItems();
   }
 
   void _showAddItemDialog() async {
@@ -478,11 +279,8 @@ class _ItemListScreenState extends State<ItemListScreen> {
     TextEditingController newGroupNameController = TextEditingController();
     String? selectedGroupId;
 
-    final productGroups = await widget.isar.productgroups
-        .filter()
-        .storeIdEqualTo(widget.initialStoreId!)
-        .sortByOrder()
-        .findAll();
+    final productGroups = await widget.productGroupService
+        .fetchProductGroups(widget.initialStoreId!);
 
     List<DropdownMenuItem<String>> groupItems = productGroups.map((group) {
       return DropdownMenuItem<String>(
@@ -625,28 +423,25 @@ class _ItemListScreenState extends State<ItemListScreen> {
                           _addItemToList(
                               itemNameController.text, selectedGroupId!);
                         } else if (newGroupNameController.text.isNotEmpty) {
-                          await widget.isar.writeTxn(() async {
-                            final lastGroup = await widget.isar.productgroups
-                                .filter()
-                                .storeIdEqualTo(widget.initialStoreId!)
-                                .sortByOrderDesc()
-                                .findFirst();
+                          final lastGroup = await widget.productGroupService
+                              .fetchLastGroupByStoreId(widget.initialStoreId!);
 
-                            final newOrder =
-                                lastGroup != null ? lastGroup.order + 1 : 0;
+                          final newOrder =
+                              lastGroup != null ? lastGroup.order + 1 : 0;
 
-                            Productgroup newGroup = Productgroup(
-                              name: newGroupNameController.text,
-                              storeId: widget.initialStoreId!,
-                              order: newOrder,
-                            );
-                            await widget.isar.writeTxn(() async {
-                              await widget.isar.productgroups.put(newGroup);
-                            });
+                          Productgroup newGroup = Productgroup(
+                            name: newGroupNameController.text,
+                            storeId: widget.initialStoreId!,
+                            order: newOrder,
+                          );
 
-                            _addItemToList(itemNameController.text,
-                                newGroup.id.toString());
-                          });
+                          // ✅ Service zum Hinzufügen verwenden
+                          final newGroupId = await widget.productGroupService
+                              .addProductGroup(newGroup);
+                          newGroup.id = newGroupId;
+
+                          _addItemToList(
+                              itemNameController.text, newGroup.id.toString());
                         }
                         Navigator.of(context).pop();
                       }
@@ -713,30 +508,30 @@ class _ItemListScreenState extends State<ItemListScreen> {
                     ),
                     onPressed: () async {
                       if (newGroupNameController.text.isNotEmpty) {
-                        await widget.isar.writeTxn(() async {
-                          final lastGroup = await widget.isar.productgroups
-                              .filter()
-                              .storeIdEqualTo(widget.initialStoreId!)
-                              .sortByOrderDesc()
-                              .findFirst();
+                        // ✅ zuletzt sortierte Gruppe holen
+                        final lastGroup = await widget.productGroupService
+                            .fetchLastGroupByStoreId(widget.initialStoreId!);
 
-                          final newOrder =
-                              lastGroup != null ? lastGroup.order + 1 : 0;
+                        final newOrder =
+                            lastGroup != null ? lastGroup.order + 1 : 0;
 
-                          Productgroup newGroup = Productgroup(
-                            name: newGroupNameController.text,
-                            storeId: widget.initialStoreId!,
-                            order: newOrder,
-                          );
-                          await widget.isar.productgroups.put(newGroup);
+                        // ✅ neue Gruppe erstellen und via Service speichern
+                        Productgroup newGroup = Productgroup(
+                          name: newGroupNameController.text,
+                          storeId: widget.initialStoreId!,
+                          order: newOrder,
+                        );
+                        final newGroupId = await widget.productGroupService
+                            .addProductGroup(newGroup);
+                        newGroup.id = newGroupId;
 
-                          setState(() {
-                            groupItems.add(DropdownMenuItem<String>(
-                              value: newGroup.id.toString(),
-                              child: Text(newGroup.name),
-                            ));
-                            selectedGroupId = newGroup.id.toString();
-                          });
+                        // ✅ Dropdown aktualisieren
+                        setState(() {
+                          groupItems.add(DropdownMenuItem<String>(
+                            value: newGroup.id.toString(),
+                            child: Text(newGroup.name),
+                          ));
+                          selectedGroupId = newGroup.id.toString();
                         });
                       }
                     },
@@ -799,12 +594,11 @@ class _ItemListScreenState extends State<ItemListScreen> {
           ),
           actions: [
             IconButton(icon: const Icon(Icons.print), onPressed: createPdf),
-            if (_isDeleteMode)
-              IconButton(
-                  icon: const Icon(Icons.check), onPressed: deleteSelectedItems)
-            else
-              IconButton(
-                  icon: const Icon(Icons.delete), onPressed: toggleDeleteMode),
+            IconButton(
+              icon: Icon(_isDeleteMode ? Icons.close : Icons.delete,
+                  color: Colors.black),
+              onPressed: toggleDeleteMode,
+            ),
           ],
           flexibleSpace: Padding(
             padding: const EdgeInsets.symmetric(
@@ -864,34 +658,24 @@ class _ItemListScreenState extends State<ItemListScreen> {
             //WARENGRUPPEN DROPWDOWN
             title: Row(
               children: [
-                if (_isDeleteMode)
-                  Checkbox(
-                    value: selectedGroups.contains(groupId),
-                    onChanged: (bool? value) {
-                      setState(() {
-                        if (value ?? false) {
-                          selectedGroups.add(groupId);
-                          selectedItems.addAll(itemsByGroup[groupId]!
-                              .map((item) => item['name']));
-                        } else {
-                          selectedGroups.remove(groupId);
-                          selectedItems.removeAll(itemsByGroup[groupId]!
-                              .map((item) => item['name']));
-                        }
-                      });
-                    },
-                  ),
-                // WARENGRUPPEN TEXT
-                Text(
-                  groupId,
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w500,
-                    color: const Color.fromARGB(255, 133, 131, 131),
+                Expanded(
+                  child: Text(
+                    groupId,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w500,
+                      color: Color.fromARGB(255, 133, 131, 131),
+                    ),
                   ),
                 ),
+                if (_isDeleteMode)
+                  IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: () => deleteProductGroup(groupId),
+                  ),
               ],
             ),
+
             children: [
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -899,31 +683,23 @@ class _ItemListScreenState extends State<ItemListScreen> {
                   ...itemsByGroup[groupId]!.map((item) {
                     return Row(
                       children: [
+                        // Checkbox im Delete-Modus links (readonly)
                         if (_isDeleteMode)
                           Padding(
-                            padding: const EdgeInsets.only(right: 8.0),
+                            padding:
+                                const EdgeInsets.only(left: 8.0, right: 8.0),
                             child: Checkbox(
-                              value: selectedItems.contains(item['name']),
-                              onChanged: (bool? value) {
-                                setState(() {
-                                  if (value ?? false) {
-                                    selectedItems.add(item['name']);
-                                  } else {
-                                    selectedItems.remove(item['name']);
-                                  }
-                                });
-                              },
+                              value: item['isDone'] ?? false,
+                              onChanged: null, // readonly
                             ),
                           ),
                         //EINZELNE ARTIKEL
+                        // ListTile mit Name & isDone-Checkbox rechts im Normalmodus
                         Expanded(
                           child: ListTile(
                             title: Text(
                               item['name'],
-                              style: TextStyle(
-                                fontSize: 23, // Ändere die Schriftgröße hier
-                                fontWeight: FontWeight.normal,
-                              ),
+                              style: const TextStyle(fontSize: 23),
                             ),
                             trailing: !_isDeleteMode
                                 ? Checkbox(
@@ -931,15 +707,20 @@ class _ItemListScreenState extends State<ItemListScreen> {
                                     onChanged: (bool? value) {
                                       if (value != null) {
                                         toggleItemDone(
-                                            groupId,
-                                            itemsByGroup[groupId]!
-                                                .indexOf(item));
+                                          groupId,
+                                          itemsByGroup[groupId]!.indexOf(item),
+                                        );
                                       }
                                     },
                                   )
                                 : null,
                           ),
                         ),
+                        if (_isDeleteMode)
+                          IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            onPressed: () => deleteItem(groupId, item['name']),
+                          ),
                       ],
                     );
                   }),

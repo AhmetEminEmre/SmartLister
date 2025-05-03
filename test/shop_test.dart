@@ -19,7 +19,7 @@ void main() {
     final all = await fakeDb.getAll();
     expect(all.length, 1);
     expect(all.first.name, 'Billa 1030');
-    expect(added.id, 1);
+    expect(added, 1);
   });
 
   test('deleteShop entfernt einen Shop', () async {

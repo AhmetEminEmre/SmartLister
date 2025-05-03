@@ -1,12 +1,29 @@
 import 'package:flutter/material.dart';
-import 'package:isar/isar.dart';
+import 'package:smart/services/userinfo_service.dart';
 import '../objects/userinfo.dart';
 import 'homepage_screen.dart';
 
-class NicknameScreen extends StatefulWidget {
-  final Isar isar;
+import 'package:smart/services/itemlist_service.dart';
+import 'package:smart/services/productgroup_service.dart';
+import 'package:smart/services/shop_service.dart';
+import 'package:smart/services/template_service.dart';
+import 'package:smart/services/userinfo_service.dart';
 
-  const NicknameScreen({super.key, required this.isar});
+class NicknameScreen extends StatefulWidget {
+  final NicknameService nicknameService;
+  final ProductGroupService productGroupService;
+  final ShopService shopService;
+  final ItemListService itemListService;
+  final TemplateService templateService;
+
+  const NicknameScreen({
+    super.key,
+    required this.nicknameService,
+    required this.productGroupService,
+    required this.shopService,
+    required this.itemListService,
+    required this.templateService,
+  });
 
   @override
   _NicknameScreenState createState() => _NicknameScreenState();
@@ -18,14 +35,19 @@ class _NicknameScreenState extends State<NicknameScreen> {
   Future<void> _saveNickname() async {
     final nickname = _nicknameController.text.trim();
     if (nickname.isNotEmpty) {
-      final user = Userinfo(nickname: nickname);
-      await widget.isar.writeTxn(() async {
-        await widget.isar.userinfos.put(user);
-      });
+      await widget.nicknameService.setNickname(nickname);
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => HomePage(isar: widget.isar)),
+        MaterialPageRoute(
+          builder: (context) => HomePage(
+            itemListService: widget.itemListService,
+            shopService: widget.shopService,
+            userinfoService: widget.nicknameService,
+            productGroupService: widget.productGroupService,
+            templateService: widget.templateService,
+          ),
+        ),
       );
     }
   }
@@ -49,21 +71,18 @@ class _NicknameScreenState extends State<NicknameScreen> {
                   fit: BoxFit.cover,
                 ),
               ),
-              const SizedBox(height: 20), // Abstand zum Text
-              //Text
+              const SizedBox(height: 20),
               const Text(
                 "SmartLister",
                 style: TextStyle(fontSize: 44, fontWeight: FontWeight.w600),
               ),
-              const SizedBox(height: 7), //Abstand
+              const SizedBox(height: 7),
               const Text(
                 "Dein smarter Begleiter\nfür jeden Einkauf",
                 style: TextStyle(fontSize: 18),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 40), //Abstand
-
-              // Textfield & Button in Padding für besseren Abstand
+              const SizedBox(height: 40),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Column(
@@ -77,9 +96,9 @@ class _NicknameScreenState extends State<NicknameScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 20), //Abstand
+                    const SizedBox(height: 20),
                     SizedBox(
-                      width: double.infinity, // Button auf volle Breite
+                      width: double.infinity,
                       child: ElevatedButton(
                         onPressed: _saveNickname,
                         style: ElevatedButton.styleFrom(
