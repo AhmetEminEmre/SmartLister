@@ -7,8 +7,6 @@ import 'package:smart/screens/shop_screen.dart';
 import 'package:smart/objects/productgroup.dart';
 import '../objects/itemlist.dart';
 import 'addlist_screen.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import '../utilities/notificationmanager.dart';
 import 'itemslist_screen.dart';
 import 'addshop_screen.dart';
 import 'dart:io';
@@ -29,9 +27,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final NotificationManager _notificationManager = NotificationManager();
-  final FlutterLocalNotificationsPlugin notificationsPlugin =
-      FlutterLocalNotificationsPlugin();
 
   late Stream<void> _itemListStream;
   late Stream<void> _shopStream;
@@ -44,7 +39,6 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    _notificationManager.initNotification();
     _setupWatchers();
     _fetchTopShops();
     _checkNickname();
@@ -734,71 +728,11 @@ Widget _buildShopCard(Einkaufsladen shop) {
       ),
     );
 
-    if (result == true) {
+    if (result == true) { 
       setState(() {
         _fetchLatestItemLists();
       });
     }
   }
 
-  Future<void> showNotificationDialog(BuildContext context) async {
-    TextEditingController titleController = TextEditingController();
-
-    DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
-    );
-
-    if (pickedDate != null) {
-      TimeOfDay? pickedTime = await showTimePicker(
-        context: context,
-        initialTime: TimeOfDay.now(),
-      );
-
-      if (pickedTime != null) {
-        DateTime scheduledDateTime = DateTime(
-          pickedDate.year,
-          pickedDate.month,
-          pickedDate.day,
-          pickedTime.hour,
-          pickedTime.minute,
-        );
-
-        await showDialog(
-          context: context,
-          builder: (context) {
-            return AlertDialog(
-              title: const Text("Titel eingeben"),
-              content: TextField(
-                controller: titleController,
-                decoration: const InputDecoration(hintText: "Titel"),
-              ),
-              actions: <Widget>[
-                TextButton(
-                  child: const Text("Abbrechen"),
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-                TextButton(
-                  child: const Text("Benachrichtigung planen"),
-                  onPressed: () async {
-                    Navigator.of(context).pop();
-                    await _notificationManager.scheduleNotification(
-                      0, //id
-                      titleController.text.isEmpty
-                          ? "nothing entered notification"
-                          : titleController.text,
-                      "notification", //body
-                      scheduledDateTime,
-                    );
-                  },
-                ),
-              ],
-            );
-          },
-        );
-      }
-    }
-  }
 }

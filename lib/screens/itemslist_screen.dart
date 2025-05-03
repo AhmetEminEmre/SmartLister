@@ -218,12 +218,12 @@ class _ItemListScreenState extends State<ItemListScreen> {
       for (var singleItem in savedItems) {
         final groupName = productGroups
             .firstWhere((group) => group.id.toString() == singleItem['groupId']
-                // ,
-                // orElse: () => Productgroup(
-                //   name: 'Unbekannt',
-                //   storeId: '0',
-                //   order: 0,
-                // ),
+                ,
+                orElse: () => Productgroup( //prob needs better solution
+                  name: 'Unbekannt',
+                  storeId: '0',
+                  order: 0,
+                ),
                 )
             .name;
 

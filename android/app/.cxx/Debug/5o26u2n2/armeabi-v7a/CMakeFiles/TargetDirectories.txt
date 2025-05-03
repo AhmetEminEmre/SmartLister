@@ -1,0 +1,2 @@
+D:/bachelor auf hdd/latestSmartLister/SmartLister/android/app/.cxx/Debug/5o26u2n2/armeabi-v7a/CMakeFiles/edit_cache.dir
+D:/bachelor auf hdd/latestSmartLister/SmartLister/android/app/.cxx/Debug/5o26u2n2/armeabi-v7a/CMakeFiles/rebuild_cache.dir

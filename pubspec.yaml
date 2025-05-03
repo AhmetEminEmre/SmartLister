@@ -39,9 +39,7 @@ dependencies:
   cupertino_icons: ^1.0.6
   printing: ^5.12.0
   share_plus: ^9.0.0
-  uni_links: ^0.5.1
   http: ^1.2.1
-  flutter_local_notifications: ^13.0.0
   timezone: ^0.9.4
   isar_flutter_libs: ^3.1.0+1
   path_provider: ^2.1.4
