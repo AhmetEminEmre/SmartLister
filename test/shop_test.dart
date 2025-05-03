@@ -1,88 +1,54 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/mockito.dart';
+import 'package:smart/services/shop_service.dart';
 import 'package:smart/objects/shop.dart';
-import 'shop_service_test.mocks.dart';
+import 'package:smart/fakeDBs/shop_fake.dart';
 
 void main() {
-  late MockIsar mockIsar;
-  late MockShopService mockShopService;
-  late MockIsarCollection<Einkaufsladen> mockShops;
+  late FakeShopDB fakeDb;
+  late ShopService service;
 
   setUp(() {
-    mockIsar = MockIsar();
-    mockShops = MockIsarCollection<Einkaufsladen>();
-    when(mockIsar.einkaufsladens).thenReturn(mockShops);
-    mockShopService = MockShopService();
+    fakeDb = FakeShopDB();
+    service = ShopService.fake(fakeDb);
   });
 
-  test('fetchShops - gibt eine Liste von Einkaufsladen zurück', () async {
-    // Arrange
-    final mockShops = [
-      Einkaufsladen(name: 'Spar 1110'),
-      Einkaufsladen(name: 'Hofer 1100'),
-    ];
+  test('addShop fügt neuen Shop hinzu', () async {
+    final shop = Einkaufsladen(name: 'Billa 1030');
+    final added = await service.addShop(shop);
 
-    when(mockShopService.fetchShops()).thenAnswer((_) async => mockShops);
-
-    // Act
-    final result = await mockShopService.fetchShops();
-
-    // Assert
-    expect(result, isA<List<Einkaufsladen>>());
-    expect(result.length, equals(2));
-    expect(result[0].name, 'Spar 1110');
-    expect(result[1].name, 'Hofer 1100');
+    final all = await fakeDb.getAll();
+    expect(all.length, 1);
+    expect(all.first.name, 'Billa 1030');
+    expect(added.id, 1);
   });
 
-  test('addShop - fügt einen neuen Einkaufsladen hinzu', () async {
-    // Arrange
-    final newShop = Einkaufsladen(name: 'Billa 1030');
-    final mockShops = <Einkaufsladen>[];
+  test('deleteShop entfernt einen Shop', () async {
+    final shop = Einkaufsladen(name: 'Spar')..id = 10;
+    fakeDb.add(shop);
 
-    when(mockShopService.addShop(newShop)).thenAnswer((_) async {
-      newShop.id = 1 +1;
-      mockShops.add(newShop);
-      return newShop;
-    });
+    await service.deleteShop(10);
+    final remaining = await fakeDb.getAll();
 
-    // Act
-    final result = await mockShopService.addShop(newShop);
-
-    // Assert
-    expect(result.name, 'Billa 1030');
-    expect(result.id, 1);
+    expect(remaining.isEmpty, true);
   });
 
-  test('deleteShop - entfernt einen Einkaufsladen', () async {
-    // Arrange
-    final mockShops = [
-      Einkaufsladen(name: 'Spar 1080'),
-      Einkaufsladen(name: 'Hofer 1110'),
-    ];
-    final groupToDelete = mockShops[0];
+  test('fetchShopById gibt richtigen Shop zurück', () async {
+    final shop = Einkaufsladen(name: 'Merkur')..id = 42;
+    fakeDb.add(shop);
 
-    when(mockShopService.deleteShop(groupToDelete.id)).thenAnswer((_) async {
-      mockShops.removeWhere((group) => group.name == groupToDelete.name);
-    });
-
-    // Act
-    await mockShopService.deleteShop(groupToDelete.id);
-
-    // Assert
-    expect(mockShops.any((group) => group.name == groupToDelete.name), false);
+    final result = await service.fetchShopById(42);
+    expect(result?.name, 'Merkur');
+    expect(result?.id, 42);
   });
 
-  test('fetchShopById - gibt einen Einkaufsladen anhand der ID zurück', () async {
-    // Arrange
-    const shopId = 1;
-    final mockShop = Einkaufsladen(name: 'Spar Mariahilferstraße');
-    when(mockShopService.fetchShopById(shopId)).thenAnswer((_) async => mockShop);
+  test('fetchShops gibt alle Shops zurück', () async {
+    fakeDb.add(Einkaufsladen(name: 'Spar 1110'));
+    fakeDb.add(Einkaufsladen(name: 'Hofer 1100'));
 
-    // Act
-    final result = await mockShopService.fetchShopById(shopId);
+    final shops = await service.fetchShops();
 
-    // Assert
-    expect(result, isNotNull);
-    expect(result?.name, 'Spar Mariahilferstraße');
+    expect(shops.length, 2);
+    expect(shops[0].name, 'Spar 1110');
+    expect(shops[1].name, 'Hofer 1100');
   });
 }

@@ -6,10 +6,10 @@
 import 'dart:async' as _i4;
 import 'dart:typed_data' as _i7;
 
-import 'package:isar/isar.dart' as _i2;
+import 'package:isar/isar.dart' as _i3;
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:mockito/src/dummies.dart' as _i6;
-import 'package:smart/objects/shop.dart' as _i3;
+import 'package:smart/objects/shop.dart' as _i2;
 import 'package:smart/services/shop_service.dart' as _i5;
 
 // ignore_for_file: type=lint
@@ -25,8 +25,8 @@ import 'package:smart/services/shop_service.dart' as _i5;
 // ignore_for_file: camel_case_types
 // ignore_for_file: subtype_of_sealed_class
 
-class _FakeIsar_0 extends _i1.SmartFake implements _i2.Isar {
-  _FakeIsar_0(
+class _FakeEinkaufsladen_0 extends _i1.SmartFake implements _i2.Einkaufsladen {
+  _FakeEinkaufsladen_0(
     Object parent,
     Invocation parentInvocation,
   ) : super(
@@ -35,8 +35,8 @@ class _FakeIsar_0 extends _i1.SmartFake implements _i2.Isar {
         );
 }
 
-class _FakeEinkaufsladen_1 extends _i1.SmartFake implements _i3.Einkaufsladen {
-  _FakeEinkaufsladen_1(
+class _FakeIsar_1 extends _i1.SmartFake implements _i3.Isar {
+  _FakeIsar_1(
     Object parent,
     Invocation parentInvocation,
   ) : super(
@@ -46,7 +46,7 @@ class _FakeEinkaufsladen_1 extends _i1.SmartFake implements _i3.Einkaufsladen {
 }
 
 class _FakeCollectionSchema_2<OBJ1> extends _i1.SmartFake
-    implements _i2.CollectionSchema<OBJ1> {
+    implements _i3.CollectionSchema<OBJ1> {
   _FakeCollectionSchema_2(
     Object parent,
     Invocation parentInvocation,
@@ -57,7 +57,7 @@ class _FakeCollectionSchema_2<OBJ1> extends _i1.SmartFake
 }
 
 class _FakeQueryBuilder_3<OBJ1, R, S> extends _i1.SmartFake
-    implements _i2.QueryBuilder<OBJ1, R, S> {
+    implements _i3.QueryBuilder<OBJ1, R, S> {
   _FakeQueryBuilder_3(
     Object parent,
     Invocation parentInvocation,
@@ -67,7 +67,7 @@ class _FakeQueryBuilder_3<OBJ1, R, S> extends _i1.SmartFake
         );
 }
 
-class _FakeQuery_4<T> extends _i1.SmartFake implements _i2.Query<T> {
+class _FakeQuery_4<T> extends _i1.SmartFake implements _i3.Query<T> {
   _FakeQuery_4(
     Object parent,
     Invocation parentInvocation,
@@ -88,7 +88,7 @@ class _FakeFuture_5<T1> extends _i1.SmartFake implements _i4.Future<T1> {
 }
 
 class _FakeIsarCollection_6<OBJ> extends _i1.SmartFake
-    implements _i2.IsarCollection<OBJ> {
+    implements _i3.IsarCollection<OBJ> {
   _FakeIsarCollection_6(
     Object parent,
     Invocation parentInvocation,
@@ -107,39 +107,30 @@ class MockShopService extends _i1.Mock implements _i5.ShopService {
   }
 
   @override
-  _i2.Isar get isar => (super.noSuchMethod(
-        Invocation.getter(#isar),
-        returnValue: _FakeIsar_0(
-          this,
-          Invocation.getter(#isar),
-        ),
-      ) as _i2.Isar);
-
-  @override
-  _i4.Future<List<_i3.Einkaufsladen>> fetchShops() => (super.noSuchMethod(
+  _i4.Future<List<_i2.Einkaufsladen>> fetchShops() => (super.noSuchMethod(
         Invocation.method(
           #fetchShops,
           [],
         ),
         returnValue:
-            _i4.Future<List<_i3.Einkaufsladen>>.value(<_i3.Einkaufsladen>[]),
-      ) as _i4.Future<List<_i3.Einkaufsladen>>);
+            _i4.Future<List<_i2.Einkaufsladen>>.value(<_i2.Einkaufsladen>[]),
+      ) as _i4.Future<List<_i2.Einkaufsladen>>);
 
   @override
-  _i4.Future<_i3.Einkaufsladen> addShop(_i3.Einkaufsladen? shop) =>
+  _i4.Future<_i2.Einkaufsladen> addShop(_i2.Einkaufsladen? shop) =>
       (super.noSuchMethod(
         Invocation.method(
           #addShop,
           [shop],
         ),
-        returnValue: _i4.Future<_i3.Einkaufsladen>.value(_FakeEinkaufsladen_1(
+        returnValue: _i4.Future<_i2.Einkaufsladen>.value(_FakeEinkaufsladen_0(
           this,
           Invocation.method(
             #addShop,
             [shop],
           ),
         )),
-      ) as _i4.Future<_i3.Einkaufsladen>);
+      ) as _i4.Future<_i2.Einkaufsladen>);
 
   @override
   _i4.Future<void> deleteShop(int? shopId) => (super.noSuchMethod(
@@ -152,42 +143,42 @@ class MockShopService extends _i1.Mock implements _i5.ShopService {
       ) as _i4.Future<void>);
 
   @override
-  _i4.Future<_i3.Einkaufsladen?> fetchShopById(int? shopId) =>
+  _i4.Future<_i2.Einkaufsladen?> fetchShopById(int? shopId) =>
       (super.noSuchMethod(
         Invocation.method(
           #fetchShopById,
           [shopId],
         ),
-        returnValue: _i4.Future<_i3.Einkaufsladen?>.value(),
-      ) as _i4.Future<_i3.Einkaufsladen?>);
+        returnValue: _i4.Future<_i2.Einkaufsladen?>.value(),
+      ) as _i4.Future<_i2.Einkaufsladen?>);
 }
 
 /// A class which mocks [IsarCollection].
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockIsarCollection<OBJ> extends _i1.Mock
-    implements _i2.IsarCollection<OBJ> {
+    implements _i3.IsarCollection<OBJ> {
   MockIsarCollection() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i2.Isar get isar => (super.noSuchMethod(
+  _i3.Isar get isar => (super.noSuchMethod(
         Invocation.getter(#isar),
-        returnValue: _FakeIsar_0(
+        returnValue: _FakeIsar_1(
           this,
           Invocation.getter(#isar),
         ),
-      ) as _i2.Isar);
+      ) as _i3.Isar);
 
   @override
-  _i2.CollectionSchema<OBJ> get schema => (super.noSuchMethod(
+  _i3.CollectionSchema<OBJ> get schema => (super.noSuchMethod(
         Invocation.getter(#schema),
         returnValue: _FakeCollectionSchema_2<OBJ>(
           this,
           Invocation.getter(#schema),
         ),
-      ) as _i2.CollectionSchema<OBJ>);
+      ) as _i3.CollectionSchema<OBJ>);
 
   @override
   String get name => (super.noSuchMethod(
@@ -566,9 +557,9 @@ class MockIsarCollection<OBJ> extends _i1.Mock
       );
 
   @override
-  _i2.QueryBuilder<OBJ, OBJ, _i2.QWhere> where({
+  _i3.QueryBuilder<OBJ, OBJ, _i3.QWhere> where({
     bool? distinct = false,
-    _i2.Sort? sort = _i2.Sort.asc,
+    _i3.Sort? sort = _i3.Sort.asc,
   }) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -579,7 +570,7 @@ class MockIsarCollection<OBJ> extends _i1.Mock
             #sort: sort,
           },
         ),
-        returnValue: _FakeQueryBuilder_3<OBJ, OBJ, _i2.QWhere>(
+        returnValue: _FakeQueryBuilder_3<OBJ, OBJ, _i3.QWhere>(
           this,
           Invocation.method(
             #where,
@@ -590,32 +581,32 @@ class MockIsarCollection<OBJ> extends _i1.Mock
             },
           ),
         ),
-      ) as _i2.QueryBuilder<OBJ, OBJ, _i2.QWhere>);
+      ) as _i3.QueryBuilder<OBJ, OBJ, _i3.QWhere>);
 
   @override
-  _i2.QueryBuilder<OBJ, OBJ, _i2.QFilterCondition> filter() =>
+  _i3.QueryBuilder<OBJ, OBJ, _i3.QFilterCondition> filter() =>
       (super.noSuchMethod(
         Invocation.method(
           #filter,
           [],
         ),
-        returnValue: _FakeQueryBuilder_3<OBJ, OBJ, _i2.QFilterCondition>(
+        returnValue: _FakeQueryBuilder_3<OBJ, OBJ, _i3.QFilterCondition>(
           this,
           Invocation.method(
             #filter,
             [],
           ),
         ),
-      ) as _i2.QueryBuilder<OBJ, OBJ, _i2.QFilterCondition>);
+      ) as _i3.QueryBuilder<OBJ, OBJ, _i3.QFilterCondition>);
 
   @override
-  _i2.Query<R> buildQuery<R>({
-    List<_i2.WhereClause>? whereClauses = const [],
+  _i3.Query<R> buildQuery<R>({
+    List<_i3.WhereClause>? whereClauses = const [],
     bool? whereDistinct = false,
-    _i2.Sort? whereSort = _i2.Sort.asc,
-    _i2.FilterOperation? filter,
-    List<_i2.SortProperty>? sortBy = const [],
-    List<_i2.DistinctProperty>? distinctBy = const [],
+    _i3.Sort? whereSort = _i3.Sort.asc,
+    _i3.FilterOperation? filter,
+    List<_i3.SortProperty>? sortBy = const [],
+    List<_i3.DistinctProperty>? distinctBy = const [],
     int? offset,
     int? limit,
     String? property,
@@ -654,7 +645,7 @@ class MockIsarCollection<OBJ> extends _i1.Mock
             },
           ),
         ),
-      ) as _i2.Query<R>);
+      ) as _i3.Query<R>);
 
   @override
   _i4.Future<int> count() => (super.noSuchMethod(
@@ -780,7 +771,7 @@ class MockIsarCollection<OBJ> extends _i1.Mock
 /// A class which mocks [Isar].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockIsar extends _i1.Mock implements _i2.Isar {
+class MockIsar extends _i1.Mock implements _i3.Isar {
   MockIsar() {
     _i1.throwOnMissingStub(this);
   }
@@ -904,7 +895,7 @@ class MockIsar extends _i1.Mock implements _i2.Isar {
       ) as T);
 
   @override
-  void attachCollections(Map<Type, _i2.IsarCollection<dynamic>>? collections) =>
+  void attachCollections(Map<Type, _i3.IsarCollection<dynamic>>? collections) =>
       super.noSuchMethod(
         Invocation.method(
           #attachCollections,
@@ -914,7 +905,7 @@ class MockIsar extends _i1.Mock implements _i2.Isar {
       );
 
   @override
-  _i2.IsarCollection<T> collection<T>() => (super.noSuchMethod(
+  _i3.IsarCollection<T> collection<T>() => (super.noSuchMethod(
         Invocation.method(
           #collection,
           [],
@@ -926,14 +917,14 @@ class MockIsar extends _i1.Mock implements _i2.Isar {
             [],
           ),
         ),
-      ) as _i2.IsarCollection<T>);
+      ) as _i3.IsarCollection<T>);
 
   @override
-  _i2.IsarCollection<dynamic>? getCollectionByNameInternal(String? name) =>
+  _i3.IsarCollection<dynamic>? getCollectionByNameInternal(String? name) =>
       (super.noSuchMethod(Invocation.method(
         #getCollectionByNameInternal,
         [name],
-      )) as _i2.IsarCollection<dynamic>?);
+      )) as _i3.IsarCollection<dynamic>?);
 
   @override
   _i4.Future<void> clear() => (super.noSuchMethod(
@@ -1017,4 +1008,14 @@ class MockIsar extends _i1.Mock implements _i2.Isar {
         returnValue: _i4.Future<void>.value(),
         returnValueForMissingStub: _i4.Future<void>.value(),
       ) as _i4.Future<void>);
+}
+
+/// A class which mocks [QueryBuilder].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockQueryBuilder<OBJ, R, S> extends _i1.Mock
+    implements _i3.QueryBuilder<OBJ, R, S> {
+  MockQueryBuilder() {
+    _i1.throwOnMissingStub(this);
+  }
 }

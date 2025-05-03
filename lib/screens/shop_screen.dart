@@ -3,6 +3,8 @@ import 'package:isar/isar.dart';
 import 'package:smart/objects/itemlist.dart';
 import '../objects/productgroup.dart';
 import '../objects/shop.dart';
+import 'package:smart/services/productgroup_service.dart';
+
 
 class EditStoreScreen extends StatefulWidget {
   final String storeId;
@@ -28,33 +30,34 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
   bool _isEditMode = false;
   late TextEditingController _storeNameController;
   late String storename;
+  late ProductGroupService _productGroupService;
 
-  @override
-  void initState() {
-    super.initState();
-    _storeNameController = TextEditingController(text: widget.storeName);
-    storename = widget.storeName;
-    _fetchProductGroups();
 
-    if (widget.isNewStore) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _promptAddDefaultProductGroups();
-      });
-    }
-  }
+ @override
+void initState() {
+  super.initState();
+  _storeNameController = TextEditingController(text: widget.storeName);
+  storename = widget.storeName;
 
-  Future<void> _fetchProductGroups() async {
-    final productGroups = await widget.isar.productgroups
-        .filter()
-        .storeIdEqualTo(widget.storeId)
-        .sortByOrder()
-        .findAll();
+  _productGroupService = ProductGroupService(widget.isar);
 
-    setState(() {
-      _productGroups = productGroups;
-      _isLoading = false;
+  _fetchProductGroups();
+
+  if (widget.isNewStore) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _promptAddDefaultProductGroups();
     });
   }
+}
+
+
+ Future<void> _fetchProductGroups() async {
+  final productGroups = await _productGroupService.fetchProductGroups(widget.storeId);
+  setState(() {
+    _productGroups = productGroups;
+    _isLoading = false;
+  });
+}
 
   Future<void> _addDefaultProductGroups() async {
     final defaultGroups = [
@@ -388,7 +391,7 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
     await widget.isar.writeTxn(() async {
       await widget.isar.productgroups.delete(group.id);
     });
-
+    //hier service aufrufen und dann die produgrkuppe löschen
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
       content: Text('Warengruppe gelöscht.'),
       backgroundColor: Colors.green,

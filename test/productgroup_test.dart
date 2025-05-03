@@ -1,111 +1,75 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/mockito.dart';
 import 'package:smart/objects/productgroup.dart';
-import 'productgroup_service_test.mocks.dart';
+import 'package:smart/services/productgroup_service.dart';
+import 'package:smart/fakeDBs/productgroup_fake.dart';
 
 void main() {
-  late MockIsar mockIsar;
-  late MockProductGroupService mockProductGroupService;
-  late MockIsarCollection<Productgroup> mockProductGroups;
+  late FakeProductgroupDB fakeDb;
+  late ProductGroupService service;
 
   setUp(() {
-    mockIsar = MockIsar();
-    mockProductGroups = MockIsarCollection<Productgroup>();
-    when(mockIsar.productgroups).thenReturn(mockProductGroups);
-    mockProductGroupService = MockProductGroupService();
+    fakeDb = FakeProductgroupDB();
+    service = ProductGroupService.fake(fakeDb);
   });
 
-  test('fetchProductGroups - gibt eine Liste von Productgroup zurück', () async {
-    // Arrange
-    final mockGroups = [
-      Productgroup(name: 'Obst', storeId: '1', order: 0),
-      Productgroup(name: 'Gemüse', storeId: '1', order: 1),
-    ];
+  test('fetchProductGroups gibt gefilterte & sortierte Produktgruppen zurück', () async {
+    await service.addProductGroup(Productgroup(name: 'Obst', storeId: '1', order: 1));
+    await service.addProductGroup(Productgroup(name: 'Getränke', storeId: '1', order: 0));
+    await service.addProductGroup(Productgroup(name: 'Fremd', storeId: '2', order: 0));
 
-    when(mockProductGroupService.fetchProductGroups('1'))
-        .thenAnswer((_) async => mockGroups);
+    final result = await service.fetchProductGroups('1');
 
-    // Act
-    final result = await mockProductGroupService.fetchProductGroups('1');
-
-    // Assert
-    expect(result, isA<List<Productgroup>>());
-    expect(result.length, equals(2));
-    expect(result[0].name, 'Obst');
-    expect(result[1].name, 'Gemüse');
+    expect(result.length, 2);
+    expect(result[0].name, 'Getränke');
+    expect(result[1].name, 'Obst');
   });
 
-  test('addProductGroup - fügt eine neue Produktgruppe hinzu', () async {
-    // Arrange
-    final newGroup = Productgroup(name: 'Getränke', storeId: '1', order: 2);
-    final mockGroups = <Productgroup>[];
+  test('addProductGroup fügt neue Produktgruppe hinzu', () async {
+    final group = Productgroup(name: 'Milch', storeId: '1', order: 0);
+    await service.addProductGroup(group);
 
-    when(mockProductGroupService.addProductGroup(newGroup)).thenAnswer((_) async {
-      mockGroups.add(newGroup);
-    });
-
-    // Act
-    await mockProductGroupService.addProductGroup(newGroup);
-
-    // Assert
-    expect(mockGroups.length, 1);
-    expect(mockGroups.first.name, 'Getränke');
-    expect(mockGroups.first.storeId, '1');
-    expect(mockGroups.first.order, 2);
+    final all = await service.fetchProductGroups('1');
+    expect(all.length, 1);
+    expect(all[0].name, 'Milch');
   });
 
-  test('deleteProductGroup - entfernt die Produktgruppe', () async {
-    // Arrange
-    final mockGroups = [
-      Productgroup(name: 'Getränke', storeId: '1', order: 2),
-      Productgroup(name: 'Obst', storeId: '1', order: 1),
-    ];
-    final groupToDelete = mockGroups[0];
+  test('deleteProductGroup entfernt Produktgruppe', () async {
+    final group = Productgroup(name: 'Käse', storeId: '1', order: 0)..id = 42;
+    await service.addProductGroup(group);
 
-    when(mockProductGroups.delete(any)).thenAnswer((_) async {
-      mockGroups.removeWhere((group) => group.name == groupToDelete.name);
-      return true;
-    });
+    await service.deleteProductGroup(42);
 
-    when(mockProductGroupService.deleteProductGroup(any)).thenAnswer((_) async {
-      await mockProductGroups.delete(groupToDelete.id);
-    });
-
-    // Act
-    await mockProductGroupService.deleteProductGroup(groupToDelete.id);
-
-    // Assert
-    expect(mockGroups.any((group) => group.name == groupToDelete.name), false);
+    final remaining = await service.fetchProductGroups('1');
+    expect(remaining.isEmpty, true);
   });
 
-  test('addDefaultProductGroups - fügt Standard-Produktgruppen hinzu', () async {
-    // Arrange
-    const storeId = '1';
-    final mockGroups = [
-      Productgroup(name: 'Getränke', storeId: '1', order: 2),
-      Productgroup(name: 'Obst', storeId: '1', order: 1),
-    ];
+  test('fetchProductGroupById liefert korrekte Produktgruppe', () async {
+    final group = Productgroup(name: 'Joghurt', storeId: '1', order: 0)..id = 99;
+    await service.addProductGroup(group);
 
-    when(mockProductGroupService.addDefaultProductGroups(storeId))
-        .thenAnswer((_) async {
-      mockGroups
-          .add(Productgroup(name: 'Obst & Gemüse', storeId: storeId, order: 0));
-      mockGroups.add(Productgroup(name: 'Säfte', storeId: storeId, order: 1));
-      mockGroups.add(Productgroup(name: 'Fleisch', storeId: storeId, order: 2));
-      mockGroups.add(Productgroup(name: 'Fisch', storeId: storeId, order: 3));
-    });
+    final result = await service.fetchProductGroupById(99);
 
-    // Act
-    await mockProductGroupService.addDefaultProductGroups(storeId);
+    expect(result?.name, 'Joghurt');
+    expect(result?.id, 99);
+  });
 
-    // Assert
-    expect(mockGroups.length, 6);
-    expect(
-      mockGroups.map((group) => group.name).toSet(),
-      containsAll(
-          ['Getränke', 'Obst', 'Obst & Gemüse', 'Säfte', 'Fleisch', 'Fisch']),
-    );
-    expect(mockGroups.map((group) => group.name).toList(),
-    equals(['Getränke', 'Obst', 'Obst & Gemüse', 'Säfte', 'Fleisch', 'Fisch']));
+  test('updateProductGroupOrder sortiert Produktgruppen korrekt', () async {
+    final g1 = Productgroup(name: 'Z', storeId: '1', order: 2);
+    final g2 = Productgroup(name: 'A', storeId: '1', order: 0);
+    final g3 = Productgroup(name: 'M', storeId: '1', order: 1);
+
+    await service.addProductGroup(g1);
+    await service.addProductGroup(g2);
+    await service.addProductGroup(g3);
+
+    final unsorted = await service.fetchProductGroups('1');
+    unsorted.sort((a, b) => a.name.compareTo(b.name));
+
+    await service.updateProductGroupOrder(unsorted);
+
+    final result = await service.fetchProductGroups('1');
+    expect(result[0].order, 0);
+    expect(result[1].order, 1);
+    expect(result[2].order, 2);
   });
 }

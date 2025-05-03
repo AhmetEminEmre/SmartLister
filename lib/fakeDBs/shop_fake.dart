@@ -1,7 +1,7 @@
 import 'package:isar/isar.dart';
 import 'package:smart/objects/shop.dart';
 
-class FakeShopDatabase {
+class FakeShopDB {
   final List<Einkaufsladen> _shops = [];
   int _nextId = 1;
 

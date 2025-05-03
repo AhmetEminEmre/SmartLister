@@ -191,25 +191,22 @@ class _ItemListScreenState extends State<ItemListScreen> {
     print(
         '🌍 ALLE Gruppen-IDs in DB: ${allGroups.map((g) => '${g.id} → ${g.name}').toList()}');
 
-    // Warengruppen aus der Datenbank laden, sortiert nach Order
     final productGroups = await widget.isar.productgroups
         .filter()
-        .storeIdEqualTo(_selectedShopId!) // ✅ Filter nach aktuellem Shop
-        .sortByOrder() // ✅ Sortierung nach Reihenfolge aus der Datenbank
+        .storeIdEqualTo(_selectedShopId!)
+        .sortByOrder() 
         .findAll();
 
     print(
         '📦 Geladene Warengruppen: ${productGroups.map((pg) => pg.name).toList()}');
 
-    // Einkaufsliste aus der Datenbank laden
     Itemlist? savedList = await widget.isar.itemlists
         .filter()
         .idEqualTo(
-            int.parse(widget.shoppingListId)) // 🔥 Laden der gesamten Liste
+            int.parse(widget.shoppingListId))
         .findFirst();
 
     if (savedList != null) {
-      // Geladene Artikel aus der Liste abrufen
       List<Map<String, dynamic>> savedItems = savedList.getItems();
       print('🧐 Geladene Artikel in der Liste: $savedItems');
 
@@ -307,24 +304,19 @@ class _ItemListScreenState extends State<ItemListScreen> {
 
       if (list == null) return;
 
-      // 1. Artikel laden
       List<Map<String, dynamic>> currentItems = list.getItems();
 
-      // 🔥 ALLE Gruppen laden, nicht nur vom neuen Shop
       final allGroups = await widget.isar.productgroups.where().findAll();
 
-      // 2. Gruppen im neuen Shop laden
       final newShopGroups = await widget.isar.productgroups
           .filter()
           .storeIdEqualTo(newShopId)
           .findAll();
 
-      // 3. Name -> Gruppe Map bauen
       final Map<String, Productgroup> nameToGroup = {
         for (var group in newShopGroups) group.name: group
       };
 
-      // 4. Fehlende Gruppen vorbereiten
       Set<String> existingGroupNames = nameToGroup.keys.toSet();
       Set<String> usedGroupNames = currentItems
           .map((item) => _getGroupNameById(item['groupId'], allGroups))

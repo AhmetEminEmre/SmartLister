@@ -1,30 +1,50 @@
 import 'package:isar/isar.dart';
 import '../objects/shop.dart';
+import 'package:smart/fakeDBs/shop_fake.dart';
 
 class ShopService {
-  final Isar isar;
+  final Isar? _isar;
+  final FakeShopDB? _fakeDb;
 
-  ShopService(this.isar);
+  ShopService(Isar isar)
+      : _isar = isar,
+        _fakeDb = null;
+
+  ShopService.fake(FakeShopDB fakeDb)
+      : _fakeDb = fakeDb,
+        _isar = null;
 
   Future<List<Einkaufsladen>> fetchShops() async {
-    return await isar.einkaufsladens.where().findAll();
+    if (_fakeDb != null) return await _fakeDb.getAll();
+    return await _isar!.einkaufsladens.where().findAll();
   }
 
   Future<Einkaufsladen> addShop(Einkaufsladen shop) async {
-    await isar.writeTxn(() async {
-      final id = await isar.einkaufsladens.put(shop);
+    if (_fakeDb != null) {
+      await _fakeDb!.add(shop);
+      return shop;
+    }
+
+    await _isar!.writeTxn(() async {
+      final id = await _isar.einkaufsladens.put(shop);
       shop.id = id;
     });
     return shop;
   }
 
   Future<void> deleteShop(int shopId) async {
-    await isar.writeTxn(() async {
-      await isar.einkaufsladens.delete(shopId);
+    if (_fakeDb != null) {
+      await _fakeDb.delete(shopId);
+      return;
+    }
+
+    await _isar!.writeTxn(() async {
+      await _isar.einkaufsladens.delete(shopId);
     });
   }
 
   Future<Einkaufsladen?> fetchShopById(int shopId) async {
-    return await isar.einkaufsladens.get(shopId);
+    if (_fakeDb != null) return await _fakeDb.getById(shopId);
+    return await _isar!.einkaufsladens.get(shopId);
   }
 }
