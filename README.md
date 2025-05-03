@@ -1,3 +1,7 @@
+# TEST STATUS
+
+[![Flutter Tests](https://github.com/AhmetEminEmre/SmartLister/actions/workflows/flutter_test.yml/badge.svg)](https://github.com/AhmetEminEmre/SmartLister/actions/workflows/flutter_test.yml)
+
 # SmartLister for MAD/WPF1
 SmartLister is a comprehensive shopping list application developed with Flutter, designed to streamline the process of managing and sharing shopping lists. This application allows users to create, manage, and share their shopping lists directly from their mobile devices.
 
