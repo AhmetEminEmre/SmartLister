@@ -40,7 +40,7 @@ void main() {
     final mockShops = <Einkaufsladen>[];
 
     when(mockShopService.addShop(newShop)).thenAnswer((_) async {
-      newShop.id = 1;
+      newShop.id = 1 +1;
       mockShops.add(newShop);
       return newShop;
     });
