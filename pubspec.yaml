@@ -86,6 +86,7 @@ flutter:
     - lib/img2/Img6.png
     - lib/img2/Img7.png
     - lib/img3/NickNameScreen.png
+    - lib/img3/Karotte.png
 
 
   # The following line ensures that the Material Icons font is

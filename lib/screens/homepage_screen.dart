@@ -430,16 +430,16 @@ class _HomePageState extends State<HomePage> {
                 print('Error loading image: $exception'); // Fehler-Handling
               },
               colorFilter: ColorFilter.mode(
-                  Colors.black.withOpacity(0.3), BlendMode.darken),
+                  Colors.black.withOpacity(0), BlendMode.darken),
             ),
           ),
           child: Align(
-            alignment: Alignment.bottomLeft,
+            alignment: Alignment.topLeft,
             child: Text(
               shop.name,
               style: const TextStyle(
-                color: Colors.white,
-                fontSize: 22,
+                color: Color.fromARGB(255, 64, 63, 63),
+                fontSize: 16,
                 fontWeight: FontWeight.w600,
               ),
               maxLines: 2, // Maximal 2 Zeilen

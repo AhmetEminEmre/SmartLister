@@ -11,6 +11,7 @@ import '../services/itemlist_service.dart';
 import '../services/productgroup_service.dart';
 import '../services/shop_service.dart';
 
+
 class ItemListScreen extends StatefulWidget {
   final String listName;
   final String shoppingListId;
@@ -583,89 +584,182 @@ class _ItemListScreenState extends State<ItemListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(100), // Extra Platz für Dropdown
-        child: AppBar(
-          backgroundColor: Colors.white,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () =>
-                Navigator.popUntil(context, (route) => route.isFirst),
-          ),
-          actions: [
-            IconButton(icon: const Icon(Icons.print), onPressed: createPdf),
-            IconButton(
-              icon: Icon(_isDeleteMode ? Icons.close : Icons.delete,
-                  color: Colors.black),
-              onPressed: toggleDeleteMode,
-            ),
-          ],
-          flexibleSpace: Padding(
-            padding: const EdgeInsets.symmetric(
-                horizontal: 55.0), // Abstand zum Rand
-            child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start, // Hier wird alles linksbündig!
-              mainAxisAlignment:
-                  MainAxisAlignment.end, // Damit es nicht oben klebt
-              children: [
-                // Listenname (Titel)
-                Text(
-                  widget.listName,
-                  style: const TextStyle(
-                      fontSize: 24, fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 5),
-                // Dropdown für den Shop
-                DropdownButton<String>(
-                  value: _selectedShopId,
-                  onChanged: (String? newValue) {
-                    if (newValue != null) {
-                      _updateShop(newValue); // Speichert den neuen Shop in Isar
-                    }
-                  },
-                  icon: const Icon(Icons.arrow_drop_down, size: 24),
-                  iconEnabledColor: Color(0xFFE5A462),
-                  padding: const EdgeInsets.only(
-                      right: 8), // 👈 Icon nach links verschieben
+    appBar: PreferredSize(
+  preferredSize: const Size.fromHeight(110),
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      AppBar(
+        backgroundColor: Colors.white,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.popUntil(context, (route) => route.isFirst),
+        ),
+      title: Transform.translate(
+  offset: const Offset(-12, 0), // 👈 verschiebt nur den Titel nach links
+  child: Text(
+    widget.listName,
+    style: const TextStyle(
+      fontSize: 24,
+      fontWeight: FontWeight.w500,
+      color: Colors.black,
+    ),
+  ),
+),
 
-                  style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF6D4C41)),
-                  dropdownColor: Colors.white,
-                  underline: Container(),
-                  items: _availableShops
-                      .map<DropdownMenuItem<String>>((Einkaufsladen shop) {
-                    return DropdownMenuItem<String>(
-                      value: shop.id.toString(),
-                      child: Text(shop.name,
-                          style: const TextStyle(color: Colors.black)),
-                    );
-                  }).toList(),
-                ),
-              ],
+        centerTitle: false,
+       actions: [
+  IconButton(
+    icon: const Icon(Icons.print, color: Color.fromARGB(255, 28, 27, 27)),
+    iconSize: 28, // z. B. 28 statt Standard 24
+    onPressed: createPdf,
+  ),
+  IconButton(
+    icon: Icon(
+      _isDeleteMode ? Icons.close : Icons.delete,
+      color: Color.fromARGB(255, 28, 27, 27),
+    ),
+    iconSize: 28, // größer als Standard
+    onPressed: toggleDeleteMode,
+  ),
+],
+
+        elevation: 0,
+      ),
+      Padding(
+        padding: const EdgeInsets.only(left: 60.0, bottom: 10),
+        child: Material(
+          borderRadius: BorderRadius.circular(6),
+          color: const Color(0xFFF2E4D9),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          
+            child: DropdownButtonHideUnderline(
+  child: DropdownButton<String>(
+    value: _selectedShopId,
+    isDense: true,
+    onChanged: (String? newValue) {
+      if (newValue != null) _updateShop(newValue);
+    },
+    dropdownColor: Colors.white,
+    // 👇 Entfernt den standardmäßigen Dropdown-Pfeil
+    icon: const SizedBox.shrink(),
+    style: const TextStyle(
+      fontSize: 17,
+      fontWeight: FontWeight.w700,
+      color: Color(0xFF986224),
+    ),
+    // 👇 eigene Darstellung des Dropdowns (sichtbarer Button)
+    selectedItemBuilder: (BuildContext context) {
+      return _availableShops.map((shop) {
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              shop.name,
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF986224),
+              ),
             ),
+            const SizedBox(width: 6),
+            const Icon(Icons.arrow_drop_down, color: Color(0xFF986224)),
+          ],
+        );
+      }).toList();
+    },
+    // 👇 was in der Liste angezeigt wird
+    items: _availableShops.map((shop) {
+      return DropdownMenuItem<String>(
+        value: shop.id.toString(),
+        child: Text(
+          shop.name,
+          style: const TextStyle(
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF986224),
+          ),
+        ),
+      );
+    }).toList(),
+  ),
+),
+
+
+            
           ),
         ),
       ),
+    ],
+  ),
+),
+
+
       backgroundColor: Colors.white,
-      body: ListView.builder(
+    body: itemsByGroup.isEmpty
+    ? Center(
+child: Padding(
+  padding: const EdgeInsets.only(top: 0), // 👈 vorher: 100
+  child: Column(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Image.asset('lib/img3/Karotte.png', width: 70, height: 70),
+      const SizedBox(height: 6),
+      const Text(
+        'Noch keine Artikel',
+        style: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+          color: Color.fromARGB(255, 74, 69, 69),
+        ),
+      ),
+      const SizedBox(height: 8),
+      const Text(
+        'Tippe auf das Plus-Symbol, um\ndeinen ersten Artikel hinzuzufügen.',
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: 13,
+          color: Color.fromARGB(255, 57, 57, 57),
+        ),
+      ),
+    ],
+  ),
+),
+
+
+)
+
+
+      
+     : ListView.builder(
         itemCount: itemsByGroup.keys.length,
         itemBuilder: (context, index) {
           String groupId = itemsByGroup.keys.elementAt(index);
           return ExpansionTile(
+             /////hierrrr
+              tilePadding: const EdgeInsets.only(left: 22, right: 24),
+ childrenPadding: const EdgeInsets.only(top: 0),
+
+  collapsedShape: RoundedRectangleBorder(
+    side: BorderSide.none,
+    borderRadius: BorderRadius.zero,
+  ),
+  shape: RoundedRectangleBorder(
+    side: BorderSide.none,
+    borderRadius: BorderRadius.zero,
+  ),
             //WARENGRUPPEN DROPWDOWN
             title: Row(
               children: [
                 Expanded(
                   child: Text(
                     groupId,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w500,
-                      color: Color.fromARGB(255, 133, 131, 131),
-                    ),
+                   style: const TextStyle(
+  fontSize: 15,
+  fontWeight: FontWeight.w400,
+  color: Color.fromARGB(255, 148, 146, 146),
+),
+
                   ),
                 ),
                 if (_isDeleteMode)
@@ -676,57 +770,75 @@ class _ItemListScreenState extends State<ItemListScreen> {
               ],
             ),
 
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ...itemsByGroup[groupId]!.map((item) {
-                    return Row(
-                      children: [
-                        // Checkbox im Delete-Modus links (readonly)
-                        if (_isDeleteMode)
-                          Padding(
-                            padding:
-                                const EdgeInsets.only(left: 8.0, right: 8.0),
-                            child: Checkbox(
-                              value: item['isDone'] ?? false,
-                              onChanged: null, // readonly
-                            ),
-                          ),
-                        //EINZELNE ARTIKEL
-                        // ListTile mit Name & isDone-Checkbox rechts im Normalmodus
-                        Expanded(
-                          child: ListTile(
-                            title: Text(
-                              item['name'],
-                              style: const TextStyle(fontSize: 23),
-                            ),
-                            trailing: !_isDeleteMode
-                                ? Checkbox(
-                                    value: item['isDone'] ?? false,
-                                    onChanged: (bool? value) {
-                                      if (value != null) {
-                                        toggleItemDone(
-                                          groupId,
-                                          itemsByGroup[groupId]!.indexOf(item),
-                                        );
-                                      }
-                                    },
-                                  )
-                                : null,
-                          ),
-                        ),
-                        if (_isDeleteMode)
-                          IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed: () => deleteItem(groupId, item['name']),
-                          ),
-                      ],
-                    );
-                  }),
-                ],
+           children: itemsByGroup[groupId]!.asMap().entries.map((entry) {
+  final index = entry.key;
+  final item = entry.value;
+
+  return Column(
+    children: [
+      Row(
+        children: [
+          Padding(
+            /////hierrrr
+            padding: const EdgeInsets.only(left: 15.0),
+            child: Transform.scale(
+              scale: 1.4,
+              child: Checkbox(
+                value: item['isDone'] ?? false,
+                onChanged: _isDeleteMode
+                    ? null
+                    : (bool? value) {
+                        if (value != null) {
+                          toggleItemDone(groupId, index);
+                        }
+                      },
+                side: const BorderSide(
+                  width: 1,
+                  color: Color(0xFFB0B0B0),
+                ),
               ),
-            ],
+            ),
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child:ListTile(
+  //dense: true,
+  contentPadding: EdgeInsets.symmetric(horizontal: 0), // oder left: 0, right: 0
+              title: Text(
+                item['name'],
+                style: TextStyle(
+                  fontSize: 21,
+                     fontWeight: FontWeight.w500, 
+                  decoration: item['isDone'] == true
+                      ? TextDecoration.lineThrough
+                      : TextDecoration.none,
+                  color: item['isDone'] == true ? Colors.grey : Colors.black,
+                ),
+              ),
+            ),
+          ),
+          if (_isDeleteMode)
+            IconButton(
+              icon: const Icon(Icons.delete, color: Colors.red),
+              onPressed: () => deleteItem(groupId, item['name']),
+            ),
+        ],
+      ),
+   if (index < itemsByGroup[groupId]!.length - 1)
+  const Padding(
+    padding: EdgeInsets.symmetric(horizontal: 22.0),
+    child: Divider(
+      color: Color(0xFFE0E0E0),
+      height: 1,
+      thickness: 1.5,
+    ),
+  ),
+
+
+    ],
+  );
+}).toList(),
+
           );
         },
       ),
@@ -743,7 +855,7 @@ class _ItemListScreenState extends State<ItemListScreen> {
                   backgroundColor:
                       Color.fromARGB(255, 239, 141, 37), // Hintergrundfarbe
                   foregroundColor: Colors.white, // Icon-Farbe
-                  child: const Icon(Icons.add, size: 36), // Größeres Icon
+                  child: const Icon(Icons.add, size: 70), // Größeres Icon
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(40), // Eckenradius
                   ),
