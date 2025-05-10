@@ -9,38 +9,115 @@ class SettingsScreen extends StatelessWidget {
   void _showNicknameDialog(BuildContext context) {
     final controller = TextEditingController();
 
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Nickname ändern'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(hintText: 'Neuer Nickname'),
+   showDialog(
+  context: context,
+  builder: (_) => Center(
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 360, minWidth: 300),
+      child: Material(
+        borderRadius: BorderRadius.circular(16),
+        color: Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Nickname ändern',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 16),
+            TextField(
+  decoration: InputDecoration(
+    labelText: 'Neuer Nickname',
+    labelStyle: TextStyle( // nicht-fokussierter Zustand
+      color: Colors.black.withOpacity(0.5), // wirkt heller als reines Grau
+      fontSize: 16,
+      fontWeight: FontWeight.w400,
+    ),
+    floatingLabelStyle: TextStyle( // fokussierter Zustand
+      color: Color.fromARGB(255, 125, 146, 5),
+      fontSize: 16,
+      fontWeight: FontWeight.w500,
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderSide: BorderSide(color: Color.fromARGB(255, 125, 146, 5)),
+      borderRadius: BorderRadius.circular(10),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderSide: BorderSide(color: Colors.grey.shade400),
+      borderRadius: BorderRadius.circular(10),
+    ),
+    isDense: true,
+    fillColor: Colors.white,
+    filled: true,
+  ),
+  style: const TextStyle(
+    fontSize: 16,
+    color: Colors.black87,
+  ),
+),
+
+
+
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    style: TextButton.styleFrom(
+                      backgroundColor: const Color(0xFFE2E2E2),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'Abbrechen',
+                      style: TextStyle(color: Color(0xFF5F5F5F), fontSize: 14),
+                    ),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  const SizedBox(width: 12),
+                  TextButton(
+                    style: TextButton.styleFrom(
+                      backgroundColor: const Color(0xFFEF8D25),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'Speichern',
+                      style: TextStyle(color: Colors.white, fontSize: 14),
+                    ),
+                    onPressed: () async {
+                      final newName = controller.text.trim();
+                      if (newName.isNotEmpty) {
+                        await nicknameService.setNickname(newName);
+                        if (context.mounted) {
+                          Navigator.pop(context);
+                         ScaffoldMessenger.of(context).showSnackBar(
+  const SnackBar(
+    content: Text('Nickname gespeichert!'),
+    backgroundColor: Color(0xFF79C267), // helles Grün
+  ),
+);
+                        }
+                      }
+                    },
+                  ),
+                ],
+              )
+            ],
+          ),
         ),
-        actions: [
-          TextButton(
-            child: const Text('Abbrechen'),
-            onPressed: () => Navigator.pop(context),
-          ),
-          TextButton(
-            child: const Text('Speichern'),
-            onPressed: () async {
-              final newName = controller.text.trim();
-              if (newName.isNotEmpty) {
-                await nicknameService.setNickname(newName);
-                if (context.mounted) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Nickname gespeichert!')),
-                  );
-                }
-              }
-            },
-          ),
-        ],
       ),
-    );
-  }
+    ),
+  ),
+);
+}
 
   @override
   Widget build(BuildContext context) {
