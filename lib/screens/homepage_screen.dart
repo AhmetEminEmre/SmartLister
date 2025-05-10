@@ -224,38 +224,44 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        backgroundColor: const Color.fromARGB(255, 255, 255, 255),
-        title: Padding(
-          padding: const EdgeInsets.only(
-              right: 100.0), // Linkes Padding für den Titel
-          child: Text(
-            _nickname.isNotEmpty ? 'Guten Tag $_nickname!' : 'Loading...',
-            style: const TextStyle(
-              fontSize: 33,
-              color: Color(0xFF222222),
-              fontWeight: FontWeight.w600,
+    appBar: AppBar(
+  automaticallyImplyLeading: false,
+  backgroundColor: const Color.fromARGB(255, 255, 255, 255),
+  title: Row(
+    children: [
+      Expanded(
+        child: Text(
+          _nickname.isNotEmpty ? 'Guten Tag $_nickname!' : 'Loading...',
+          style: const TextStyle(
+            fontSize: 30,
+            color: Color(0xFF222222),
+            fontWeight: FontWeight.w600,
+          ),
+          overflow: TextOverflow.visible,
+          softWrap: true,
+        ),
+      ),
+    ],
+  ),
+  actions: <Widget>[
+    IconButton(
+      icon: const Icon(Icons.settings, color: Color(0xFF222222)),
+      iconSize: 30,
+      onPressed: () async {
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => SettingsScreen(
+              nicknameService: widget.userinfoService,
             ),
           ),
-        ),
-        actions: <Widget>[
-          IconButton(
-            icon: const Icon(Icons.settings, color: Color(0xFF222222)),
-            onPressed: () async {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => SettingsScreen(
-                    nicknameService: widget.userinfoService,
-                  ),
-                ),
-              );
-              _checkNickname();
-            },
-          ),
-        ],
-      ),
+        );
+        _checkNickname();
+      },
+    ),
+  ],
+),
+
       backgroundColor: const Color.fromARGB(255, 255, 255, 255),
       body: SingleChildScrollView(
         child: Column(
@@ -265,7 +271,7 @@ class _HomePageState extends State<HomePage> {
               padding: EdgeInsets.only(
                   left: 16.0,
                   right: 16.0,
-                  top: 16.0,
+                  top: 1.0,
                   bottom: 2.0), // Abstand unten verringern
               child: Text(
                 'Meine Listen',
@@ -307,7 +313,7 @@ class _HomePageState extends State<HomePage> {
                 width: double.infinity, // Button über die gesamte Breite
                 child: ElevatedButton.icon(
                   onPressed: () => _createListDialog(context),
-                  icon: const Icon(Icons.add),
+                  icon: const Icon(Icons.add_shopping_cart),
                   label: const Text(
                     "Neue Einkaufsliste",
                     style: TextStyle(fontSize: 23, fontWeight: FontWeight.w700),
@@ -355,7 +361,7 @@ class _HomePageState extends State<HomePage> {
 
             // BUTTON NEUER LADEN
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
               child: SizedBox(
                 width: double.infinity, // Button über die gesamte Breite
                 child: ElevatedButton.icon(
@@ -460,7 +466,7 @@ class _HomePageState extends State<HomePage> {
 
     return Padding(
       padding: const EdgeInsets.symmetric(
-          horizontal: 12.0, vertical: 8.0), // Gleiche Padding wie Buttons
+          horizontal: 12.0, vertical: 4.0), // Gleiche Padding wie Buttons
       child: Center(
         child: InkWell(
           onTap: () {
@@ -493,7 +499,7 @@ class _HomePageState extends State<HomePage> {
                   image: AssetImage(imagePath),
                   fit: BoxFit.cover,
                   colorFilter: ColorFilter.mode(
-                      Colors.black.withOpacity(0.1), BlendMode.darken),
+                      Colors.black.withOpacity(0.04), BlendMode.darken),
                 ),
               ),
               child: Padding(
@@ -592,45 +598,50 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildOptionsMenu(Itemlist itemlist) {
-    return PopupMenuButton<String>(
-      onSelected: (value) {
-        switch (value) {
-          case 'rename':
-            _renameList(itemlist);
-            break;
-          case 'delete':
-            _deleteList(itemlist);
-            break;
-          case 'saveAsTemplate':
-            _saveListAsTemplate(itemlist);
-            break;
-          case 'exportCsv':
-            exportCsvWithFilePicker(itemlist);
-            break;
-        }
-      },
-      itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-        const PopupMenuItem<String>(
-          value: 'rename',
-          child: Text('Liste umbenennen'),
-        ),
-        const PopupMenuItem<String>(
-          value: 'delete',
-          child: Text('Liste löschen'),
-        ),
-        const PopupMenuItem<String>(
-          value: 'saveAsTemplate',
-          child: Text('Liste als Vorlage speichern'),
-        ),
-        const PopupMenuItem<String>(
-          value: 'exportCsv',
-          child: Text('Liste exportieren'),
-        ),
-      ],
-      icon: const Icon(Icons.more_vert, color: Colors.white),
-    );
-  }
+ Widget _buildOptionsMenu(Itemlist itemlist) {
+  return PopupMenuButton<String>(
+    onSelected: (value) {
+      switch (value) {
+        case 'rename':
+          _renameList(itemlist);
+          break;
+        case 'delete':
+          _deleteList(itemlist);
+          break;
+        case 'saveAsTemplate':
+          _saveListAsTemplate(itemlist);
+          break;
+        case 'exportCsv':
+          exportCsvWithFilePicker(itemlist);
+          break;
+      }
+    },
+    itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+      const PopupMenuItem<String>(
+        value: 'rename',
+        child: Text('Liste umbenennen'),
+      ),
+      const PopupMenuItem<String>(
+        value: 'delete',
+        child: Text('Liste löschen'),
+      ),
+      const PopupMenuItem<String>(
+        value: 'saveAsTemplate',
+        child: Text('Liste als Vorlage speichern'),
+      ),
+      const PopupMenuItem<String>(
+        value: 'exportCsv',
+        child: Text('Liste exportieren'),
+      ),
+    ],
+    icon: const Icon(Icons.more_vert, color: Colors.white),
+    offset: const Offset(0, 40), // nach unten verschoben
+    color: Colors.white, // 👈 Hintergrundfarbe weiß
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(16), // runde Ecken
+    ),
+  );
+}
 
   Future<Directory> _getDownloadDirectory() async {
     Directory? directory;

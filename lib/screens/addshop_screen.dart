@@ -22,13 +22,13 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
 
   // Map für die Bilder in img2
   final Map<String, String> imageNameToPath = {
-    'Bild 1': 'lib/img2/Img1.png',
-    'Bild 2': 'lib/img2/Img2.png',
-    'Bild 3': 'lib/img2/Img3.png',
-    'Bild 4': 'lib/img2/Img4.png',
-    'Bild 5': 'lib/img2/Img5.png',
-    'Bild 6': 'lib/img2/Img6.png',
-    'Bild 7': 'lib/img2/Img7.png',
+    'Obst & Gemüse': 'lib/img2/Img1.png',
+    'Backwaren': 'lib/img2/Img2.png',
+    'Tierbedarf': 'lib/img2/Img3.png',
+    'Drogerie': 'lib/img2/Img4.png',
+    'Haushalt': 'lib/img2/Img5.png',
+    'Werkzeug': 'lib/img2/Img6.png',
+    'Garten': 'lib/img2/Img7.png',
   };
 
   @override

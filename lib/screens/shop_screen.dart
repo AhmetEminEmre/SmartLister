@@ -227,118 +227,121 @@ void _updateProductGroupOrder() async {
 }
 
 
-  void _showAddProductGroupDialog() {
-    TextEditingController groupNameController = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16), // Abgerundete Ecken
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min, // Passt sich dem Inhalt an
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Neue Warengruppe hinzufügen',
-                  style: TextStyle(
-                    color: Color.fromARGB(255, 92, 91, 91),
-                    fontSize: 23,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(
-                    height: 20), // Abstand zwischen Text und Textfeld
-                TextField(
-                  controller: groupNameController,
-                  decoration: InputDecoration(
-                    labelText: 'Name der Warengruppe',
-                    labelStyle: const TextStyle(
-                      color: Color.fromARGB(255, 54, 54, 54),
-                      fontSize: 16,
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(
-                        color: Color(0xFFBDBDBD),
-                        width: 1,
-                      ),
+ void _showAddProductGroupDialog() {
+  TextEditingController groupNameController = TextEditingController();
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return Center( // <-- manuell zentrieren
+        child: Material(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          child: SizedBox(
+            width: 360, 
+            height: 230,// ✅ hier kannst du wirklich die Breite bestimmen
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Neue Warengruppe hinzufügen',
+                    style: TextStyle(
+                      color: Color.fromARGB(255, 92, 91, 91),
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  style: const TextStyle(
-                    color: Color.fromARGB(255, 26, 26, 26),
+                  const SizedBox(height: 20),
+                  TextField(
+                    controller: groupNameController,
+                    decoration: InputDecoration(
+                      labelText: 'Name der Warengruppe',
+                      labelStyle: const TextStyle(
+                        color: Color.fromARGB(255, 54, 54, 54),
+                        fontSize: 16,
+                      ),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                          color: Color(0xFFBDBDBD),
+                          width: 1,
+                        ),
+                      ),
+                    ),
+                    style: const TextStyle(
+                      color: Color.fromARGB(255, 26, 26, 26),
+                    ),
                   ),
-                ),
-                const SizedBox(
-                    height: 20), // Abstand zwischen Textfeld und Buttons
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      style: TextButton.styleFrom(
-                        backgroundColor:
-                            const Color.fromARGB(255, 239, 141, 37),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        style: TextButton.styleFrom(
+                          backgroundColor: const Color.fromARGB(255, 239, 141, 37),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 10,
+                            horizontal: 16,
+                          ),
                         ),
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 10,
-                          horizontal: 12,
+                        child: const Text(
+                          'Hinzufügen',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                      ),
-                      child: const Text(
-                        'Hinzufügen',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      onPressed: () {
-                        if (groupNameController.text.trim().isNotEmpty) {
-                          _addProductGroupIfNotExists(
-                              groupNameController.text.trim());
-                          Navigator.of(context).pop();
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Der Name der Warengruppe darf nicht leer sein!',
-                                textAlign: TextAlign.center,
+                        onPressed: () {
+                          if (groupNameController.text.trim().isNotEmpty) {
+                            _addProductGroupIfNotExists(groupNameController.text.trim());
+                            Navigator.of(context).pop();
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Der Name der Warengruppe darf nicht leer sein!',
+                                  textAlign: TextAlign.center,
+                                ),
+                                backgroundColor: Colors.red,
                               ),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                        }
-                      },
-                    ),
-                    const SizedBox(width: 8), // Abstand zwischen den Buttons
-                    TextButton(
-                      child: const Text(
-                        'Abbrechen',
-                        style: TextStyle(
-                          color: Color(0xFF4A4A4A),
-                          fontSize: 18,
-                        ),
+                            );
+                          }
+                        },
                       ),
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                    ),
-                  ],
-                ),
-              ],
+                      const SizedBox(width: 8),
+                      TextButton(
+                        child: const Text(
+                          'Abbrechen',
+                          style: TextStyle(
+                            color: Color(0xFF4A4A4A),
+                            fontSize: 18,
+                          ),
+                        ),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
-        );
-      },
-    );
-  }
+        ),
+      );
+    },
+  );
+}
+
+
 
 Future<void> _addProductGroupIfNotExists(String name) async {
   final existingGroup = await widget.productGroupService.fetchByNameAndShop(name, widget.storeId);
@@ -462,7 +465,7 @@ Future<void> _deleteStore() async {
               )
             : Text(storename,
                 style: const TextStyle(
-                    color: Color.fromARGB(255, 26, 25, 25), fontSize: 23)),
+                    color: Color.fromARGB(255, 26, 25, 25), fontSize: 26)),
         backgroundColor: Color.fromARGB(255, 255, 255, 255),
         actions: [
           IconButton(
@@ -471,100 +474,153 @@ Future<void> _deleteStore() async {
             onPressed: _promptAddDefaultProductGroups,
           ),
           IconButton(
-            icon: Icon(_isEditMode ? Icons.close : Icons.edit,
-                color: const Color.fromARGB(255, 31, 31, 31)),
-            onPressed: _toggleEditMode,
-          ),
+  icon: Icon(
+    _isEditMode ? Icons.check : Icons.edit,
+    color: const Color.fromARGB(255, 31, 31, 31),
+  ),
+  onPressed: _toggleEditMode,
+),
+
         ],
       ),
-      backgroundColor: Colors.white,
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                Expanded(
-                  child: _productGroups.isEmpty
-                      ? const Center(
-                          child: Text("Keine Produktgruppen verfügbar.",
-                              style: TextStyle(color: Colors.black)))
-                      : ReorderableListView(
-                          onReorder: _onReorder,
-                          children: _productGroups.map((group) {
-                            return Container(
-                              key: ValueKey(group.id),
-                              decoration: const BoxDecoration(
-                                color: Color.fromARGB(255, 255, 255, 255),
-                                border: Border(
-                                  bottom: BorderSide(
-                                      color:
-                                          Color.fromRGBO(126, 126, 126, 0.284),
-                                      width: 1),
-                                ),
-                              ),
-                              child: ListTile(
-                                contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 35.0, vertical: 4),
-                                title: Text(
-                                  group.name,
-                                  style: const TextStyle(
-                                    color: Color.fromARGB(255, 31, 31, 31),
-                                    fontSize: 20,
-                                  ),
-                                ),
-                                trailing: _isEditMode
-                                    ? IconButton(
-                                        icon: const Icon(Icons.delete,
-                                            color: Color.fromARGB(
-                                                255, 239, 141, 37)),
-                                        onPressed: () =>
-                                            _deleteProductGroup(group),
-                                      )
-                                    : ReorderableDragStartListener(
-                                        index: _productGroups.indexOf(group),
-                                        child: const Icon(Icons.reorder,
-                                            color: Color.fromARGB(
-                                                255, 239, 141, 37)),
-                                      ),
-                              ),
-                            );
+    backgroundColor: Colors.white,
+body: _isLoading
+    ? const Center(child: CircularProgressIndicator())
+    : Column(
+        children: [
+          Expanded(
+            child: _productGroups.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Icon(Icons.category_outlined,
+                            size: 72, color: Color(0xFFBDBDBD)),
+                        SizedBox(height: 16),
+                        Text(
+                          "Noch keine Warengruppen",
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF444444),
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 24.0),
+                          child: Text(
+                            "Tippe auf das Plus-Symbol, um deine \nerste Warengruppe zu erstellen.",
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Color(0xFF666666),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : ReorderableListView(
+                    onReorder: _onReorder,
+                    children: _productGroups.map((group) {
+                      // …
+
+                          return Container(
+  key: ValueKey(group.id),
+  decoration: const BoxDecoration(
+    color: Color.fromARGB(255, 255, 255, 255),
+    border: Border(
+      bottom: BorderSide(
+        color: Color.fromRGBO(126, 126, 126, 0.284),
+        width: 1,
+      ),
+    ),
+  ),
+  child: ListTile(
+    contentPadding: const EdgeInsets.symmetric(horizontal: 35.0, vertical: 4),
+    title: Text(
+      group.name,
+      style: const TextStyle(
+        color: Color.fromARGB(255, 31, 31, 31),
+        fontSize: 20,
+      ),
+    ),
+   trailing: SizedBox(
+  width: 30, // etwas mehr Platz nach rechts
+  height: 40,
+  child: Center(
+    child: _isEditMode
+        ? IconButton(
+            icon: const Icon(Icons.delete,
+                color: Color.fromARGB(255, 239, 141, 37)),
+            onPressed: () => _deleteProductGroup(group),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          )
+        : ReorderableDragStartListener(
+            index: _productGroups.indexOf(group),
+            child: const Icon(Icons.reorder,
+                color: Color.fromARGB(255, 239, 141, 37)),
+          ),
+  ),
+),
+
+  ),
+);
+
+
                           }).toList(),
                         ),
                 ),
                 // PLUS- UND LÖSCHEN-BUTTON FEST UNTEN RECHTS
                 // PLUS- UND LÖSCHEN-BUTTON FEST UNTEN RECHTS
-                Padding(
-                  padding: const EdgeInsets.only(right: 20.0, bottom: 20.0),
-                  child: Row(
-                    mainAxisAlignment:
-                        MainAxisAlignment.end, // Buttons nach rechts schieben
-                    children: [
-                      if (!_isEditMode) // "+" nur anzeigen, wenn NICHT im Edit-Modus
-                        FloatingActionButton(
-                          onPressed: _showAddProductGroupDialog,
-                          backgroundColor:
-                              const Color.fromARGB(255, 239, 141, 37),
-                          foregroundColor: Colors.white,
-                          child: const Icon(Icons.add, size: 36),
-                          tooltip: 'Warengruppe hinzufügen',
-                        ),
-                      if (_isEditMode) // "Laden löschen" nur im Edit-Modus anzeigen
-                        ElevatedButton.icon(
-                          onPressed: _deleteStore,
-                          icon: const Icon(Icons.delete, color: Colors.white),
-                          label: const Text("Laden löschen"),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 12, horizontal: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
+              Padding(
+  padding: const EdgeInsets.only(right: 20.0, bottom: 20.0),
+  child: _isEditMode
+      ? Center( // 🟥 NUR der Delete-Button soll zentriert sein
+          child: ElevatedButton.icon(
+            onPressed: _deleteStore,
+            icon: const Icon(Icons.delete, color: Colors.white),
+            label: const Text(
+              "Laden löschen",
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        )
+      : Align( // 🟧 Plus-Button bleibt rechts
+          alignment: Alignment.bottomRight,
+  child: SizedBox(
+  width: 74,
+  height: 74,
+  child: FloatingActionButton(
+    onPressed: _showAddProductGroupDialog,
+    backgroundColor: const Color.fromARGB(255, 239, 141, 37),
+    foregroundColor: Colors.white,
+    elevation: 4,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(32),
+    ),
+   child: const Icon(Icons.add, size: 50),
+
+    tooltip: 'Warengruppe hinzufügen',
+  ),
+),
+
+
+      ),
+),
+
               ],
             ),
     );

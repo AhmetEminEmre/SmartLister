@@ -600,7 +600,7 @@ class _ItemListScreenState extends State<ItemListScreen> {
   child: Text(
     widget.listName,
     style: const TextStyle(
-      fontSize: 24,
+      fontSize: 26,
       fontWeight: FontWeight.w500,
       color: Colors.black,
     ),
@@ -696,38 +696,49 @@ class _ItemListScreenState extends State<ItemListScreen> {
 
 
       backgroundColor: Colors.white,
-    body: itemsByGroup.isEmpty
-    ? Center(
-child: Padding(
-  padding: const EdgeInsets.only(top: 0), // 👈 vorher: 100
-  child: Column(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      Image.asset('lib/img3/Karotte.png', width: 70, height: 70),
-      const SizedBox(height: 6),
-      const Text(
-        'Noch keine Artikel',
-        style: TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-          color: Color.fromARGB(255, 74, 69, 69),
+ body: itemsByGroup.isEmpty
+    ? Align(
+        alignment: Alignment.topCenter,
+        child: FractionallySizedBox(
+          heightFactor: 0.82, // Höhe des Platzes, den die Mitte einnimmt
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: const [
+              Image(
+                image: AssetImage('lib/img3/Karotte.png'),
+                width: 70,
+                height: 70,
+              ),
+              SizedBox(height: 8),
+              Text(
+                'Noch keine Artikel',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: Color.fromARGB(255, 74, 69, 69),
+                ),
+              ),
+              SizedBox(height: 8),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 24.0),
+                child: Text(
+                  'Tippe auf das Plus-Symbol, um \ndeinen ersten Artikel hinzuzufügen.',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Color.fromARGB(255, 57, 57, 57),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-      const SizedBox(height: 8),
-      const Text(
-        'Tippe auf das Plus-Symbol, um\ndeinen ersten Artikel hinzuzufügen.',
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontSize: 13,
-          color: Color.fromARGB(255, 57, 57, 57),
-        ),
-      ),
-    ],
-  ),
-),
+      )
+  
 
 
-)
+
+
 
 
       
@@ -807,7 +818,7 @@ child: Padding(
               title: Text(
                 item['name'],
                 style: TextStyle(
-                  fontSize: 21,
+                  fontSize: 18,
                      fontWeight: FontWeight.w500, 
                   decoration: item['isDone'] == true
                       ? TextDecoration.lineThrough
@@ -842,27 +853,27 @@ child: Padding(
           );
         },
       ),
-      // ADD ARTIKEL BUTTON
-      floatingActionButton: !_isDeleteMode
-          ? Padding(
-              padding: const EdgeInsets.only(
-                  right: 16.0, bottom: 16.0), // Abstand rechts und unten
-              child: SizedBox(
-                height: 80, // Höhe des Buttons
-                width: 80, // Breite des Buttons
-                child: FloatingActionButton(
-                  onPressed: _showAddItemDialog,
-                  backgroundColor:
-                      Color.fromARGB(255, 239, 141, 37), // Hintergrundfarbe
-                  foregroundColor: Colors.white, // Icon-Farbe
-                  child: const Icon(Icons.add, size: 70), // Größeres Icon
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(40), // Eckenradius
-                  ),
-                ),
-              ),
-            )
-          : null,
+      //ADD ARTIKEL BUTTON
+   floatingActionButton: !_isDeleteMode
+    ? Padding(
+        padding: const EdgeInsets.only(right: 16.0, bottom: 16.0),
+        child: SizedBox(
+          height: 74, // etwas kleiner als vorher
+          width: 74,
+          child: FloatingActionButton(
+            onPressed: _showAddItemDialog,
+            backgroundColor: const Color.fromARGB(255, 239, 141, 37),
+            foregroundColor: Colors.white,
+            elevation: 4, // schöner, aber nicht übertrieben
+             child: const Icon(Icons.add, size: 50),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(32),
+            ),
+          ),
+        ),
+      )
+    : null,
+
     );
   }
 }
