@@ -232,72 +232,57 @@ void _updateProductGroupOrder() async {
   showDialog(
     context: context,
     builder: (BuildContext context) {
-      return Center( // <-- manuell zentrieren
-        child: Material(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          child: SizedBox(
-            width: 360, 
-            height: 230,// ✅ hier kannst du wirklich die Breite bestimmen
+      return Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 360, minWidth: 300),
+          child: Material(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
             child: Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(24),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Neue Warengruppe hinzufügen',
+                    'Warengruppe hinzufügen',
                     style: TextStyle(
-                      color: Color.fromARGB(255, 92, 91, 91),
                       fontSize: 20,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
                   TextField(
                     controller: groupNameController,
-                    decoration: InputDecoration(
-                      labelText: 'Name der Warengruppe',
-                      labelStyle: const TextStyle(
+                    decoration: const InputDecoration(
+                      labelText: 'Bezeichnung',
+                      labelStyle: TextStyle(
                         color: Color.fromARGB(255, 54, 54, 54),
                         fontSize: 16,
                       ),
                       filled: true,
                       fillColor: Colors.white,
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(
-                          color: Color(0xFFBDBDBD),
-                          width: 1,
-                        ),
+                        borderSide: BorderSide(color: Color(0xFFBDBDBD)),
+                        borderRadius: BorderRadius.all(Radius.circular(10)),
                       ),
                     ),
-                    style: const TextStyle(
-                      color: Color.fromARGB(255, 26, 26, 26),
-                    ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       TextButton(
                         style: TextButton.styleFrom(
-                          backgroundColor: const Color.fromARGB(255, 239, 141, 37),
+                          backgroundColor: const Color(0xFFEF8D25),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 10,
-                            horizontal: 16,
                           ),
                         ),
                         child: const Text(
                           'Hinzufügen',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: TextStyle(color: Colors.white, fontSize: 14),
                         ),
                         onPressed: () {
                           if (groupNameController.text.trim().isNotEmpty) {
@@ -306,31 +291,30 @@ void _updateProductGroupOrder() async {
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text(
-                                  'Der Name der Warengruppe darf nicht leer sein!',
-                                  textAlign: TextAlign.center,
-                                ),
+                                content: Text('Bitte Bezeichnung eingeben.'),
                                 backgroundColor: Colors.red,
                               ),
                             );
                           }
                         },
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 12),
                       TextButton(
-                        child: const Text(
-                          'Abbrechen',
-                          style: TextStyle(
-                            color: Color(0xFF4A4A4A),
-                            fontSize: 18,
+                        style: TextButton.styleFrom(
+                          backgroundColor: const Color(0xFFE2E2E2),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
+                        child: const Text(
+                          'Abbrechen',
+                          style: TextStyle(color: Color(0xFF5F5F5F), fontSize: 14),
+                        ),
+                        onPressed: () => Navigator.of(context).pop(),
                       ),
                     ],
-                  ),
+                  )
                 ],
               ),
             ),
@@ -340,6 +324,8 @@ void _updateProductGroupOrder() async {
     },
   );
 }
+
+
 
 
 
@@ -386,25 +372,71 @@ Future<void> _deleteStore() async {
   final assignedLists =
       await widget.itemListService.fetchItemListsByShopId(storeId);
 
+  // 🟠 Fall: Es gibt verknüpfte Einkaufslisten
   if (assignedLists.isNotEmpty) {
     final confirmDelete = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Laden und zugehörige Listen löschen?'),
-        content: const Text(
-          'Dieser Laden ist noch mit \${assignedLists.length} Einkaufsliste(n) verknüpft. '
-          'Möchtest du den Laden und alle zugehörigen Listen wirklich löschen?',
+      builder: (context) => Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 360, minWidth: 300),
+          child: Material(
+            borderRadius: BorderRadius.circular(16),
+            color: Colors.white,
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Alles löschen?',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Dieser Laden ist mit ${assignedLists.length} Einkaufsliste(n) verknüpft. Möchtest du den Laden und alle zugehörigen Listen wirklich löschen?',
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        style: TextButton.styleFrom(
+                          backgroundColor: const Color(0xFFE2E2E2),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Behalten',
+                          style: TextStyle(color: Color(0xFF5F5F5F), fontSize: 14),
+                        ),
+                        onPressed: () => Navigator.of(context).pop(false),
+                      ),
+                      const SizedBox(width: 12),
+                      TextButton(
+                        style: TextButton.styleFrom(
+                          backgroundColor: const Color(0xFFEF8D25),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Alles löschen',
+                          style: TextStyle(color: Colors.white, fontSize: 14),
+                        ),
+                        onPressed: () => Navigator.of(context).pop(true),
+                      ),
+                    ],
+                  )
+                ],
+              ),
+            ),
+          ),
         ),
-        actions: [
-          TextButton(
-            child: const Text('Nein'),
-            onPressed: () => Navigator.of(context).pop(false),
-          ),
-          TextButton(
-            child: const Text('Ja, alles löschen'),
-            onPressed: () => Navigator.of(context).pop(true),
-          ),
-        ],
       ),
     );
 
@@ -422,21 +454,70 @@ Future<void> _deleteStore() async {
     return;
   }
 
+  // 🟢 Fall: Es gibt keine verknüpften Einkaufslisten
   final confirmDelete = await showDialog<bool>(
     context: context,
-    builder: (context) => AlertDialog(
-      title: const Text('Laden löschen?'),
-      content: const Text('Möchtest du diesen Laden wirklich löschen?'),
-      actions: [
-        TextButton(
-          child: const Text('Nein'),
-          onPressed: () => Navigator.of(context).pop(false),
+    builder: (context) => Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 360, minWidth: 300),
+        child: Material(
+          borderRadius: BorderRadius.circular(16),
+          color: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Laden löschen?',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Bist du sicher, dass du diesen Laden löschen möchtest?',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      style: TextButton.styleFrom(
+                        backgroundColor: const Color(0xFFE2E2E2),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Behalten',
+                        style: TextStyle(color: Color(0xFF5F5F5F), fontSize: 14),
+                      ),
+                      onPressed: () => Navigator.of(context).pop(false),
+                    ),
+                    const SizedBox(width: 12),
+                    TextButton(
+                      style: TextButton.styleFrom(
+                        backgroundColor: const Color(0xFFEF8D25),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Löschen',
+                        style: TextStyle(color: Colors.white, fontSize: 14),
+                      ),
+                      onPressed: () => Navigator.of(context).pop(true),
+                    ),
+                  ],
+                )
+              ],
+            ),
+          ),
         ),
-        TextButton(
-          child: const Text('Ja'),
-          onPressed: () => Navigator.of(context).pop(true),
-        ),
-      ],
+      ),
     ),
   );
 
@@ -448,6 +529,7 @@ Future<void> _deleteStore() async {
     Navigator.of(context).pop();
   }
 }
+
 
   @override
   Widget build(BuildContext context) {
