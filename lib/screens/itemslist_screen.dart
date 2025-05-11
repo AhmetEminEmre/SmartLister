@@ -10,6 +10,8 @@ import 'package:pdf/widgets.dart' as pdf_wd;
 import '../services/itemlist_service.dart';
 import '../services/productgroup_service.dart';
 import '../services/shop_service.dart';
+import 'package:smart/screens/shop_screen.dart';
+
 
 
 class ItemListScreen extends StatefulWidget {
@@ -335,6 +337,7 @@ class _ItemListScreenState extends State<ItemListScreen> {
           style: const TextStyle(color: Colors.black87),
         ),
         const SizedBox(height: 20),
+
         DropdownButtonFormField<String>(
           value: selectedGroupId,
           onChanged: (newValue) {
@@ -344,7 +347,7 @@ class _ItemListScreenState extends State<ItemListScreen> {
           },
           items: groupItems,
           isExpanded: true,
-          icon: const SizedBox.shrink(),
+       //   icon: const SizedBox.shrink(),
           decoration: InputDecoration(
             filled: true,
             fillColor: Colors.white,
@@ -369,7 +372,56 @@ class _ItemListScreenState extends State<ItemListScreen> {
             overflow: TextOverflow.ellipsis,
           ),
         ),
+
+        // 👉 Neuer Linktext unter dem Dropdown
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton(
+          onPressed: () async {
+  final selectedShop = _availableShops.firstWhere(
+    (shop) => shop.id.toString() == widget.initialStoreId!,
+  );
+
+  final neueGruppe = await Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => EditStoreScreen(
+        storeId: selectedShop.id.toString(),
+        storeName: selectedShop.name,
+        productGroupService: widget.productGroupService,
+        shopService: widget.shopService,
+        itemListService: widget.itemListService,
+      ),
+    ),
+  );
+
+  if (neueGruppe != null && mounted) {
+    setState(() {
+      groupItems.add(DropdownMenuItem<String>(
+        value: neueGruppe.id.toString(),
+        child: Text(neueGruppe.name),
+      ));
+      selectedGroupId = neueGruppe.id.toString();
+    });
+  }
+},
+
+            child: const Text(
+              '+ Neue Warengruppe hinzufügen',
+              style: TextStyle(
+                color: Color(0xFF7D9205),
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                 decoration: TextDecoration.underline, 
+                 decorationColor: Color(0xFF7D9205), 
+              ),
+            ),
+          ),
+        ),
+
         const SizedBox(height: 24),
+
+        // Buttons
         Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
@@ -393,22 +445,8 @@ class _ItemListScreenState extends State<ItemListScreen> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
               onPressed: () async {
-                if (itemNameController.text.isNotEmpty) {
-                  if (selectedGroupId != null) {
-                    _addItemToList(itemNameController.text, selectedGroupId!);
-                  } else if (newGroupNameController.text.isNotEmpty) {
-                    final lastGroup = await widget.productGroupService.fetchLastGroupByStoreId(widget.initialStoreId!);
-                    final newOrder = lastGroup != null ? lastGroup.order + 1 : 0;
-
-                    final newGroup = Productgroup(
-                      name: newGroupNameController.text,
-                      storeId: widget.initialStoreId!,
-                      order: newOrder,
-                    );
-                    final newGroupId = await widget.productGroupService.addProductGroup(newGroup);
-                    newGroup.id = newGroupId;
-                    _addItemToList(itemNameController.text, newGroup.id.toString());
-                  }
+                if (itemNameController.text.isNotEmpty && selectedGroupId != null) {
+                  _addItemToList(itemNameController.text, selectedGroupId!);
                   Navigator.of(context).pop();
                 }
               },
@@ -419,73 +457,33 @@ class _ItemListScreenState extends State<ItemListScreen> {
             ),
           ],
         ),
+
+        // 🔸 Auskommentierter Teil: Textfeld + Button für Warengruppe
+        /*
         const SizedBox(height: 24),
         TextField(
           controller: newGroupNameController,
           decoration: InputDecoration(
             labelText: 'Bezeichnung ',
-            labelStyle: TextStyle(
-              color: Colors.black.withOpacity(0.5),
-              fontSize: 16,
-              fontWeight: FontWeight.w400,
-            ),
-            floatingLabelStyle: const TextStyle(
-              color: Color(0xFF7D9205),
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Color(0xFF7D9205), width: 2),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: Colors.grey.shade400, width: 1.5),
-            ),
-            filled: true,
-            fillColor: Colors.white,
-            isDense: true,
+            ...
           ),
-          style: const TextStyle(color: Colors.black87),
         ),
         const SizedBox(height: 12),
         TextButton(
-          style: TextButton.styleFrom(
-            backgroundColor: const Color(0xFFEF8D25),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
           onPressed: () async {
-            if (newGroupNameController.text.isNotEmpty) {
-              final lastGroup = await widget.productGroupService.fetchLastGroupByStoreId(widget.initialStoreId!);
-              final newOrder = lastGroup != null ? lastGroup.order + 1 : 0;
-
-              final newGroup = Productgroup(
-                name: newGroupNameController.text,
-                storeId: widget.initialStoreId!,
-                order: newOrder,
-              );
-              final newGroupId = await widget.productGroupService.addProductGroup(newGroup);
-              newGroup.id = newGroupId;
-
-              setState(() {
-                groupItems.add(DropdownMenuItem<String>(
-                  value: newGroup.id.toString(),
-                  child: Text(newGroup.name),
-                ));
-                selectedGroupId = newGroup.id.toString();
-              });
-            }
+            ...
           },
           child: const Text(
             'Neue Warengruppe',
-            style: TextStyle(color: Colors.white, fontSize: 14),
+            ...
           ),
         ),
+        */
       ],
     ),
   ),
 );
+
 
 
 

@@ -377,14 +377,19 @@ Future<void> _addProductGroupIfNotExists(String name) async {
       storeId: widget.storeId,
       order: newOrder,
     );
-    await widget.productGroupService.addProductGroup(productGroup);
+    final newGroupId = await widget.productGroupService.addProductGroup(productGroup);
+    productGroup.id = newGroupId;
 
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
       content: Text('Warengruppe hinzugefügt.'),
       backgroundColor: Colors.green,
     ));
 
-    _fetchProductGroups();
+    // 👉 Neue Gruppe zurückgeben, damit sie im Dialog direkt ausgewählt wird
+    Navigator.pop(context, productGroup);
+
+    // (Optional: nicht mehr nötig, da du sowieso zurückspringst)
+    // _fetchProductGroups();
   } else {
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
       content: Text('Warengruppe existiert bereits.'),
@@ -392,6 +397,7 @@ Future<void> _addProductGroupIfNotExists(String name) async {
     ));
   }
 }
+
 
 
 void _deleteProductGroup(Productgroup group) async {
