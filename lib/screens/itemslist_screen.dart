@@ -22,6 +22,7 @@ class ItemListScreen extends StatefulWidget {
   final ItemListService itemListService;
   final ProductGroupService productGroupService;
   final ShopService shopService;
+  
 
   const ItemListScreen({
     super.key,
@@ -49,6 +50,11 @@ class _ItemListScreenState extends State<ItemListScreen> {
   String? _selectedShopId; // Die aktuell gewählte Shop-ID
   String _selectedShopName =
       "Kein Shop gefunden"; // Fallback falls kein Shop existiert
+
+      String? _editingItemName;
+String? _editingGroupName;
+final TextEditingController _editController = TextEditingController();
+
 
   @override
   void initState() {
@@ -758,21 +764,66 @@ class _ItemListScreenState extends State<ItemListScreen> {
           ),
           const SizedBox(width: 4),
           Expanded(
-            child:ListTile(
-  //dense: true,
-  contentPadding: EdgeInsets.symmetric(horizontal: 0), // oder left: 0, right: 0
-              title: Text(
-                item['name'],
-                style: TextStyle(
-                  fontSize: 18,
-                     fontWeight: FontWeight.w500, 
-                  decoration: item['isDone'] == true
-                      ? TextDecoration.lineThrough
-                      : TextDecoration.none,
-                  color: item['isDone'] == true ? Colors.grey : Colors.black,
-                ),
-              ),
+          child: GestureDetector(
+  onTap: () {
+    setState(() {
+      _editingItemName = item['name'];
+      _editingGroupName = groupId;
+      _editController.text = item['name'];
+    });
+  },
+  child: Padding(
+    padding: const EdgeInsets.symmetric(vertical: 15.0), // 👈 Abstand oben/unten
+    child: _editingItemName == item['name'] && _editingGroupName == groupId
+        ? TextField(
+            controller: _editController,
+            autofocus: true,
+             cursorColor: Color(0xFF7D9205), 
+            style: const TextStyle(fontSize: 18),
+            decoration: const InputDecoration(
+              isDense: true,
+              border: InputBorder.none, // 👈 kein Rahmen
+              contentPadding: EdgeInsets.zero,
             ),
+            onSubmitted: (value) async {
+              final list = await widget.itemListService
+                  .fetchItemListById(int.parse(widget.shoppingListId));
+              if (list != null) {
+                final items = list.getItems();
+                final current = items.firstWhere(
+                  (e) =>
+                      e['name'] == _editingItemName &&
+                      e['groupId'] ==
+                          (itemsByGroup[groupId]?.first['groupId']),
+                  orElse: () => {},
+                );
+                if (current.isNotEmpty) {
+                  current['name'] = value;
+                  list.setItems(items);
+                  await widget.itemListService.updateItemList(list);
+                }
+              }
+              setState(() {
+                _editingItemName = null;
+                _editingGroupName = null;
+              });
+              await loadItems();
+            },
+          )
+        : Text(
+            item['name'],
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+              decoration: item['isDone'] == true
+                  ? TextDecoration.lineThrough
+                  : TextDecoration.none,
+              color: item['isDone'] == true ? Colors.grey : Colors.black,
+            ),
+          ),
+  ),
+),
+
           ),
           if (_isDeleteMode)
             IconButton(
