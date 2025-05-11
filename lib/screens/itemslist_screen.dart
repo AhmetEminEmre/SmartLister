@@ -294,253 +294,201 @@ class _ItemListScreenState extends State<ItemListScreen> {
       context: context,
       builder: (BuildContext context) {
         return StatefulBuilder(builder: (context, setState) {
-          return AlertDialog(
-            backgroundColor: Color.fromARGB(255, 255, 255, 255),
-            title: const Text('Artikel hinzufügen',
-                style: TextStyle(color: Color.fromARGB(255, 22, 22, 22))),
-            content: SizedBox(
-              width: 400,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  TextField(
-                    controller: itemNameController,
-                    decoration: InputDecoration(
-                      labelText: 'Artikelname',
-                      labelStyle: const TextStyle(
-                        color: Color.fromARGB(255, 54, 54, 54),
-                        fontSize: 16,
-                      ),
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(
-                          color: Color(0xFFBDBDBD),
-                          width: 1,
-                        ),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(
-                          color: Color(0xFFBDBDBD),
-                          width: 2,
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(
-                          color: Color(0xFFE5A462),
-                          width: 2,
-                        ),
-                      ),
-                    ),
-                    style: const TextStyle(
-                      color: Color.fromARGB(255, 26, 26, 26),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Container(
-                    width: MediaQuery.of(context).size.width *
-                        0.8, // Dynamische Breite
-                    child: DropdownButtonFormField<String>(
-                      value: selectedGroupId,
-                      onChanged: (newValue) {
-                        setState(() {
-                          selectedGroupId = newValue;
-                        });
-                      },
-                      items: groupItems,
-                      isExpanded: true,
-                      icon:
-                          const SizedBox.shrink(), // 👈 Icon ganz deaktivieren
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(
-                              color: Color(0xFFBDBDBD), width: 1),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(
-                              color: Color(0xFFBDBDBD), width: 2),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(
-                              color: Color(0xFFE5A462), width: 2),
-                        ),
-                      ),
-                      dropdownColor: Colors.white,
-                      style: const TextStyle(
-                        color: Color(0xFF212121),
-                        fontSize: 16,
-                      ),
-                      hint: Row(
-                        children: const [
-                          Expanded(
-                            child: Text(
-                              'Warengruppe wählen',
-                              style: TextStyle(
-                                color: Color.fromARGB(255, 54, 54, 54),
-                                fontSize: 16,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          SizedBox(width: 8),
-                          Icon(Icons.arrow_drop_down, color: Color(0xFFE5A462)),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  TextButton(
-                    style: TextButton.styleFrom(
-                      backgroundColor: const Color.fromARGB(
-                          255, 239, 141, 37), // Orangener Hintergrund
-                      shape: RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(12), // Abgerundete Ecken
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 10,
-                        horizontal: 12,
-                      ),
-                    ),
-                    child: const Text(
-                      'Artikel hinzufügen',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ), // Weiße Schrift
-                    ),
-                    onPressed: () async {
-                      if (itemNameController.text.isNotEmpty) {
-                        if (selectedGroupId != null) {
-                          _addItemToList(
-                              itemNameController.text, selectedGroupId!);
-                        } else if (newGroupNameController.text.isNotEmpty) {
-                          final lastGroup = await widget.productGroupService
-                              .fetchLastGroupByStoreId(widget.initialStoreId!);
-
-                          final newOrder =
-                              lastGroup != null ? lastGroup.order + 1 : 0;
-
-                          Productgroup newGroup = Productgroup(
-                            name: newGroupNameController.text,
-                            storeId: widget.initialStoreId!,
-                            order: newOrder,
-                          );
-
-                          // ✅ Service zum Hinzufügen verwenden
-                          final newGroupId = await widget.productGroupService
-                              .addProductGroup(newGroup);
-                          newGroup.id = newGroupId;
-
-                          _addItemToList(
-                              itemNameController.text, newGroup.id.toString());
-                        }
-                        Navigator.of(context).pop();
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 20),
-                  TextField(
-                    controller: newGroupNameController,
-                    decoration: InputDecoration(
-                      labelText: 'Neue Warengruppe hinzufügen',
-                      labelStyle: const TextStyle(
-                        color: Color.fromARGB(255, 54, 54, 54),
-                        fontSize: 16,
-                      ),
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(
-                          color: Color(0xFFBDBDBD),
-                          width: 1,
-                        ),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(
-                          color: Color(0xFFBDBDBD),
-                          width: 2,
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(
-                          color: Color(0xFFE5A462),
-                          width: 2,
-                        ),
-                      ),
-                    ),
-                    style: const TextStyle(
-                      color: Color.fromARGB(255, 26, 26, 26),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  TextButton(
-                    style: TextButton.styleFrom(
-                      backgroundColor: const Color.fromARGB(
-                          255, 239, 141, 37), // Orangener Hintergrund
-                      shape: RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(12), // Abgerundete Ecken
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 10,
-                        horizontal: 12,
-                      ),
-                    ),
-                    child: const Text(
-                      'Warengruppe hinzufügen',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ), // Weiße Schrift
-                    ),
-                    onPressed: () async {
-                      if (newGroupNameController.text.isNotEmpty) {
-                        // ✅ zuletzt sortierte Gruppe holen
-                        final lastGroup = await widget.productGroupService
-                            .fetchLastGroupByStoreId(widget.initialStoreId!);
-
-                        final newOrder =
-                            lastGroup != null ? lastGroup.order + 1 : 0;
-
-                        // ✅ neue Gruppe erstellen und via Service speichern
-                        Productgroup newGroup = Productgroup(
-                          name: newGroupNameController.text,
-                          storeId: widget.initialStoreId!,
-                          order: newOrder,
-                        );
-                        final newGroupId = await widget.productGroupService
-                            .addProductGroup(newGroup);
-                        newGroup.id = newGroupId;
-
-                        // ✅ Dropdown aktualisieren
-                        setState(() {
-                          groupItems.add(DropdownMenuItem<String>(
-                            value: newGroup.id.toString(),
-                            child: Text(newGroup.name),
-                          ));
-                          selectedGroupId = newGroup.id.toString();
-                        });
-                      }
-                    },
-                  ),
-                ],
+   return AlertDialog(
+  backgroundColor: Colors.white,
+  title: const Text(
+    'Artikel hinzufügen',
+    style: TextStyle(color: Color(0xFF161616), fontSize: 20, fontWeight: FontWeight.w500),
+  ),
+  content: SizedBox(
+    width: 400,
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TextField(
+          controller: itemNameController,
+          decoration: InputDecoration(
+            labelText: 'Artikelname',
+            labelStyle: TextStyle(
+              color: Colors.black.withOpacity(0.5),
+              fontSize: 16,
+              fontWeight: FontWeight.w400,
+            ),
+            floatingLabelStyle: const TextStyle(
+              color: Color(0xFF7D9205),
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Color(0xFF7D9205), width: 2),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: Colors.grey.shade400, width: 1.5),
+            ),
+            filled: true,
+            fillColor: Colors.white,
+            isDense: true,
+          ),
+          style: const TextStyle(color: Colors.black87),
+        ),
+        const SizedBox(height: 20),
+        DropdownButtonFormField<String>(
+          value: selectedGroupId,
+          onChanged: (newValue) {
+            setState(() {
+              selectedGroupId = newValue;
+            });
+          },
+          items: groupItems,
+          isExpanded: true,
+          icon: const SizedBox.shrink(),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: Colors.grey.shade400),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: Colors.grey.shade400, width: 1.5),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Color(0xFF7D9205), width: 2),
+            ),
+          ),
+          dropdownColor: Colors.white,
+          style: const TextStyle(color: Color(0xFF212121), fontSize: 16),
+          hint: const Text(
+            'Warengruppe wählen',
+            style: TextStyle(color: Color(0xFF363636), fontSize: 16),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        const SizedBox(height: 24),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            TextButton(
+              style: TextButton.styleFrom(
+                backgroundColor: const Color(0xFFE2E2E2),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text(
+                'Abbrechen',
+                style: TextStyle(color: Color(0xFF5F5F5F), fontSize: 14),
               ),
             ),
-          );
+            const SizedBox(width: 12),
+            TextButton(
+              style: TextButton.styleFrom(
+                backgroundColor: const Color(0xFFEF8D25),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              onPressed: () async {
+                if (itemNameController.text.isNotEmpty) {
+                  if (selectedGroupId != null) {
+                    _addItemToList(itemNameController.text, selectedGroupId!);
+                  } else if (newGroupNameController.text.isNotEmpty) {
+                    final lastGroup = await widget.productGroupService.fetchLastGroupByStoreId(widget.initialStoreId!);
+                    final newOrder = lastGroup != null ? lastGroup.order + 1 : 0;
+
+                    final newGroup = Productgroup(
+                      name: newGroupNameController.text,
+                      storeId: widget.initialStoreId!,
+                      order: newOrder,
+                    );
+                    final newGroupId = await widget.productGroupService.addProductGroup(newGroup);
+                    newGroup.id = newGroupId;
+                    _addItemToList(itemNameController.text, newGroup.id.toString());
+                  }
+                  Navigator.of(context).pop();
+                }
+              },
+              child: const Text(
+                'Hinzufügen',
+                style: TextStyle(color: Colors.white, fontSize: 14),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
+        TextField(
+          controller: newGroupNameController,
+          decoration: InputDecoration(
+            labelText: 'Bezeichnung ',
+            labelStyle: TextStyle(
+              color: Colors.black.withOpacity(0.5),
+              fontSize: 16,
+              fontWeight: FontWeight.w400,
+            ),
+            floatingLabelStyle: const TextStyle(
+              color: Color(0xFF7D9205),
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Color(0xFF7D9205), width: 2),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: Colors.grey.shade400, width: 1.5),
+            ),
+            filled: true,
+            fillColor: Colors.white,
+            isDense: true,
+          ),
+          style: const TextStyle(color: Colors.black87),
+        ),
+        const SizedBox(height: 12),
+        TextButton(
+          style: TextButton.styleFrom(
+            backgroundColor: const Color(0xFFEF8D25),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+          onPressed: () async {
+            if (newGroupNameController.text.isNotEmpty) {
+              final lastGroup = await widget.productGroupService.fetchLastGroupByStoreId(widget.initialStoreId!);
+              final newOrder = lastGroup != null ? lastGroup.order + 1 : 0;
+
+              final newGroup = Productgroup(
+                name: newGroupNameController.text,
+                storeId: widget.initialStoreId!,
+                order: newOrder,
+              );
+              final newGroupId = await widget.productGroupService.addProductGroup(newGroup);
+              newGroup.id = newGroupId;
+
+              setState(() {
+                groupItems.add(DropdownMenuItem<String>(
+                  value: newGroup.id.toString(),
+                  child: Text(newGroup.name),
+                ));
+                selectedGroupId = newGroup.id.toString();
+              });
+            }
+          },
+          child: const Text(
+            'Neue Warengruppe',
+            style: TextStyle(color: Colors.white, fontSize: 14),
+          ),
+        ),
+      ],
+    ),
+  ),
+);
+
+
+
         });
       },
     );

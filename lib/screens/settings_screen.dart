@@ -122,14 +122,18 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+       backgroundColor: Color.fromARGB(255, 255, 255, 255),
       appBar: AppBar(
         title: const Text('Einstellungen'),
         backgroundColor: const Color(0xFFEDF2D0),
         foregroundColor: const Color(0xFF222222),
       ),
       body: ListView(
+     
+      
         padding: const EdgeInsets.all(16.0),
         children: [
+
           ListTile(
             leading: const Icon(Icons.person),
             title: const Text('Nickname ändern'),
