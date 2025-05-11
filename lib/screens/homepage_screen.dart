@@ -125,35 +125,110 @@ class _HomePageState extends State<HomePage> {
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: const Text('Listennamen ändern'),
-          content: TextField(
-            controller: nameController,
-            decoration:
-                const InputDecoration(hintText: 'Neuer Listennamen eingeben'),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Abbrechen'),
-              onPressed: () => Navigator.of(context).pop(),
+     return Center(
+  child: ConstrainedBox(
+    constraints: const BoxConstraints(maxWidth: 360, minWidth: 300),
+    child: Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Listennamen ändern',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w500,
+              ),
             ),
-            TextButton(
-              child: const Text('Speichern'),
-              onPressed: () async {
-                if (nameController.text.isNotEmpty) {
-                  itemlist.name = nameController.text.trim();
-                  final navigator = Navigator.of(context);
-                  await widget.itemListService.updateItemList(itemlist);
-                  if (!mounted) return;
-                  navigator.pop();
-                  setState(() {
-                    _fetchLatestItemLists();
-                  });
-                }
-              },
+            const SizedBox(height: 16),
+            TextField(
+              controller: nameController,
+              decoration: InputDecoration(
+                labelText: 'Listenname',
+                labelStyle: TextStyle(
+                  color: Colors.black.withOpacity(0.5),
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
+                ),
+                floatingLabelStyle: const TextStyle(
+                  color: Color(0xFF7D9205),
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: const BorderSide(color: Color(0xFF7D9205)),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.grey.shade400),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                isDense: true,
+                filled: true,
+                fillColor: Colors.white,
+              ),
+              style: const TextStyle(
+                fontSize: 16,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  style: TextButton.styleFrom(
+                    backgroundColor: const Color(0xFFE2E2E2),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Abbrechen',
+                    style: TextStyle(color: Color(0xFF5F5F5F), fontSize: 14),
+                  ),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+                const SizedBox(width: 12),
+                TextButton(
+                  style: TextButton.styleFrom(
+                    backgroundColor: const Color(0xFFEF8D25),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Speichern',
+                    style: TextStyle(color: Colors.white, fontSize: 14),
+                  ),
+                  onPressed: () async {
+                    if (nameController.text.trim().isNotEmpty) {
+                      itemlist.name = nameController.text.trim();
+                      final navigator = Navigator.of(context);
+                      await widget.itemListService.updateItemList(itemlist);
+                      if (!mounted) return;
+                      navigator.pop();
+                      setState(() {
+                        _fetchLatestItemLists();
+                      });
+                    }
+                  },
+                ),
+              ],
             ),
           ],
-        );
+        ),
+      ),
+    ),
+  ),
+);
+
       },
     );
   }
