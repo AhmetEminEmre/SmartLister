@@ -246,7 +246,7 @@ Future<void> _addStore() async {
     ),
   );
 
-  Navigator.pop(context);
+Navigator.pop(context, newShop);
 }
 
 }

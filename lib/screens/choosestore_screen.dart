@@ -6,7 +6,6 @@ import '../services/itemlist_service.dart';
 import '../services/shop_service.dart';
 import '../services/productgroup_service.dart';
 
-
 class StoreScreen extends StatefulWidget {
   final String listId;
   final String listName;
@@ -71,8 +70,7 @@ class _StoreScreenState extends State<StoreScreen> {
     }
 
     await widget.shopService.deleteShop(int.parse(storeId));
-
-    await _loadStores(); 
+    await _loadStores();
     setState(() {});
   }
 
@@ -83,139 +81,131 @@ class _StoreScreenState extends State<StoreScreen> {
         title: const Text(
           "Einkaufsladen zuordnen",
           style: TextStyle(
-            color: Colors.black, // Textfarbe des Titels
+            color: Colors.black,
           ),
         ),
-        backgroundColor: Colors.white, // AppBar-Hintergrundfarbe
+        backgroundColor: Colors.white,
         iconTheme: const IconThemeData(
-          color: Colors.black, // Icon-Farbe
+          color: Colors.black,
         ),
-        elevation: 0, // Entfernt den Schatten der AppBar
+        elevation: 0,
       ),
-      backgroundColor: Colors.white, // Hintergrundfarbe des gesamten Screens
+      backgroundColor: Colors.white,
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Padding(
-              padding: EdgeInsets.only(
-                  left: 12.0, bottom: 8.0), // Abstand links und unten
+              padding: EdgeInsets.only(left: 12.0, bottom: 8.0),
               child: Text(
                 'Wähle den Laden aus, in dem du einkaufen möchtest.',
                 style: TextStyle(
-                  fontSize: 16, // Schriftgröße
-                  fontWeight: FontWeight.w500, // Schriftstärke
-                  color: Color(0xFF212121), // Textfarbe
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF212121),
                 ),
               ),
             ),
-
-            // Dropdown zum Auswählen eines Stores
-            DropdownButtonFormField<String>(
-              value: _selectedStoreId,
-              onChanged: (value) {
-                setState(() {
-                  _selectedStoreId = value;
-                });
-              },
-              items: _stores.map((store) {
-                return DropdownMenuItem<String>(
-                  value: store.id.toString(),
-                  child: GestureDetector(
-                    onLongPress: () async {
-                      final shouldDelete = await showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            title: const Text('Laden löschen?'),
-                            content: const Text(
-                                'Möchten Sie diesen Laden wirklich löschen?'),
-                            actions: [
-                              TextButton(
-                                onPressed: () =>
-                                    Navigator.of(context).pop(false),
-                                child: const Text('Nein'),
-                              ),
-                              TextButton(
-                                onPressed: () =>
-                                    Navigator.of(context).pop(true),
-                                child: const Text('Ja'),
-                              ),
-                            ],
+    Padding(
+            padding: const EdgeInsets.only(left: 8), // Verschiebt Dropdown leicht nach links 
+              child: SizedBox(
+                width: 280,
+                child: DropdownButtonFormField<String>(
+                  value: _selectedStoreId,
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedStoreId = value;
+                    });
+                  },
+                  items: _stores.map((store) {
+                    return DropdownMenuItem<String>(
+                      value: store.id.toString(),
+                      child: GestureDetector(
+                        onLongPress: () async {
+                          final shouldDelete = await showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                title: const Text('Laden löschen?'),
+                                content: const Text(
+                                    'Möchten Sie diesen Laden wirklich löschen?'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.of(context).pop(false),
+                                    child: const Text('Nein'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.of(context).pop(true),
+                                    child: const Text('Ja'),
+                                  ),
+                                ],
+                              );
+                            },
                           );
-                        },
-                      );
 
-                      if (shouldDelete == true) {
-                        await _deleteStore(store.id.toString());
-                      }
-                    },
-                    child: Text(
-                      store.name,
-                      style: const TextStyle(
-                        color: Color(0xFF212121), // Textfarbe im Dropdown
-                      ),
-                    ),
-                  ),
-                );
-              }).toList(),
-              decoration: InputDecoration(
-                label: RichText(
-                  text: TextSpan(
-                    text: 'Bitte auswählen...',
-                    style: const TextStyle(
-                      color: Color.fromARGB(255, 46, 46, 46), // Label-Farbe
-                      fontSize: 16,
-                    ),
-                    children: const [
-                      TextSpan(
-                        text: ' *', // Rotes Sternchen
-                        style: TextStyle(
-                          color: Colors.red, // Sternchen-Farbe
-                          fontSize: 16,
+                          if (shouldDelete == true) {
+                            await _deleteStore(store.id.toString());
+                          }
+                        },
+                        child: Text(
+                          store.name,
+                          style:
+                              const TextStyle(color: Color(0xFF212121)),
                         ),
                       ),
-                    ],
+                    );
+                  }).toList(),
+                  decoration: InputDecoration(
+                    label: RichText(
+                      text: TextSpan(
+                        text: 'Bitte auswählen...',
+                        style: const TextStyle(
+                          color: Color.fromARGB(255, 46, 46, 46),
+                          fontSize: 16,
+                        ),
+                        children: const [
+                          TextSpan(
+                            text: ' *',
+                            style:
+                                TextStyle(color: Colors.red, fontSize: 16),
+                          ),
+                        ],
+                      ),
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide:
+                          const BorderSide(color: Color(0xFFBDBDBD), width: 1),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide:
+                          const BorderSide(color: Color(0xFFBDBDBD), width: 2),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide:
+                          const BorderSide(color: Color(0xFFE5A462), width: 2),
+                    ),
                   ),
-                ),
-                filled: true,
-                fillColor: Colors.white, // Weißer Hintergrund
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(
-                    color: Color(0xFFBDBDBD), // Grauer Rand
-                    width: 1,
-                  ),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(
-                    color: Color(
-                        0xFFBDBDBD), // Grauer Rand für nicht fokussierten Zustand
-                    width: 2,
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(
-                    color: Color(
-                        0xFFE5A462), // Orange Rand für fokussierten Zustand
-                    width: 2,
-                  ),
+                  dropdownColor: Colors.white,
                 ),
               ),
-              dropdownColor: Colors.white, // Dropdown-Hintergrund
             ),
 
-            // Fertigstellen-Button
             const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: _selectedStoreId != null
                     ? () async {
-                        final items = await _fetchItemsForList(widget.listId);
+                        final items =
+                            await _fetchItemsForList(widget.listId);
                         widget.onStoreSelected(_selectedStoreId!);
 
                         Navigator.pushReplacement(
@@ -227,9 +217,9 @@ class _StoreScreenState extends State<StoreScreen> {
                               items: items,
                               initialStoreId: _selectedStoreId!,
                               itemListService: widget.itemListService,
-                              productGroupService: widget.productGroupService,
+                              productGroupService:
+                                  widget.productGroupService,
                               shopService: widget.shopService,
-
                             ),
                           ),
                         );
@@ -240,18 +230,17 @@ class _StoreScreenState extends State<StoreScreen> {
                   style: TextStyle(
                     fontSize: 23,
                     fontWeight: FontWeight.w600,
-                    color: Colors.white, // Textfarbe Weiß
+                    color: Colors.white,
                   ),
                 ),
                 style: ButtonStyle(
-                  backgroundColor: WidgetStateProperty.resolveWith<Color>(
+                  backgroundColor:
+                      WidgetStateProperty.resolveWith<Color>(
                     (Set<WidgetState> states) {
                       if (states.contains(WidgetState.disabled)) {
-                        return const Color(
-                            0xFFFFD9B3); // Helles Orange für disabled Zustand
+                        return const Color(0xFFFFD9B3);
                       }
-                      return const Color(
-                          0xFFE5A462); // Starkes Orange für enabled Zustand
+                      return const Color(0xFFE5A462);
                     },
                   ),
                   padding: WidgetStateProperty.all(
@@ -262,9 +251,8 @@ class _StoreScreenState extends State<StoreScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  minimumSize: WidgetStateProperty.all(
-                    const Size.fromHeight(56),
-                  ),
+                  minimumSize:
+                      WidgetStateProperty.all(const Size.fromHeight(56)),
                 ),
               ),
             ),
@@ -274,3 +262,4 @@ class _StoreScreenState extends State<StoreScreen> {
     );
   }
 }
+//   

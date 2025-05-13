@@ -12,8 +12,6 @@ import '../services/productgroup_service.dart';
 import '../services/shop_service.dart';
 import 'package:smart/screens/shop_screen.dart';
 
-
-
 class ItemListScreen extends StatefulWidget {
   final String listName;
   final String shoppingListId;
@@ -22,7 +20,6 @@ class ItemListScreen extends StatefulWidget {
   final ItemListService itemListService;
   final ProductGroupService productGroupService;
   final ShopService shopService;
-  
 
   const ItemListScreen({
     super.key,
@@ -50,11 +47,12 @@ class _ItemListScreenState extends State<ItemListScreen> {
   String? _selectedShopId; // Die aktuell gewählte Shop-ID
   String _selectedShopName =
       "Kein Shop gefunden"; // Fallback falls kein Shop existiert
+  Set<String> expandedGroups = {};
+  String? _lastSelectedGroupId;
 
-      String? _editingItemName;
-String? _editingGroupName;
-final TextEditingController _editController = TextEditingController();
-
+  String? _editingItemName;
+  String? _editingGroupName;
+  final TextEditingController _editController = TextEditingController();
 
   @override
   void initState() {
@@ -141,9 +139,12 @@ final TextEditingController _editController = TextEditingController();
           orderedGroupedItems[group.name] = groupedItems[group.name]!;
         }
       }
+      final oldExpanded = Set<String>.from(expandedGroups);
 
       setState(() {
         itemsByGroup = orderedGroupedItems;
+        expandedGroups =
+            oldExpanded.intersection(orderedGroupedItems.keys.toSet());
       });
     }
   }
@@ -234,7 +235,6 @@ final TextEditingController _editController = TextEditingController();
     list.shopId = newShopId;
     list.setItems(currentItems);
 
-    // ✅ ersetzt durch Service
     await widget.itemListService.updateItemList(list);
 
     setState(() {
@@ -286,7 +286,7 @@ final TextEditingController _editController = TextEditingController();
   void _showAddItemDialog() async {
     TextEditingController itemNameController = TextEditingController();
     TextEditingController newGroupNameController = TextEditingController();
-    String? selectedGroupId;
+    String? selectedGroupId = _lastSelectedGroupId;
 
     final productGroups = await widget.productGroupService
         .fetchProductGroups(widget.initialStoreId!);
@@ -302,170 +302,187 @@ final TextEditingController _editController = TextEditingController();
       context: context,
       builder: (BuildContext context) {
         return StatefulBuilder(builder: (context, setState) {
-   return AlertDialog(
-  backgroundColor: Colors.white,
-  title: const Text(
-    'Artikel hinzufügen',
-    style: TextStyle(color: Color(0xFF161616), fontSize: 20, fontWeight: FontWeight.w500),
-  ),
-  content: SizedBox(
-    width: 400,
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        TextField(
-          controller: itemNameController,
-          decoration: InputDecoration(
-            labelText: 'Artikelname',
-            labelStyle: TextStyle(
-              color: Colors.black.withOpacity(0.5),
-              fontSize: 16,
-              fontWeight: FontWeight.w400,
-            ),
-            floatingLabelStyle: const TextStyle(
-              color: Color(0xFF7D9205),
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Color(0xFF7D9205), width: 2),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: Colors.grey.shade400, width: 1.5),
-            ),
-            filled: true,
-            fillColor: Colors.white,
-            isDense: true,
-          ),
-          style: const TextStyle(color: Colors.black87),
-        ),
-        const SizedBox(height: 20),
-
-        DropdownButtonFormField<String>(
-          value: selectedGroupId,
-          onChanged: (newValue) {
-            setState(() {
-              selectedGroupId = newValue;
-            });
-          },
-          items: groupItems,
-          isExpanded: true,
-       //   icon: const SizedBox.shrink(),
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: Colors.white,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: Colors.grey.shade400),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: Colors.grey.shade400, width: 1.5),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Color(0xFF7D9205), width: 2),
-            ),
-          ),
-          dropdownColor: Colors.white,
-          style: const TextStyle(color: Color(0xFF212121), fontSize: 16),
-          hint: const Text(
-            'Warengruppe wählen',
-            style: TextStyle(color: Color(0xFF363636), fontSize: 16),
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-
-        // 👉 Neuer Linktext unter dem Dropdown
-        Align(
-          alignment: Alignment.centerLeft,
-          child: TextButton(
-          onPressed: () async {
-  final selectedShop = _availableShops.firstWhere(
-    (shop) => shop.id.toString() == widget.initialStoreId!,
-  );
-
-  final neueGruppe = await Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => EditStoreScreen(
-        storeId: selectedShop.id.toString(),
-        storeName: selectedShop.name,
-        productGroupService: widget.productGroupService,
-        shopService: widget.shopService,
-        itemListService: widget.itemListService,
-      ),
-    ),
-  );
-
-  if (neueGruppe != null && mounted) {
-    setState(() {
-      groupItems.add(DropdownMenuItem<String>(
-        value: neueGruppe.id.toString(),
-        child: Text(neueGruppe.name),
-      ));
-      selectedGroupId = neueGruppe.id.toString();
-    });
-  }
-},
-
-            child: const Text(
-              '+ Neue Warengruppe hinzufügen',
+          return AlertDialog(
+            backgroundColor: Colors.white,
+            title: const Text(
+              'Artikel hinzufügen',
               style: TextStyle(
-                color: Color(0xFF7D9205),
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                 decoration: TextDecoration.underline, 
-                 decorationColor: Color(0xFF7D9205), 
-              ),
+                  color: Color(0xFF161616),
+                  fontSize: 20,
+                  fontWeight: FontWeight.w500),
             ),
-          ),
-        ),
+            content: SizedBox(
+              width: 400,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  TextField(
+                    controller: itemNameController,
+                    decoration: InputDecoration(
+                      labelText: 'Artikelname',
+                      labelStyle: TextStyle(
+                        color: Colors.black.withOpacity(0.5),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w400,
+                      ),
+                      floatingLabelStyle: const TextStyle(
+                        color: Color(0xFF7D9205),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                            color: Color(0xFF7D9205), width: 2),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide:
+                            BorderSide(color: Colors.grey.shade400, width: 1.5),
+                      ),
+                      filled: true,
+                      fillColor: Colors.white,
+                      isDense: true,
+                    ),
+                    style: const TextStyle(color: Colors.black87),
+                  ),
+                  const SizedBox(height: 20),
 
-        const SizedBox(height: 24),
+                  DropdownButtonFormField<String>(
+                    value: selectedGroupId,
+                    onChanged: (newValue) {
+                      setState(() {
+                        selectedGroupId = newValue;
+                        _lastSelectedGroupId = newValue;
+                      });
+                    },
+                    items: groupItems,
+                    isExpanded: true,
+                    //   icon: const SizedBox.shrink(),
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: Colors.grey.shade400),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide:
+                            BorderSide(color: Colors.grey.shade400, width: 1.5),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                            color: Color(0xFF7D9205), width: 2),
+                      ),
+                    ),
+                    dropdownColor: Colors.white,
+                    style:
+                        const TextStyle(color: Color(0xFF212121), fontSize: 16),
+                    hint: const Text(
+                      'Warengruppe wählen',
+                      style: TextStyle(color: Color(0xFF363636), fontSize: 16),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
 
-        // Buttons
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            TextButton(
-              style: TextButton.styleFrom(
-                backgroundColor: const Color(0xFFE2E2E2),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text(
-                'Abbrechen',
-                style: TextStyle(color: Color(0xFF5F5F5F), fontSize: 14),
-              ),
-            ),
-            const SizedBox(width: 12),
-            TextButton(
-              style: TextButton.styleFrom(
-                backgroundColor: const Color(0xFFEF8D25),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              onPressed: () async {
-                if (itemNameController.text.isNotEmpty && selectedGroupId != null) {
-                  _addItemToList(itemNameController.text, selectedGroupId!);
-                  Navigator.of(context).pop();
-                }
-              },
-              child: const Text(
-                'Hinzufügen',
-                style: TextStyle(color: Colors.white, fontSize: 14),
-              ),
-            ),
-          ],
-        ),
+                  // 👉 Neuer Linktext unter dem Dropdown
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton(
+                      onPressed: () async {
+                        final selectedShop = _availableShops.firstWhere(
+                          (shop) => shop.id.toString() == _selectedShopId!,
+                        );
 
-        // 🔸 Auskommentierter Teil: Textfeld + Button für Warengruppe
-        /*
+                        final neueGruppe = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => EditStoreScreen(
+                              storeId: selectedShop.id.toString(),
+                              storeName: selectedShop.name,
+                              productGroupService: widget.productGroupService,
+                              shopService: widget.shopService,
+                              itemListService: widget.itemListService,
+                            ),
+                          ),
+                        );
+                        await loadItems();
+
+                        if (neueGruppe != null && mounted) {
+                          setState(() {
+                            groupItems.add(DropdownMenuItem<String>(
+                              value: neueGruppe.id.toString(),
+                              child: Text(neueGruppe.name),
+                            ));
+                            selectedGroupId = neueGruppe.id.toString();
+                          });
+                          await loadItems();
+                        }
+                      },
+                      child: const Text(
+                        '+ Neue Warengruppe hinzufügen',
+                        style: TextStyle(
+                          color: Color(0xFF7D9205),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          decoration: TextDecoration.underline,
+                          decorationColor: Color(0xFF7D9205),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Buttons
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        style: TextButton.styleFrom(
+                          backgroundColor: const Color(0xFFE2E2E2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 10),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: const Text(
+                          'Abbrechen',
+                          style:
+                              TextStyle(color: Color(0xFF5F5F5F), fontSize: 14),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      TextButton(
+                        style: TextButton.styleFrom(
+                          backgroundColor: const Color(0xFFEF8D25),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 10),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onPressed: () async {
+                          if (itemNameController.text.isNotEmpty &&
+                              selectedGroupId != null) {
+                            _addItemToList(
+                                itemNameController.text, selectedGroupId!);
+                            Navigator.of(context).pop();
+                          }
+                        },
+                        child: const Text(
+                          'Hinzufügen',
+                          style: TextStyle(color: Colors.white, fontSize: 14),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  // 🔸 Auskommentierter Teil: Textfeld + Button für Warengruppe
+                  /*
         const SizedBox(height: 24),
         TextField(
           controller: newGroupNameController,
@@ -485,14 +502,10 @@ final TextEditingController _editController = TextEditingController();
           ),
         ),
         */
-      ],
-    ),
-  ),
-);
-
-
-
-
+                ],
+              ),
+            ),
+          );
         });
       },
     );
@@ -536,341 +549,337 @@ final TextEditingController _editController = TextEditingController();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-    appBar: PreferredSize(
-  preferredSize: const Size.fromHeight(110),
-  child: Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      AppBar(
-        backgroundColor: Colors.white,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.popUntil(context, (route) => route.isFirst),
-        ),
-      title: Transform.translate(
-  offset: const Offset(-12, 0), // 👈 verschiebt nur den Titel nach links
-  child: Text(
-    widget.listName,
-    style: const TextStyle(
-      fontSize: 26,
-      fontWeight: FontWeight.w500,
-      color: Colors.black,
-    ),
-  ),
-),
-
-        centerTitle: false,
-       actions: [
-  IconButton(
-    icon: const Icon(Icons.print, color: Color.fromARGB(255, 28, 27, 27)),
-    iconSize: 28, // z. B. 28 statt Standard 24
-    onPressed: createPdf,
-  ),
-  IconButton(
-    icon: Icon(
-      _isDeleteMode ? Icons.close : Icons.delete,
-      color: Color.fromARGB(255, 28, 27, 27),
-    ),
-    iconSize: 28, // größer als Standard
-    onPressed: toggleDeleteMode,
-  ),
-],
-
-        elevation: 0,
-      ),
-      Padding(
-        padding: const EdgeInsets.only(left: 60.0, bottom: 10),
-        child: Material(
-          borderRadius: BorderRadius.circular(6),
-          color: const Color(0xFFF2E4D9),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          
-            child: DropdownButtonHideUnderline(
-  child: DropdownButton<String>(
-    value: _selectedShopId,
-    isDense: true,
-    onChanged: (String? newValue) {
-      if (newValue != null) _updateShop(newValue);
-    },
-    dropdownColor: Colors.white,
-    // 👇 Entfernt den standardmäßigen Dropdown-Pfeil
-    icon: const SizedBox.shrink(),
-    style: const TextStyle(
-      fontSize: 17,
-      fontWeight: FontWeight.w700,
-      color: Color(0xFF986224),
-    ),
-    // 👇 eigene Darstellung des Dropdowns (sichtbarer Button)
-    selectedItemBuilder: (BuildContext context) {
-      return _availableShops.map((shop) {
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(110),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              shop.name,
-              style: const TextStyle(
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF986224),
+            AppBar(
+              backgroundColor: Colors.white,
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.black),
+                onPressed: () =>
+                    Navigator.popUntil(context, (route) => route.isFirst),
+              ),
+              title: Transform.translate(
+                offset: const Offset(
+                    -12, 0), // 👈 verschiebt nur den Titel nach links
+                child: Text(
+                  widget.listName,
+                  style: const TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+              centerTitle: false,
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.print,
+                      color: Color.fromARGB(255, 28, 27, 27)),
+                  iconSize: 28, // z. B. 28 statt Standard 24
+                  onPressed: createPdf,
+                ),
+                IconButton(
+                  icon: Icon(
+                    _isDeleteMode ? Icons.close : Icons.delete,
+                    color: Color.fromARGB(255, 28, 27, 27),
+                  ),
+                  iconSize: 28, // größer als Standard
+                  onPressed: toggleDeleteMode,
+                ),
+              ],
+              elevation: 0,
+            ),
+            Padding(
+              padding: const EdgeInsets.only(left: 60.0, bottom: 10),
+              child: Material(
+                borderRadius: BorderRadius.circular(6),
+                color: const Color(0xFFF2E4D9),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _selectedShopId,
+                      isDense: true,
+                      onChanged: (String? newValue) {
+                        if (newValue != null) _updateShop(newValue);
+                      },
+                      dropdownColor: Colors.white,
+                      // 👇 Entfernt den standardmäßigen Dropdown-Pfeil
+                      icon: const SizedBox.shrink(),
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF986224),
+                      ),
+                      // 👇 eigene Darstellung des Dropdowns (sichtbarer Button)
+                      selectedItemBuilder: (BuildContext context) {
+                        return _availableShops.map((shop) {
+                          return Row(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                shop.name,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF986224),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              const Icon(Icons.arrow_drop_down,
+                                  color: Color(0xFF986224)),
+                            ],
+                          );
+                        }).toList();
+                      },
+                      // 👇 was in der Liste angezeigt wird
+                      items: _availableShops.map((shop) {
+                        return DropdownMenuItem<String>(
+                          value: shop.id.toString(),
+                          child: Text(
+                            shop.name,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF986224),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
               ),
             ),
-            const SizedBox(width: 6),
-            const Icon(Icons.arrow_drop_down, color: Color(0xFF986224)),
           ],
-        );
-      }).toList();
-    },
-    // 👇 was in der Liste angezeigt wird
-    items: _availableShops.map((shop) {
-      return DropdownMenuItem<String>(
-        value: shop.id.toString(),
-        child: Text(
-          shop.name,
-          style: const TextStyle(
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF986224),
-          ),
-        ),
-      );
-    }).toList(),
-  ),
-),
-
-
-            
-          ),
         ),
       ),
-    ],
-  ),
-),
-
 
       backgroundColor: Colors.white,
- body: itemsByGroup.isEmpty
-    ? Align(
-        alignment: Alignment.topCenter,
-        child: FractionallySizedBox(
-          heightFactor: 0.82, // Höhe des Platzes, den die Mitte einnimmt
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: const [
-              Image(
-                image: AssetImage('lib/img3/Karotte.png'),
-                width: 70,
-                height: 70,
-              ),
-              SizedBox(height: 8),
-              Text(
-                'Noch keine Artikel',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  color: Color.fromARGB(255, 74, 69, 69),
+      body: itemsByGroup.isEmpty
+          ? Align(
+              alignment: Alignment.topCenter,
+              child: FractionallySizedBox(
+                heightFactor: 0.82, // Höhe des Platzes, den die Mitte einnimmt
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    Image(
+                      image: AssetImage('lib/img3/Karotte.png'),
+                      width: 70,
+                      height: 70,
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'Noch keine Artikel',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                        color: Color.fromARGB(255, 74, 69, 69),
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 24.0),
+                      child: Text(
+                        'Tippe auf das Plus-Symbol, um \ndeinen ersten Artikel hinzuzufügen.',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Color.fromARGB(255, 57, 57, 57),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              SizedBox(height: 8),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 24.0),
-                child: Text(
-                  'Tippe auf das Plus-Symbol, um \ndeinen ersten Artikel hinzuzufügen.',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Color.fromARGB(255, 57, 57, 57),
+            )
+          : ListView.builder(
+              itemCount: itemsByGroup.keys.length,
+              itemBuilder: (context, index) {
+                String groupId = itemsByGroup.keys.elementAt(index);
+                return ExpansionTile(
+                  /////hierrrr
+                  tilePadding: const EdgeInsets.only(left: 22, right: 24),
+                  childrenPadding: const EdgeInsets.only(top: 0),
+
+                  collapsedShape: RoundedRectangleBorder(
+                    side: BorderSide.none,
+                    borderRadius: BorderRadius.zero,
                   ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ],
-          ),
-        ),
-      )
-  
-
-
-
-
-
-
-      
-     : ListView.builder(
-        itemCount: itemsByGroup.keys.length,
-        itemBuilder: (context, index) {
-          String groupId = itemsByGroup.keys.elementAt(index);
-          return ExpansionTile(
-             /////hierrrr
-              tilePadding: const EdgeInsets.only(left: 22, right: 24),
- childrenPadding: const EdgeInsets.only(top: 0),
-
-  collapsedShape: RoundedRectangleBorder(
-    side: BorderSide.none,
-    borderRadius: BorderRadius.zero,
-  ),
-  shape: RoundedRectangleBorder(
-    side: BorderSide.none,
-    borderRadius: BorderRadius.zero,
-  ),
-            //WARENGRUPPEN DROPWDOWN
-            title: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    groupId,
-                   style: const TextStyle(
-  fontSize: 15,
-  fontWeight: FontWeight.w400,
-  color: Color.fromARGB(255, 148, 146, 146),
-),
-
+                  shape: RoundedRectangleBorder(
+                    side: BorderSide.none,
+                    borderRadius: BorderRadius.zero,
                   ),
-                ),
-                if (_isDeleteMode)
-                  IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.red),
-                    onPressed: () => deleteProductGroup(groupId),
+                  //WARENGRUPPEN DROPWDOWN
+                  title: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          groupId,
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w400,
+                            color: Color.fromARGB(255, 148, 146, 146),
+                          ),
+                        ),
+                      ),
+                      if (_isDeleteMode)
+                        IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          onPressed: () => deleteProductGroup(groupId),
+                        ),
+                    ],
                   ),
-              ],
-            ),
 
-           children: itemsByGroup[groupId]!.asMap().entries.map((entry) {
-  final index = entry.key;
-  final item = entry.value;
+                  children: itemsByGroup[groupId]!.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final item = entry.value;
 
-  return Column(
-    children: [
-      Row(
-        children: [
-          Padding(
-            /////hierrrr
-            padding: const EdgeInsets.only(left: 15.0),
-            child: Transform.scale(
-              scale: 1.4,
-              child: Checkbox(
-                value: item['isDone'] ?? false,
-                onChanged: _isDeleteMode
-                    ? null
-                    : (bool? value) {
-                        if (value != null) {
-                          toggleItemDone(groupId, index);
-                        }
-                      },
-                side: const BorderSide(
-                  width: 1,
-                  color: Color(0xFFB0B0B0),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 4),
-          Expanded(
-          child: GestureDetector(
-  onTap: () {
-    setState(() {
-      _editingItemName = item['name'];
-      _editingGroupName = groupId;
-      _editController.text = item['name'];
-    });
-  },
-  child: Padding(
-    padding: const EdgeInsets.symmetric(vertical: 15.0), // 👈 Abstand oben/unten
-    child: _editingItemName == item['name'] && _editingGroupName == groupId
-        ? TextField(
-            controller: _editController,
-            autofocus: true,
-             cursorColor: Color(0xFF7D9205), 
-            style: const TextStyle(fontSize: 18),
-            decoration: const InputDecoration(
-              isDense: true,
-              border: InputBorder.none, // 👈 kein Rahmen
-              contentPadding: EdgeInsets.zero,
-            ),
-            onSubmitted: (value) async {
-              final list = await widget.itemListService
-                  .fetchItemListById(int.parse(widget.shoppingListId));
-              if (list != null) {
-                final items = list.getItems();
-                final current = items.firstWhere(
-                  (e) =>
-                      e['name'] == _editingItemName &&
-                      e['groupId'] ==
-                          (itemsByGroup[groupId]?.first['groupId']),
-                  orElse: () => {},
+                    return Column(
+                      children: [
+                        Row(
+                          children: [
+                            Padding(
+                              /////hierrrr
+                              padding: const EdgeInsets.only(left: 15.0),
+                              child: Transform.scale(
+                                scale: 1.4,
+                                child: Checkbox(
+                                  value: item['isDone'] ?? false,
+                                  onChanged: _isDeleteMode
+                                      ? null
+                                      : (bool? value) {
+                                          if (value != null) {
+                                            toggleItemDone(groupId, index);
+                                          }
+                                        },
+                                  side: const BorderSide(
+                                    width: 1,
+                                    color: Color(0xFFB0B0B0),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    _editingItemName = item['name'];
+                                    _editingGroupName = groupId;
+                                    _editController.text = item['name'];
+                                  });
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 15.0), // 👈 Abstand oben/unten
+                                  child: _editingItemName == item['name'] &&
+                                          _editingGroupName == groupId
+                                      ? TextField(
+                                          controller: _editController,
+                                          autofocus: true,
+                                          cursorColor: Color(0xFF7D9205),
+                                          style: const TextStyle(fontSize: 18),
+                                          decoration: const InputDecoration(
+                                            isDense: true,
+                                            border: InputBorder
+                                                .none, // 👈 kein Rahmen
+                                            contentPadding: EdgeInsets.zero,
+                                          ),
+                                          onSubmitted: (value) async {
+                                            final list = await widget
+                                                .itemListService
+                                                .fetchItemListById(int.parse(
+                                                    widget.shoppingListId));
+                                            if (list != null) {
+                                              final items = list.getItems();
+                                              final current = items.firstWhere(
+                                                (e) =>
+                                                    e['name'] ==
+                                                        _editingItemName &&
+                                                    e['groupId'] ==
+                                                        (itemsByGroup[groupId]
+                                                            ?.first['groupId']),
+                                                orElse: () => {},
+                                              );
+                                              if (current.isNotEmpty) {
+                                                current['name'] = value;
+                                                list.setItems(items);
+                                                await widget.itemListService
+                                                    .updateItemList(list);
+                                              }
+                                            }
+                                            setState(() {
+                                              _editingItemName = null;
+                                              _editingGroupName = null;
+                                            });
+                                            await loadItems();
+                                          },
+                                        )
+                                      : Text(
+                                          item['name'],
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w500,
+                                            decoration: item['isDone'] == true
+                                                ? TextDecoration.lineThrough
+                                                : TextDecoration.none,
+                                            color: item['isDone'] == true
+                                                ? Colors.grey
+                                                : Colors.black,
+                                          ),
+                                        ),
+                                ),
+                              ),
+                            ),
+                            if (_isDeleteMode)
+                              IconButton(
+                                icon:
+                                    const Icon(Icons.delete, color: Colors.red),
+                                onPressed: () =>
+                                    deleteItem(groupId, item['name']),
+                              ),
+                          ],
+                        ),
+                        if (index < itemsByGroup[groupId]!.length - 1)
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 22.0),
+                            child: Divider(
+                              color: Color(0xFFE0E0E0),
+                              height: 1,
+                              thickness: 1.5,
+                            ),
+                          ),
+                      ],
+                    );
+                  }).toList(),
                 );
-                if (current.isNotEmpty) {
-                  current['name'] = value;
-                  list.setItems(items);
-                  await widget.itemListService.updateItemList(list);
-                }
-              }
-              setState(() {
-                _editingItemName = null;
-                _editingGroupName = null;
-              });
-              await loadItems();
-            },
-          )
-        : Text(
-            item['name'],
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w500,
-              decoration: item['isDone'] == true
-                  ? TextDecoration.lineThrough
-                  : TextDecoration.none,
-              color: item['isDone'] == true ? Colors.grey : Colors.black,
+              },
             ),
-          ),
-  ),
-),
-
-          ),
-          if (_isDeleteMode)
-            IconButton(
-              icon: const Icon(Icons.delete, color: Colors.red),
-              onPressed: () => deleteItem(groupId, item['name']),
-            ),
-        ],
-      ),
-   if (index < itemsByGroup[groupId]!.length - 1)
-  const Padding(
-    padding: EdgeInsets.symmetric(horizontal: 22.0),
-    child: Divider(
-      color: Color(0xFFE0E0E0),
-      height: 1,
-      thickness: 1.5,
-    ),
-  ),
-
-
-    ],
-  );
-}).toList(),
-
-          );
-        },
-      ),
       //ADD ARTIKEL BUTTON
-   floatingActionButton: !_isDeleteMode
-    ? Padding(
-        padding: const EdgeInsets.only(right: 16.0, bottom: 16.0),
-        child: SizedBox(
-          height: 74, // etwas kleiner als vorher
-          width: 74,
-          child: FloatingActionButton(
-            onPressed: _showAddItemDialog,
-            backgroundColor: const Color.fromARGB(255, 239, 141, 37),
-            foregroundColor: Colors.white,
-            elevation: 4, // schöner, aber nicht übertrieben
-             child: const Icon(Icons.add, size: 50),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(32),
-            ),
-          ),
-        ),
-      )
-    : null,
-
+      floatingActionButton: !_isDeleteMode
+          ? Padding(
+              padding: const EdgeInsets.only(right: 16.0, bottom: 16.0),
+              child: SizedBox(
+                height: 74, // etwas kleiner als vorher
+                width: 74,
+                child: FloatingActionButton(
+                  onPressed: _showAddItemDialog,
+                  backgroundColor: const Color.fromARGB(255, 239, 141, 37),
+                  foregroundColor: Colors.white,
+                  elevation: 4, // schöner, aber nicht übertrieben
+                  child: const Icon(Icons.add, size: 50),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(32),
+                  ),
+                ),
+              ),
+            )
+          : null,
     );
   }
 }

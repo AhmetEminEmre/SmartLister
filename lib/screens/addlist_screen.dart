@@ -121,7 +121,6 @@ class _CreateListScreenState extends State<CreateListScreen> {
           itemListService: widget.itemListService,
           shopService: widget.shopService,
           productGroupService: widget.productGroupService,
-
           onStoreSelected: (selectedStoreId) async {
             newList.shopId = selectedStoreId;
             await widget.itemListService.updateItemList(newList);
@@ -146,152 +145,161 @@ class _CreateListScreenState extends State<CreateListScreen> {
     );
   }
 
-Future<void> importList(String csvContent) async {
-  List<String> lines = csvContent.split('\n');
-  if (lines.isEmpty) return;
+  Future<void> importList(String csvContent) async {
+    List<String> lines = csvContent.split('\n');
+    if (lines.isEmpty) return;
 
-  String listName = lines[0].split(';')[0].trim();
-  String imagepath = lines[0].split(';')[1].trim();
-  String shopName = lines[0].split(';')[2].trim();
+    String listName = lines[0].split(';')[0].trim();
+    String imagepath = lines[0].split(';')[1].trim();
+    String shopName = lines[0].split(';')[2].trim();
 
-  debugPrint("Starting import for list: $listName, with shop: $shopName");
+    debugPrint("Starting import for list: $listName, with shop: $shopName");
 
-  List<String> importedGroupNames = lines[0]
-      .split(';')
-      .skip(3)
-      .where((groupName) => groupName.isNotEmpty)
-      .map((name) => name.trim())
-      .toList();
+    List<String> importedGroupNames = lines[0]
+        .split(';')
+        .skip(3)
+        .where((groupName) => groupName.isNotEmpty)
+        .map((name) => name.trim())
+        .toList();
 
-  debugPrint("Imported Group Names (normalized): $importedGroupNames");
+    debugPrint("Imported Group Names (normalized): $importedGroupNames");
 
-  int shopId = -1;
-  Map<String, String> groupNameToId = {};
+    int shopId = -1;
+    Map<String, String> groupNameToId = {};
 
-  bool matchingOrder = await isProductGroupOrderMatching(shopName, importedGroupNames);
-  if (matchingOrder) {
-    final existingShop = await widget.shopService.fetchShopByName(shopName);
-    shopId = existingShop?.id ?? -1;
+    bool matchingOrder =
+        await isProductGroupOrderMatching(shopName, importedGroupNames);
+    if (matchingOrder) {
+      final existingShop = await widget.shopService.fetchShopByName(shopName);
+      shopId = existingShop?.id ?? -1;
 
-    debugPrint('Found existing shop: Name = ${existingShop?.name}, ID = $shopId');
+      debugPrint(
+          'Found existing shop: Name = ${existingShop?.name}, ID = $shopId');
 
-    if (shopId != -1) {
-      for (String groupName in importedGroupNames) {
-        final existingGroup = await widget.productGroupService
-            .fetchByNameAndShop(groupName, shopId.toString());
-        if (existingGroup != null) {
-          groupNameToId[groupName] = existingGroup.id.toString();
-          debugPrint(
-              "Found existing group: Name = ${existingGroup.name}, ID = ${existingGroup.id}");
-        } else {
-          debugPrint("Group not found in existing shop: $groupName");
+      if (shopId != -1) {
+        for (String groupName in importedGroupNames) {
+          final existingGroup = await widget.productGroupService
+              .fetchByNameAndShop(groupName, shopId.toString());
+          if (existingGroup != null) {
+            groupNameToId[groupName] = existingGroup.id.toString();
+            debugPrint(
+                "Found existing group: Name = ${existingGroup.name}, ID = ${existingGroup.id}");
+          } else {
+            debugPrint("Group not found in existing shop: $groupName");
+          }
         }
+      } else {
+        debugPrint("Shop ID retrieval failed for shop: $shopName");
       }
     } else {
-      debugPrint("Shop ID retrieval failed for shop: $shopName");
+      debugPrint(
+          "No matching shop with correct group order. Creating a new shop.");
+
+      shopName = await createUniqueShop(shopName);
+      final newShop = Einkaufsladen(name: shopName);
+      shopId = await widget.shopService.addShop(newShop);
+
+      for (int i = 0; i < importedGroupNames.length; i++) {
+        final groupName = importedGroupNames[i];
+        final productGroup = Productgroup(
+          name: groupName,
+          storeId: shopId.toString(),
+          order: i,
+        );
+        final groupId =
+            await widget.productGroupService.addProductGroup(productGroup);
+        groupNameToId[groupName] = groupId.toString();
+        debugPrint(
+            "Created new group in new shop: Name = $groupName, ID = $groupId");
+      }
+
+      debugPrint(
+          "Created new shop with name: $shopName, ID: $shopId, and groups: $groupNameToId");
     }
-  } else {
-    debugPrint("No matching shop with correct group order. Creating a new shop.");
 
-    shopName = await createUniqueShop(shopName);
-    final newShop = Einkaufsladen(name: shopName);
-    shopId = await widget.shopService.addShop(newShop);
+    List<Map<String, dynamic>> importedItems = [];
+    for (int i = 1; i < lines.length; i++) {
+      var line = lines[i].trim();
+      if (line.isEmpty) continue;
 
-    for (int i = 0; i < importedGroupNames.length; i++) {
-      final groupName = importedGroupNames[i];
-      final productGroup = Productgroup(
-        name: groupName,
-        storeId: shopId.toString(),
-        order: i,
-      );
-      final groupId = await widget.productGroupService.addProductGroup(productGroup);
-      groupNameToId[groupName] = groupId.toString();
-      debugPrint("Created new group in new shop: Name = $groupName, ID = $groupId");
+      var fields = line.split(';');
+      if (fields.length >= 3) {
+        final groupName = fields[0].trim();
+        final groupId = groupNameToId[groupName] ?? "0";
+        final itemName = fields[1].trim();
+        final status = fields[2] == 'true';
+
+        importedItems.add({
+          'groupId': groupId,
+          'name': itemName,
+          'isDone': status,
+        });
+        debugPrint(
+            "Imported item: Group ID = $groupId, Name = $itemName, Status = $status");
+      }
     }
 
-    debugPrint("Created new shop with name: $shopName, ID: $shopId, and groups: $groupNameToId");
+    debugPrint("Final imported items: $importedItems");
+
+    final newList = Itemlist(
+      name: listName,
+      imagePath: imagepath,
+      shopId: shopId.toString(),
+      items: importedItems,
+      creationDate: DateTime.now(),
+    );
+
+    await widget.itemListService.addItemList(newList);
+    Navigator.popUntil(context, (route) => route.isFirst);
   }
 
-  List<Map<String, dynamic>> importedItems = [];
-  for (int i = 1; i < lines.length; i++) {
-    var line = lines[i].trim();
-    if (line.isEmpty) continue;
+  Future<String> createUniqueShop(String shopName) async {
+    String uniqueName = shopName;
+    int counter = 1;
 
-    var fields = line.split(';');
-    if (fields.length >= 3) {
-      final groupName = fields[0].trim();
-      final groupId = groupNameToId[groupName] ?? "0";
-      final itemName = fields[1].trim();
-      final status = fields[2] == 'true';
+    while (true) {
+      final existingShop = await widget.shopService.fetchShopByName(uniqueName);
 
-      importedItems.add({
-        'groupId': groupId,
-        'name': itemName,
-        'isDone': status,
-      });
-      debugPrint("Imported item: Group ID = $groupId, Name = $itemName, Status = $status");
+      if (existingShop == null) {
+        return uniqueName;
+      } else {
+        uniqueName = "$shopName($counter)";
+        counter++;
+      }
     }
   }
 
-  debugPrint("Final imported items: $importedItems");
+  Future<bool> isProductGroupOrderMatching(
+      String shopName, List<String> importedGroupNames) async {
+    final existingShop = await widget.shopService.fetchShopByName(shopName);
 
-  final newList = Itemlist(
-    name: listName,
-    imagePath: imagepath,
-    shopId: shopId.toString(),
-    items: importedItems,
-    creationDate: DateTime.now(),
-  );
+    if (existingShop != null) {
+      final existingGroups = await widget.productGroupService
+          .fetchProductGroupsByStoreIdSorted(existingShop.id.toString());
 
-  await widget.itemListService.addItemList(newList);
-  Navigator.popUntil(context, (route) => route.isFirst);
-}
- Future<String> createUniqueShop(String shopName) async {
-  String uniqueName = shopName;
-  int counter = 1;
+      List<String> existingGroupNames =
+          existingGroups.map((g) => g.name.trim()).toList();
+      List<String> normalizedImported =
+          importedGroupNames.map((n) => n.trim()).toList();
 
-  while (true) {
-    final existingShop = await widget.shopService.fetchShopByName(uniqueName);
+      debugPrint(
+          "Comparing imported groups with existing shop (order preserved)...");
+      debugPrint("Shop Name: $shopName");
+      debugPrint("Imported Groups: $normalizedImported");
+      debugPrint("Existing Groups: $existingGroupNames");
 
-    if (existingShop == null) {
-      return uniqueName;
+      if (_deepEquals(existingGroupNames, normalizedImported)) {
+        debugPrint("Exact match found for shop: $shopName");
+        return true;
+      } else {
+        debugPrint("No exact match found.");
+      }
     } else {
-      uniqueName = "$shopName($counter)";
-      counter++;
+      debugPrint("Shop not found: $shopName");
     }
+
+    return false;
   }
-}
-
-
-Future<bool> isProductGroupOrderMatching(
-    String shopName, List<String> importedGroupNames) async {
-  final existingShop = await widget.shopService.fetchShopByName(shopName);
-
-  if (existingShop != null) {
-    final existingGroups = await widget.productGroupService
-        .fetchProductGroupsByStoreIdSorted(existingShop.id.toString());
-
-    List<String> existingGroupNames =
-        existingGroups.map((g) => g.name.trim()).toList();
-    List<String> normalizedImported = importedGroupNames.map((n) => n.trim()).toList();
-
-    debugPrint("Comparing imported groups with existing shop (order preserved)...");
-    debugPrint("Shop Name: $shopName");
-    debugPrint("Imported Groups: $normalizedImported");
-    debugPrint("Existing Groups: $existingGroupNames");
-
-    if (_deepEquals(existingGroupNames, normalizedImported)) {
-      debugPrint("Exact match found for shop: $shopName");
-      return true;
-    } else {
-      debugPrint("No exact match found.");
-    }
-  } else {
-    debugPrint("Shop not found: $shopName");
-  }
-
-  return false;
-}
 
   bool _deepEquals(List<String> list1, List<String> list2) {
     if (list1.length != list2.length) return false;
@@ -387,6 +395,7 @@ Future<bool> isProductGroupOrderMatching(
                   ),
                 );
               }).toList(),
+
               decoration: InputDecoration(
                 label: RichText(
                   text: TextSpan(
@@ -639,8 +648,6 @@ Future<bool> isProductGroupOrderMatching(
                 ),
               ),
             ),
-
-            
           ],
         ),
       ),
