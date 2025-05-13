@@ -18,6 +18,10 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:smart/screens/settings_screen.dart';
 
+import 'package:provider/provider.dart';
+import 'package:smart/font_scaling.dart';
+
+
 class HomePage extends StatefulWidget {
   final ItemListService itemListService;
   final ShopService shopService;
@@ -298,6 +302,8 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final scaling = context.watch<FontScaling>().factor;
+
     return Scaffold(
     appBar: AppBar(
   automaticallyImplyLeading: false,
@@ -342,7 +348,7 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            const Padding(
+             Padding(
               padding: EdgeInsets.only(
                   left: 16.0,
                   right: 16.0,
@@ -351,7 +357,7 @@ class _HomePageState extends State<HomePage> {
               child: Text(
                 'Meine Listen',
                 style: TextStyle(
-                    fontSize: 23,
+          fontSize: 23 * scaling,
                     color: Color(0xFF222222),
                     fontWeight: FontWeight.w500),
               ),
@@ -520,7 +526,7 @@ class _HomePageState extends State<HomePage> {
               shop.name,
               style: const TextStyle(
                 color: Color.fromARGB(255, 64, 63, 63),
-                fontSize: 16,
+                fontSize: 18,
                 fontWeight: FontWeight.w600,
               ),
               maxLines: 2, // Maximal 2 Zeilen

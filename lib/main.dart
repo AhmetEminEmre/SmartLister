@@ -16,6 +16,10 @@ import 'package:smart/services/shop_service.dart';
 import 'package:smart/services/template_service.dart';
 import 'package:smart/services/userinfo_service.dart';
 
+import 'package:provider/provider.dart';
+import 'package:smart/font_scaling.dart'; // ⬅️ diese Datei musst du erstellen
+
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -32,13 +36,19 @@ void main() async {
   final productGroupService = ProductGroupService(isar);
   final templateService = TemplateService(isar);
 
-  runApp(MyApp(
-    itemListService: itemListService,
-    shopService: shopService,
-    userinfoService: userinfoService,
-    productGroupService: productGroupService,
-    templateService: templateService,
-  ));
+ runApp(
+  ChangeNotifierProvider(
+    create: (_) => FontScaling(),
+    child: MyApp(
+      itemListService: itemListService,
+      shopService: shopService,
+      userinfoService: userinfoService,
+      productGroupService: productGroupService,
+      templateService: templateService,
+    ),
+  ),
+);
+
 }
 
 

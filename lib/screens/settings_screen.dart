@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:smart/services/userinfo_service.dart';
 
+import 'package:provider/provider.dart';
+import 'package:smart/font_scaling.dart';
+
+
 class SettingsScreen extends StatelessWidget {
   final NicknameService nicknameService;
 
@@ -140,11 +144,34 @@ class SettingsScreen extends StatelessWidget {
             subtitle: const Text('Setze deinen Anzeigennamen neu'),
             onTap: () => _showNicknameDialog(context),
           ),
-          const ListTile(
-            leading: Icon(Icons.color_lens),
-            title: Text('Design & Farben & Fonts'),
-            subtitle: Text('Wähle deinen bevorzugten Look'),
+         Consumer<FontScaling>(
+  builder: (context, fontScaling, _) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const ListTile(
+          leading: Icon(Icons.format_size),
+          title: Text('Schriftgröße'),
+          subtitle: Text('Passe die Textgröße in der App an'),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          child: Slider(
+            value: fontScaling.factor,
+            min: 0.8,
+            max: 1.4,
+            divisions: 6,
+            label: '${(fontScaling.factor * 100).round()}%',
+            onChanged: (newValue) {
+              fontScaling.setFactor(newValue);
+            },
           ),
+        ),
+      ],
+    );
+  },
+),
+
           const ListTile(
             leading: Icon(Icons.info_outline),
             title: Text('Über die App'),
