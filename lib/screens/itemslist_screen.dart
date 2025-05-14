@@ -543,7 +543,8 @@ class _ItemListScreenState extends State<ItemListScreen> {
                 children: [
                   pdf_wd.Text(entry.key,
                       style: pdf_wd.TextStyle(
-                          fontSize: 18, fontWeight: pdf_wd.FontWeight.bold)),
+                          fontSize: 18
+                          , fontWeight: pdf_wd.FontWeight.bold)),
                   ...entry.value.map((item) {
                     return pdf_wd.Text(item['name'] ?? 'Unnamed Item',
                         style: const pdf_wd.TextStyle(fontSize: 14));
@@ -728,7 +729,9 @@ class _ItemListScreenState extends State<ItemListScreen> {
     });
   },
   tilePadding: const EdgeInsets.only(left: 22, right: 24),
-  childrenPadding: const EdgeInsets.only(top: 0),
+  childrenPadding: EdgeInsets.zero,
+
+
   collapsedShape: const RoundedRectangleBorder(
     side: BorderSide.none,
     borderRadius: BorderRadius.zero,
@@ -744,7 +747,7 @@ class _ItemListScreenState extends State<ItemListScreen> {
                         child: Text(
                           groupId,
                           style: const TextStyle(
-                            fontSize: 24,
+                            fontSize: 16,
                             fontWeight: FontWeight.w400,
                             color: Color.fromARGB(255, 148, 146, 146),
                           ),
@@ -764,110 +767,106 @@ class _ItemListScreenState extends State<ItemListScreen> {
 
                     return Column(
                       children: [
-                        Row(
-                          children: [
-                            Padding(
-                              /////hierrrr
-                              padding: const EdgeInsets.only(left: 15.0),
-                              child: Transform.scale(
-                                scale: 1.4,
-                                child: Checkbox(
-                                  value: item['isDone'] ?? false,
-                                  onChanged: _isDeleteMode
-                                      ? null
-                                      : (bool? value) {
-                                          if (value != null) {
-                                            toggleItemDone(groupId, index);
-                                          }
-                                        },
-                                  side: const BorderSide(
-                                    width: 1,
-                                    color: Color(0xFFB0B0B0),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    _editingItemName = item['name'];
-                                    _editingGroupName = groupId;
-                                    _editController.text = item['name'];
-                                  });
-                                },
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 15.0), // 👈 Abstand oben/unten
-                                  child: _editingItemName == item['name'] &&
-                                          _editingGroupName == groupId
-                                      ? TextField(
-                                          controller: _editController,
-                                          autofocus: true,
-                                          cursorColor: Color(0xFF7D9205),
-                                          style: const TextStyle(fontSize: 18),
-                                          decoration: const InputDecoration(
-                                            isDense: true,
-                                            border: InputBorder
-                                                .none, // 👈 kein Rahmen
-                                            contentPadding: EdgeInsets.zero,
-                                          ),
-                                          onSubmitted: (value) async {
-                                            final list = await widget
-                                                .itemListService
-                                                .fetchItemListById(int.parse(
-                                                    widget.shoppingListId));
-                                            if (list != null) {
-                                              final items = list.getItems();
-                                              final current = items.firstWhere(
-                                                (e) =>
-                                                    e['name'] ==
-                                                        _editingItemName &&
-                                                    e['groupId'] ==
-                                                        (itemsByGroup[groupId]
-                                                            ?.first['groupId']),
-                                                orElse: () => {},
-                                              );
-                                              if (current.isNotEmpty) {
-                                                current['name'] = value;
-                                                list.setItems(items);
-                                                await widget.itemListService
-                                                    .updateItemList(list);
-                                              }
-                                            }
-                                            setState(() {
-                                              _editingItemName = null;
-                                              _editingGroupName = null;
-                                            });
-                                            await loadItems();
-                                          },
-                                        )
-                                      : Text(
-                                          item['name'],
-                                          style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.w500,
-                                            decoration: item['isDone'] == true
-                                                ? TextDecoration.lineThrough
-                                                : TextDecoration.none,
-                                            color: item['isDone'] == true
-                                                ? Colors.grey
-                                                : Colors.black,
-                                          ),
-                                        ),
-                                ),
-                              ),
-                            ),
-                            if (_isDeleteMode)
-                              IconButton(
-                                icon:
-                                    const Icon(Icons.delete, color: Colors.red),
-                                onPressed: () =>
-                                    deleteItem(groupId, item['name']),
-                              ),
-                          ],
-                        ),
+                Padding(
+ padding: EdgeInsets.only(
+  left: 16.0,
+  right: 16.0,
+  top: index == 0 ? 0.0 : 12.0, // 👈 hier steuerst du den Abstand zum Gruppen-Titel
+  bottom: 3.0,
+),
+
+  child: Row(
+    crossAxisAlignment: CrossAxisAlignment.center,
+    children: [
+      Transform.scale(
+        scale: 1.4,
+        child: Checkbox(
+          value: item['isDone'] ?? false,
+          onChanged: _isDeleteMode
+              ? null
+              : (bool? value) {
+                  if (value != null) {
+                    toggleItemDone(groupId, index);
+                  }
+                },
+          side: const BorderSide(
+            width: 1,
+            color: Color(0xFFB0B0B0),
+          ),
+        ),
+      ),
+      const SizedBox(width: 8),
+      Expanded(
+        child: GestureDetector(
+          onTap: () {
+            setState(() {
+              _editingItemName = item['name'];
+              _editingGroupName = groupId;
+              _editController.text = item['name'];
+            });
+          },
+          child: _editingItemName == item['name'] &&
+                  _editingGroupName == groupId
+              ? TextField(
+                  controller: _editController,
+                  autofocus: true,
+                  cursorColor: Color(0xFF7D9205),
+                  style: const TextStyle(fontSize: 18),
+                  decoration: const InputDecoration(
+                    isDense: true,
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                  onSubmitted: (value) async {
+                    final list = await widget.itemListService
+                        .fetchItemListById(int.parse(widget.shoppingListId));
+                    if (list != null) {
+                      final items = list.getItems();
+                      final current = items.firstWhere(
+                        (e) =>
+                            e['name'] == _editingItemName &&
+                            e['groupId'] ==
+                                (itemsByGroup[groupId]?.first['groupId']),
+                        orElse: () => {},
+                      );
+                      if (current.isNotEmpty) {
+                        current['name'] = value;
+                        list.setItems(items);
+                        await widget.itemListService.updateItemList(list);
+                      }
+                    }
+                    setState(() {
+                      _editingItemName = null;
+                      _editingGroupName = null;
+                    });
+                    await loadItems();
+                  },
+                )
+              : Text(
+                  item['name'],
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
+                    decoration: item['isDone'] == true
+                        ? TextDecoration.lineThrough
+                        : TextDecoration.none,
+                    color: item['isDone'] == true
+                        ? Colors.grey
+                        : Colors.black,
+                  ),
+                ),
+        ),
+      ),
+      if (_isDeleteMode)
+        IconButton(
+          icon: const Icon(Icons.delete, color: Colors.red),
+          onPressed: () => deleteItem(groupId, item['name']),
+        ),
+    ],
+  ),
+),
+
+
                         if (index < itemsByGroup[groupId]!.length - 1)
                           const Padding(
                             padding: EdgeInsets.symmetric(horizontal: 22.0),
