@@ -143,8 +143,8 @@ class _ItemListScreenState extends State<ItemListScreen> {
 
       setState(() {
         itemsByGroup = orderedGroupedItems;
-        expandedGroups =
-            oldExpanded.intersection(orderedGroupedItems.keys.toSet());
+     expandedGroups = oldExpanded.intersection(orderedGroupedItems.keys.toSet());
+
       });
     }
   }
@@ -715,21 +715,28 @@ class _ItemListScreenState extends State<ItemListScreen> {
               itemCount: itemsByGroup.keys.length,
               itemBuilder: (context, index) {
                 String groupId = itemsByGroup.keys.elementAt(index);
-                return ExpansionTile(
-                   key: Key(groupId), // 👈 wichtig!
-  initiallyExpanded: expandedGroups.contains(groupId), // 👈 wichtig!
-                  /////hierrrr
-                  tilePadding: const EdgeInsets.only(left: 22, right: 24),
-                  childrenPadding: const EdgeInsets.only(top: 0),
-
-                  collapsedShape: RoundedRectangleBorder(
-                    side: BorderSide.none,
-                    borderRadius: BorderRadius.zero,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    side: BorderSide.none,
-                    borderRadius: BorderRadius.zero,
-                  ),
+             return ExpansionTile(
+  key: ValueKey('groupTile_$groupId'), // wichtig für Rebuild
+  initiallyExpanded: expandedGroups.contains(groupId), // Zustand aus deinem Set
+  onExpansionChanged: (bool expanded) {
+    setState(() {
+      if (expanded) {
+        expandedGroups.add(groupId);
+      } else {
+        expandedGroups.remove(groupId);
+      }
+    });
+  },
+  tilePadding: const EdgeInsets.only(left: 22, right: 24),
+  childrenPadding: const EdgeInsets.only(top: 0),
+  collapsedShape: const RoundedRectangleBorder(
+    side: BorderSide.none,
+    borderRadius: BorderRadius.zero,
+  ),
+  shape: const RoundedRectangleBorder(
+    side: BorderSide.none,
+    borderRadius: BorderRadius.zero,
+  ),
                   //WARENGRUPPEN DROPWDOWN
                   title: Row(
                     children: [
