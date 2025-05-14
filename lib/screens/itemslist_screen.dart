@@ -270,18 +270,32 @@ class _ItemListScreenState extends State<ItemListScreen> {
   }
 
   void _addItemToList(String itemName, String groupId) async {
-    final list = await widget.itemListService
-        .fetchItemListById(int.parse(widget.shoppingListId));
-    if (list == null) return;
+  final list = await widget.itemListService
+      .fetchItemListById(int.parse(widget.shoppingListId));
+  if (list == null) return;
 
-    final currentItems = List<Map<String, dynamic>>.from(list.getItems());
-    currentItems.add({'name': itemName, 'isDone': false, 'groupId': groupId});
-    list.setItems(currentItems);
+  final currentItems = List<Map<String, dynamic>>.from(list.getItems());
+  currentItems.add({'name': itemName, 'isDone': false, 'groupId': groupId});
+  list.setItems(currentItems);
+  await widget.itemListService.updateItemList(list);
 
-    await widget.itemListService.updateItemList(list);
+  // Gruppennamen ermitteln
+  final groupName = (await widget.productGroupService
+          .fetchProductGroups(_selectedShopId!))
+      .firstWhere((g) => g.id.toString() == groupId,
+          orElse: () =>
+              Productgroup(name: 'Unbekannt', storeId: '0', order: 0))
+      .name;
 
-    await loadItems();
-  }
+  // Gruppe vorher als offen markieren
+  setState(() {
+    expandedGroups.add(groupName);
+  });
+
+  // Danach neu laden
+  await loadItems();
+}
+
 
   void _showAddItemDialog() async {
     TextEditingController itemNameController = TextEditingController();
@@ -702,6 +716,8 @@ class _ItemListScreenState extends State<ItemListScreen> {
               itemBuilder: (context, index) {
                 String groupId = itemsByGroup.keys.elementAt(index);
                 return ExpansionTile(
+                   key: Key(groupId), // 👈 wichtig!
+  initiallyExpanded: expandedGroups.contains(groupId), // 👈 wichtig!
                   /////hierrrr
                   tilePadding: const EdgeInsets.only(left: 22, right: 24),
                   childrenPadding: const EdgeInsets.only(top: 0),
