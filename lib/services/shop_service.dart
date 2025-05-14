@@ -27,7 +27,7 @@ class ShopService {
     }
 
     final id = await _isar!.writeTxn(() async {
-      return await _isar!.einkaufsladens.put(shop);
+      return await _isar.einkaufsladens.put(shop);
     });
     return id;
   }

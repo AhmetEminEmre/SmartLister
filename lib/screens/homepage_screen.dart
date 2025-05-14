@@ -63,11 +63,13 @@ class _HomePageState extends State<HomePage> {
     _shopStream = widget.shopService.watchShops();
 
     _itemListStream.listen((_) {
+      if (!mounted) return;
       _fetchLatestItemLists();
       _fetchTopShops();
     });
 
     _shopStream.listen((_) {
+      if (!mounted) return;
       _fetchTopShops();
     });
   }
@@ -107,8 +109,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _fetchTopShops() async {
-    setState(() => _loadingShops = true);
     final shops = await widget.shopService.fetchShops();
+    if (!mounted) return;
     setState(() {
       _topShops = shops;
       _loadingShops = false;

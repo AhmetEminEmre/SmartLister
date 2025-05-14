@@ -15,7 +15,6 @@ class AddStoreScreen extends StatefulWidget {
   _AddStoreScreenState createState() => _AddStoreScreenState();
 }
 
-
 class _AddStoreScreenState extends State<AddStoreScreen> {
   final TextEditingController _storeNameController = TextEditingController();
   String? _selectedImagePath;
@@ -30,6 +29,12 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
     'Werkzeug': 'lib/img2/Img6.png',
     'Garten': 'lib/img2/Img7.png',
   };
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedImagePath = imageNameToPath.values.first;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -221,32 +226,34 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
     );
   }
 
-Future<void> _addStore() async {
-  if (_storeNameController.text.isEmpty || _selectedImagePath == null) {
+  Future<void> _addStore() async {
+    if (_storeNameController.text.isEmpty || _selectedImagePath == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Bitte geben Sie den Namen und ein Bild ein.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final newShop = Einkaufsladen(
+      name: _storeNameController.text.trim(),
+      imagePath: _selectedImagePath!,
+    );
+
+    final id = await widget.shopService.addShop(newShop);
+    newShop.id = id;
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Bitte geben Sie den Namen und ein Bild ein.'),
-        backgroundColor: Colors.red,
+        content: Text('Laden erfolgreich hinzugefügt!'),
+        backgroundColor: Colors.green,
       ),
     );
-    return;
+
+    if (mounted) {
+      Navigator.pop(context, newShop);
+    }
   }
-
-  final newShop = Einkaufsladen(
-    name: _storeNameController.text.trim(),
-    imagePath: _selectedImagePath!,
-  );
-
-  await widget.shopService.addShop(newShop);
-
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(
-      content: Text('Laden erfolgreich hinzugefügt!'),
-      backgroundColor: Colors.green,
-    ),
-  );
-
-Navigator.pop(context, newShop);
-}
-
 }
