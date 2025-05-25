@@ -88,6 +88,7 @@ class _NicknameScreenState extends State<NicknameScreen> {
                 child: Column(
                   children: [
                     TextField(
+                      key: Key('nicknameField'),
                       controller: _nicknameController,
                       decoration: InputDecoration(
                         hintText: "Dein Name",
@@ -100,13 +101,14 @@ class _NicknameScreenState extends State<NicknameScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
+                        key: Key('continueButton'),
                         onPressed: _saveNickname,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.orange,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                         ),
                         child: const Text(
-                          "Los geht's",
+                          "Los gehts",
                           style: TextStyle(
                               fontSize: 18,
                               color: Colors.white,

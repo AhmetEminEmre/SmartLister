@@ -1,0 +1,61 @@
+name: Appium Flutter Tests
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      appium:
+        image: appium/appium:latest
+        ports:
+          - 4723:4723
+        options: >-
+          --health-cmd "curl --fail http://localhost:4723/status || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Install Appium Flutter Driver
+      run: |
+        git clone https://github.com/appium/appium-flutter-driver.git
+        cd appium-flutter-driver
+        npm install
+        appium driver install --source=local ./driver
+
+    - name: Set up Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.19.0'
+
+    - name: Build Flutter App
+      run: flutter build apk --debug
+
+    - name: Set up Android Emulator
+      uses: reactivecircus/android-emulator-runner@v2
+      with:
+        api-level: 30
+        target: default
+        arch: x86_64
+        profile: pixel
+        script: |
+          flutter devices
+          adb install build/app/outputs/flutter-apk/app-debug.apk
+          nohup appium &
+          sleep 10
+          python3 ui_tests/test_enter_name_and_continue.py
