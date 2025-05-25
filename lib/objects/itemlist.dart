@@ -34,8 +34,6 @@ class Itemlist {
     try {
       return List<Map<String, dynamic>>.from(jsonDecode(itemsJson));
     } catch (e) {
-      debugPrint(
-          'Fehler beim Decodieren von itemsJson: $e. Inhalt: $itemsJson');
       return [];
     }
   }
@@ -43,7 +41,6 @@ class Itemlist {
   void setItems(List<Map<String, dynamic>> items) {
     _items = items;
     itemsJson = jsonEncode(items);
-    debugPrint('Items JSON: $itemsJson');
   }
 
   Map<String, dynamic> toJson() => {

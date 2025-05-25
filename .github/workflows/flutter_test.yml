@@ -31,7 +31,7 @@ jobs:
             TOTAL=$(grep -m1 -Po 'LF:\d+' $LCOV_FILE | cut -d':' -f2)
             COVERED=$(grep -m1 -Po 'LH:\d+' $LCOV_FILE | cut -d':' -f2)
             PERCENT=$(( 100 * COVERED / TOTAL ))
-            echo "🧪 Total Test Coverage: $PERCENT%"
+            echo "Code coverage ist gerade $PERCENT%"
           else
-            echo "❌ No coverage file found."
+            echo "Coverage file not found!"
           fi
