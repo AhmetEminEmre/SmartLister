@@ -25,12 +25,14 @@ class FakeShopDB {
   Future<void> delete(int id) async {
     _shops.removeWhere((s) => s.id == id);
   }
+
   //getbyname
   Future<Einkaufsladen?> getByName(String name) async {
-    return _shops.firstWhere((s) => s.name == name);
+    try {
+      return _shops.firstWhere((s) => s.name == name);
+    } catch (e) {
+      return null;
+    }
   }
 
-  void clear() {
-    _shops.clear();
-  }
 }

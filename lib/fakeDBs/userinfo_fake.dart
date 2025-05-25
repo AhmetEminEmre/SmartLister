@@ -10,5 +10,3 @@ class FakeNicknameDB {
   }
 }
 
-
-//tbd

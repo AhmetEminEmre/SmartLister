@@ -52,7 +52,7 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
 
   Future<void> _fetchProductGroups() async {
     final productGroups =
-        await widget.productGroupService.fetchProductGroups(widget.storeId);
+        await widget.productGroupService.fetchProductGroupsByStoreIdSorted(widget.storeId);
     setState(() {
       _productGroups = productGroups;
       _isLoading = false;
@@ -74,7 +74,7 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
     ];
 
     final existingGroups =
-        await widget.productGroupService.fetchProductGroups(widget.storeId);
+        await widget.productGroupService.fetchProductGroupsByStoreIdSorted(widget.storeId);
     Set<String> existingNames = existingGroups.map((g) => g.name).toSet();
 
     for (var groupName in defaultGroups) {

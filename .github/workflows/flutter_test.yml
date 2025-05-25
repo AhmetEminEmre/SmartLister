@@ -11,15 +11,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Setup Flutter
-      uses: subosito/flutter-action@v2
-      with:
-        flutter-version: '3.29.3'
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.29.3'
 
-    - name: Install dependencies
-      run: flutter pub get
+      - name: Install dependencies
+        run: flutter pub get
 
-    - name: Run tests
-      run: flutter test
+      - name: Run tests with coverage
+        run: flutter test --no-test-assets --coverage
+
+      - name: Show coverage %
+        run: |
+          LCOV_FILE=coverage/lcov.info
+          if [ -f "$LCOV_FILE" ]; then
+            TOTAL=$(grep -m1 -Po 'LF:\d+' $LCOV_FILE | cut -d':' -f2)
+            COVERED=$(grep -m1 -Po 'LH:\d+' $LCOV_FILE | cut -d':' -f2)
+            PERCENT=$(( 100 * COVERED / TOTAL ))
+            echo "🧪 Total Test Coverage: $PERCENT%"
+          else
+            echo "❌ No coverage file found."
+          fi

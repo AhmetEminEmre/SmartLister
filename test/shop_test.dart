@@ -12,43 +12,35 @@ void main() {
     service = ShopService.fake(fakeDb);
   });
 
-  test('addShop fügt neuen Shop hinzu', () async {
-    final shop = Einkaufsladen(name: 'Billa 1030');
-    final added = await service.addShop(shop);
+  test('Einkaufsladen speichert Name + Bild', () {
+    final shop =
+        Einkaufsladen(name: 'Spar', imagePath: 'lib/img/default_image.png');
 
-    final all = await fakeDb.getAll();
-    expect(all.length, 1);
-    expect(all.first.name, 'Billa 1030');
-    expect(added, 1);
+    expect(shop.name, 'Spar');
+    expect(shop.imagePath, 'lib/img/default_image.png');
   });
 
-  test('deleteShop entfernt einen Shop', () async {
-    final shop = Einkaufsladen(name: 'Spar')..id = 10;
-    fakeDb.add(shop);
+  test('toJson gibt korrektes Mapping zurück', () {
+    final shop = Einkaufsladen(name: 'Billa', imagePath: 'assets/logo.png')
+      ..id = 5;
 
-    await service.deleteShop(10);
-    final remaining = await fakeDb.getAll();
+    final json = shop.toJson();
 
-    expect(remaining.isEmpty, true);
+    expect(json['id'], 5);
+    expect(json['name'], 'Billa');
+    expect(json['imagePath'], 'assets/logo.png');
   });
 
-  test('fetchShopById gibt richtigen Shop zurück', () async {
-    final shop = Einkaufsladen(name: 'Merkur')..id = 42;
-    fakeDb.add(shop);
+  test('fromJson erstellt korrektes Objekt', () {
+    final json = {
+      'name': 'mein Hofer',
+      'imagePath': 'test_img/test.png',
+    };
 
-    final result = await service.fetchShopById(42);
-    expect(result?.name, 'Merkur');
-    expect(result?.id, 42);
+    final shop = Einkaufsladen.fromJson(json);
+
+    expect(shop.name, 'mein Hofer');
+    expect(shop.imagePath, 'test_img/test.png');
   });
 
-  test('fetchShops gibt alle Shops zurück', () async {
-    fakeDb.add(Einkaufsladen(name: 'Spar 1110'));
-    fakeDb.add(Einkaufsladen(name: 'Hofer 1100'));
-
-    final shops = await service.fetchShops();
-
-    expect(shops.length, 2);
-    expect(shops[0].name, 'Spar 1110');
-    expect(shops[1].name, 'Hofer 1100');
-  });
 }

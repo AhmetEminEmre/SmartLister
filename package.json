@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "lcov": "^1.16.0"
+  }
+}

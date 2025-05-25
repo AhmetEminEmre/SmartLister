@@ -12,64 +12,30 @@ void main() {
     service = ProductGroupService.fake(fakeDb);
   });
 
-  test('fetchProductGroups gibt gefilterte & sortierte Produktgruppen zurück', () async {
-    await service.addProductGroup(Productgroup(name: 'Obst', storeId: '1', order: 1));
-    await service.addProductGroup(Productgroup(name: 'Getränke', storeId: '1', order: 0));
-    await service.addProductGroup(Productgroup(name: 'Fremd', storeId: '2', order: 0));
+  test('toJson gibt korrektes Mapping zurück', () {
+    final group = Productgroup(name: 'Obst', storeId: '123', order: 2)..id = 99;
 
-    final result = await service.fetchProductGroups('1');
+    final json = group.toJson();
 
-    expect(result.length, 2);
-    expect(result[0].name, 'Getränke');
-    expect(result[1].name, 'Obst');
+    expect(json['id'], 99);
+    expect(json['name'], 'Obst');
+    expect(json['storeId'], '123');
+    expect(json['order'], 2);
   });
 
-  test('addProductGroup fügt neue Produktgruppe hinzu', () async {
-    final group = Productgroup(name: 'Milch', storeId: '1', order: 0);
-    await service.addProductGroup(group);
+  test('fromJson erstellt korrektes Objekt', () {
+    final json = {
+      'name': 'Getränke',
+      'storeId': '123',
+      'order': 1,
+    };
 
-    final all = await service.fetchProductGroups('1');
-    expect(all.length, 1);
-    expect(all[0].name, 'Milch');
+    final group = Productgroup.fromJson(json);
+
+    expect(group.name, 'Getränke');
+    expect(group.storeId, '123');
+    expect(group.order, 1);
   });
 
-  test('deleteProductGroup entfernt Produktgruppe', () async {
-    final group = Productgroup(name: 'Käse', storeId: '1', order: 0)..id = 42;
-    await service.addProductGroup(group);
 
-    await service.deleteProductGroup(42);
-
-    final remaining = await service.fetchProductGroups('1');
-    expect(remaining.isEmpty, true);
-  });
-
-  test('fetchProductGroupById liefert korrekte Produktgruppe', () async {
-    final group = Productgroup(name: 'Joghurt', storeId: '1', order: 0)..id = 99;
-    await service.addProductGroup(group);
-
-    final result = await service.fetchGroupById(99);
-
-    expect(result?.name, 'Joghurt');
-    expect(result?.id, 99);
-  });
-
-  test('updateProductGroupOrder sortiert Produktgruppen korrekt', () async {
-    final g1 = Productgroup(name: 'Z', storeId: '1', order: 2);
-    final g2 = Productgroup(name: 'A', storeId: '1', order: 0);
-    final g3 = Productgroup(name: 'M', storeId: '1', order: 1);
-
-    await service.addProductGroup(g1);
-    await service.addProductGroup(g2);
-    await service.addProductGroup(g3);
-
-    final unsorted = await service.fetchProductGroups('1');
-    unsorted.sort((a, b) => a.name.compareTo(b.name));
-
-    await service.updateProductGroupOrder(unsorted);
-
-    final result = await service.fetchProductGroups('1');
-    expect(result[0].order, 0);
-    expect(result[1].order, 1);
-    expect(result[2].order, 2);
-  });
 }

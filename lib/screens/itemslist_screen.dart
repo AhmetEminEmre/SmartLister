@@ -115,7 +115,7 @@ class _ItemListScreenState extends State<ItemListScreen> {
     if (_selectedShopId == null) return;
 
     final productGroups =
-        await widget.productGroupService.fetchProductGroups(_selectedShopId!);
+        await widget.productGroupService.fetchProductGroupsByStoreIdSorted(_selectedShopId!);
 
     final savedList = await widget.itemListService
         .fetchItemListById(int.parse(widget.shoppingListId));
@@ -192,9 +192,9 @@ class _ItemListScreenState extends State<ItemListScreen> {
     final currentItems = list.getItems();
 
     final allGroups = await widget.productGroupService
-        .fetchProductGroups(widget.initialStoreId!);
+        .fetchProductGroupsByStoreIdSorted(widget.initialStoreId!);
     final newShopGroups =
-        await widget.productGroupService.fetchProductGroups(newShopId);
+        await widget.productGroupService.fetchProductGroupsByStoreIdSorted(newShopId);
 
     final Map<String, Productgroup> nameToGroup = {
       for (var group in newShopGroups) group.name: group
@@ -281,7 +281,7 @@ class _ItemListScreenState extends State<ItemListScreen> {
 
   // Gruppennamen ermitteln
   final groupName = (await widget.productGroupService
-          .fetchProductGroups(_selectedShopId!))
+          .fetchProductGroupsByStoreIdSorted(_selectedShopId!))
       .firstWhere((g) => g.id.toString() == groupId,
           orElse: () =>
               Productgroup(name: 'Unbekannt', storeId: '0', order: 0))
@@ -303,7 +303,7 @@ class _ItemListScreenState extends State<ItemListScreen> {
     String? selectedGroupId = _lastSelectedGroupId;
 
     final productGroups = await widget.productGroupService
-        .fetchProductGroups(widget.initialStoreId!);
+        .fetchProductGroupsByStoreIdSorted(widget.initialStoreId!);
 
     List<DropdownMenuItem<String>> groupItems = productGroups.map((group) {
       return DropdownMenuItem<String>(

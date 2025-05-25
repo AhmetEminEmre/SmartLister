@@ -251,7 +251,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<List<String>> getAllProductGroups(String shopId) async {
-    final groups = await widget.productGroupService.fetchProductGroups(shopId);
+    final groups = await widget.productGroupService.fetchProductGroupsByStoreIdSorted(shopId);
     return groups.map((group) => group.name.trim()).toList();
   }
 
