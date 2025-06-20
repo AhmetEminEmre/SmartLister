@@ -8,7 +8,6 @@ import 'package:smart/objects/productgroup.dart';
 import 'package:smart/objects/template.dart';
 import 'package:smart/objects/userinfo.dart';
 import 'package:smart/screens/homepage_screen.dart';
-import 'package:smart/screens/nickname_screen.dart';
 
 import 'package:smart/services/itemlist_service.dart';
 import 'package:smart/services/productgroup_service.dart';

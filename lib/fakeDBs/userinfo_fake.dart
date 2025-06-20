@@ -1,4 +1,3 @@
-import '../objects/userinfo.dart';
 
 class FakeNicknameDB {
   String? _nickname;

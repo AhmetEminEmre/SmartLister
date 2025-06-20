@@ -307,8 +307,8 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final scaling = context.watch<FontScaling>().factor;
 
+ final scaling = context.watch<FontScaling>().factor;
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
@@ -353,7 +353,7 @@ class _HomePageState extends State<HomePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Padding(
-              padding: EdgeInsets.only(
+              padding: const EdgeInsets.only(
                   left: 16.0,
                   right: 16.0,
                   top: 1.0,
@@ -362,7 +362,7 @@ class _HomePageState extends State<HomePage> {
                 'Meine Listen',
                 style: TextStyle(
                     fontSize: 23 * scaling,
-                    color: Color(0xFF222222),
+                    color: const Color(0xFF222222),
                     fontWeight: FontWeight.w500),
               ),
             ),
@@ -418,12 +418,12 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
 
-            const Padding(
+             Padding(
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               child: Text(
                 'Meine Lieblingseinkaufsläden',
                 style: TextStyle(
-                  fontSize: 23,
+                  fontSize: 23 * scaling,
                   color: Color(0xFF222222),
                   fontWeight: FontWeight.w500,
                 ),
@@ -560,6 +560,7 @@ class _HomePageState extends State<HomePage> {
 
 // LISTEN CARDS
   Widget _buildListCard(Itemlist itemlist) {
+     final scaling = context.watch<FontScaling>().factor; 
     String imagePath = itemlist.imagePath ?? 'lib/img/default_image.png';
 
     List<Map<String, dynamic>> items = itemlist.getItems();
@@ -613,7 +614,7 @@ class _HomePageState extends State<HomePage> {
                         Text(
                           itemlist.name,
                           style: GoogleFonts.poppins(
-                            fontSize: 33,
+                            fontSize: 33 * scaling,
                             color: Colors.white,
                             fontWeight: FontWeight.w500, // SemiBold Gewichtung
                           ),
@@ -621,39 +622,38 @@ class _HomePageState extends State<HomePage> {
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            // Artikel-Tag mit den definierten Farben
-                            _buildTag(
-                              '${items.length} Artikel',
-                              const Color(0xFFF9F2BF), // Hintergrundfarbe
-                              const Color.fromARGB(
-                                  255, 144, 133, 54), // Textfarbe
-                            ),
-                            const SizedBox(width: 5),
-                            // Shop-Tag mit den definierten Farben
-                            FutureBuilder<String>(
-                              future: getShopName(itemlist.shopId),
-                              builder: (context, snapshot) {
-                                if (snapshot.connectionState ==
-                                        ConnectionState.done &&
-                                    snapshot.hasData) {
-                                  return _buildTag(
-                                    snapshot.data!,
-                                    const Color(0xFFF2E4D9), // Hintergrundfarbe
-                                    const Color(0xFF986224), // Textfarbe
-                                  );
-                                } else {
-                                  return _buildTag(
-                                    "Unbekannt",
-                                    const Color(0xFFF2E4D9), // Hintergrundfarbe
-                                    const Color(0xFF986224), // Textfarbe
-                                  );
-                                }
-                              },
-                            ),
-                          ],
-                        ),
+                       Row(
+  children: [
+    _buildTag(
+      '${items.length} Artikel',
+      const Color(0xFFF9F2BF),
+      const Color(0xFF908536),
+      scaling, // ✅ HIER
+    ),
+    const SizedBox(width: 5),
+    FutureBuilder<String>(
+      future: getShopName(itemlist.shopId),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
+          return _buildTag(
+            snapshot.data!,
+            const Color(0xFFF2E4D9),
+            const Color(0xFF986224),
+            scaling, // ✅ HIER
+          );
+        } else {
+          return _buildTag(
+            "Unbekannt",
+            const Color(0xFFF2E4D9),
+            const Color(0xFF986224),
+            scaling, // ✅ HIER
+          );
+        }
+      },
+    ),
+  ],
+),
+
                       ],
                     ),
                     // Drei Punkte: Etwas weiter rechts und höher positionieren
@@ -680,7 +680,7 @@ class _HomePageState extends State<HomePage> {
   }
 
 // TAG-WIDGET: Dynamische Farben und Schriftart
-  Widget _buildTag(String label, Color backgroundColor, Color textColor) {
+  Widget _buildTag(String label, Color backgroundColor, Color textColor, double scaling) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -691,7 +691,7 @@ class _HomePageState extends State<HomePage> {
         label,
         style: GoogleFonts.poppins(
           color: textColor, // Dynamische Textfarbe
-          fontSize: 18, // Größerer Text
+          fontSize: 18 * scaling, // Größerer Text
           fontWeight: FontWeight.w600, // SemiBold Gewichtung
         ),
       ),

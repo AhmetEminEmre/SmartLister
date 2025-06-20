@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:isar/isar.dart';
 import 'package:smart/objects/productgroup.dart';
 import 'package:smart/objects/shop.dart';
 import '../objects/itemlist.dart';
@@ -158,28 +157,33 @@ class _ItemListScreenState extends State<ItemListScreen> {
         .name;
   }
 
-  void loadShops() async {
-    final shops = await widget.shopService.fetchShops();
+void loadShops() async {
+  final shops = await widget.shopService.fetchShops();
 
-    final list = await widget.itemListService
-        .fetchItemListById(int.parse(widget.shoppingListId));
+  final list = await widget.itemListService
+      .fetchItemListById(int.parse(widget.shoppingListId));
 
-    setState(() {
-      _availableShops = shops;
-      if (list != null) {
-        _selectedShopId = list.shopId;
-        _selectedShopName = shops
-            .firstWhere(
-              (shop) => shop.id.toString() == list.shopId,
-              orElse: () =>
-                  Einkaufsladen(name: "Kein Shop gefunden", imagePath: null),
-            )
-            .name;
-      }
-    });
+  setState(() {
+    _availableShops = shops;
 
-    await loadItems();
-  }
+    if (list != null && shops.any((s) => s.id.toString() == list.shopId)) {
+      _selectedShopId = list.shopId;
+    } else if (shops.isNotEmpty) {
+      _selectedShopId = shops.first.id.toString();
+    } else {
+      _selectedShopId = null;
+    }
+
+    _selectedShopName = shops
+        .firstWhere(
+          (shop) => shop.id.toString() == _selectedShopId,
+          orElse: () => Einkaufsladen(name: "Kein Shop gefunden"),
+        )
+        .name;
+  });
+
+  await loadItems();
+}
 
   void _updateShop(String newShopId) async {
     final newShop =
@@ -599,7 +603,7 @@ class _ItemListScreenState extends State<ItemListScreen> {
                 IconButton(
                   icon: Icon(
                     _isDeleteMode ? Icons.close : Icons.delete,
-                    color: Color.fromARGB(255, 28, 27, 27),
+                    color: const Color.fromARGB(255, 28, 27, 27),
                   ),
                   iconSize: 28, // größer als Standard
                   onPressed: toggleDeleteMode,
@@ -617,7 +621,9 @@ class _ItemListScreenState extends State<ItemListScreen> {
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
-                      value: _selectedShopId,
+                       value: _availableShops.any((shop) => shop.id.toString() == _selectedShopId)
+      ? _selectedShopId
+      : null, // Fallback auf null, wenn nicht gefunden
                       isDense: true,
                       onChanged: (String? newValue) {
                         if (newValue != null) _updateShop(newValue);
@@ -675,13 +681,13 @@ class _ItemListScreenState extends State<ItemListScreen> {
 
       backgroundColor: Colors.white,
       body: itemsByGroup.isEmpty
-          ? Align(
+          ? const Align(
               alignment: Alignment.topCenter,
               child: FractionallySizedBox(
                 heightFactor: 0.82, // Höhe des Platzes, den die Mitte einnimmt
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
+                  children: [
                     Image(
                       image: AssetImage('lib/img3/Karotte.png'),
                       width: 70,
@@ -810,7 +816,7 @@ class _ItemListScreenState extends State<ItemListScreen> {
               ? TextField(
                   controller: _editController,
                   autofocus: true,
-                  cursorColor: Color(0xFF7D9205),
+                  cursorColor: const Color(0xFF7D9205),
                   style: const TextStyle(fontSize: 18),
                   decoration: const InputDecoration(
                     isDense: true,
@@ -893,11 +899,11 @@ class _ItemListScreenState extends State<ItemListScreen> {
                   onPressed: _showAddItemDialog,
                   backgroundColor: const Color.fromARGB(255, 239, 141, 37),
                   foregroundColor: Colors.white,
-                  elevation: 4, // schöner, aber nicht übertrieben
-                  child: const Icon(Icons.add, size: 50),
+                  elevation: 4,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(32),
-                  ),
+                  ), // schöner, aber nicht übertrieben
+                  child: const Icon(Icons.add, size: 50),
                 ),
               ),
             )

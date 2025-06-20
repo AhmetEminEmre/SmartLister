@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:isar/isar.dart';
-import 'package:smart/objects/itemlist.dart';
 import '../objects/productgroup.dart';
-import '../objects/shop.dart';
 import 'package:smart/services/productgroup_service.dart';
 import 'package:smart/services/shop_service.dart';
 import 'package:smart/services/itemlist_service.dart';
+import 'package:provider/provider.dart';
+import 'package:smart/font_scaling.dart';
 
 class EditStoreScreen extends StatefulWidget {
   final String storeId;
@@ -96,91 +95,98 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
     _fetchProductGroups();
   }
 
-  void _promptAddDefaultProductGroups() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 360, minWidth: 300),
-            child: Material(
-              borderRadius: BorderRadius.circular(16),
-              color: Colors.white,
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Standard-Warengruppen hinzufügen?',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black87,
-                      ),
+ void _promptAddDefaultProductGroups() {
+  showDialog(
+    context: context,
+    builder: (context) {
+      final scaling = context.watch<FontScaling>().factor; // ✅ HIER
+      return Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 360, minWidth: 300),
+          child: Material(
+            borderRadius: BorderRadius.circular(16),
+            color: Colors.white,
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Standard-Warengruppen hinzufügen?',
+                    style: TextStyle(
+                      fontSize: 20 * scaling,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black87,
                     ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Möchtest du die Standard-Warengruppen dieser Filiale hinzufügen?',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w400,
-                        color: Colors.black87,
-                      ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Möchtest du die Standard-Warengruppen dieser Filiale hinzufügen?',
+                    style: TextStyle(
+                      fontSize: 16 * scaling,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.black87,
                     ),
-                    const SizedBox(height: 24),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        TextButton(
-                          style: TextButton.styleFrom(
-                            backgroundColor: const Color(0xFFE2E2E2),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 10),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        style: TextButton.styleFrom(
+                          backgroundColor: const Color(0xFFE2E2E2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Text(
-                            'Überspringen',
-                            style: TextStyle(
-                                color: Color(0xFF5F5F5F), fontSize: 14),
-                          ),
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          },
                         ),
-                        const SizedBox(width: 12),
-                        TextButton(
-                          style: TextButton.styleFrom(
-                            backgroundColor: const Color(0xFFEF8D25),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 10),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                        child: Text(
+                          'Überspringen',
+                          style: TextStyle(
+                            color: const Color(0xFF5F5F5F),
+                            fontSize: 14 * scaling,
                           ),
-                          child: const Text(
-                            'Hinzufügen',
-                            style: TextStyle(color: Colors.white, fontSize: 14),
-                          ),
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                            _addDefaultProductGroups();
-                          },
                         ),
-                      ],
-                    ),
-                  ],
-                ),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                      const SizedBox(width: 12),
+                      TextButton(
+                        style: TextButton.styleFrom(
+                          backgroundColor: const Color(0xFFEF8D25),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          'Hinzufügen',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14 * scaling,
+                          ),
+                        ),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          _addDefaultProductGroups();
+                        },
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ),
-        );
-      },
-    );
-  }
+        ),
+      );
+    },
+  );
+}
+
 
   Future<void> _saveStoreName() async {
     final newStoreName = _storeNameController.text.trim();
@@ -249,124 +255,129 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
     ));
   }
 
-  void _showAddProductGroupDialog() {
-    TextEditingController groupNameController = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 360, minWidth: 300),
-            child: Material(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Warengruppe hinzufügen',
-                      style: TextStyle(
-                        fontSize: 20,
+ void _showAddProductGroupDialog() {
+  TextEditingController groupNameController = TextEditingController();
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      final scaling = context.watch<FontScaling>().factor; // ✅ HIER
+      return Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 360, minWidth: 300),
+          child: Material(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text( // ⛔️ KEIN const
+                    'Warengruppe hinzufügen',
+                    style: TextStyle(
+                      fontSize: 20 * scaling,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: groupNameController,
+                    decoration: InputDecoration(
+                      labelText: 'Bezeichnung',
+                      labelStyle: TextStyle(
+                        color: Colors.black.withOpacity(0.5),
+                        fontSize: 16 * scaling,
+                        fontWeight: FontWeight.w400,
+                      ),
+                      floatingLabelStyle: TextStyle(
+                        color: const Color(0xFF7D9205),
+                        fontSize: 16 * scaling,
                         fontWeight: FontWeight.w500,
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: groupNameController,
-                      decoration: InputDecoration(
-                        labelText: 'Bezeichnung',
-                        labelStyle: TextStyle(
-                          color:
-                              Colors.black.withOpacity(0.5), // nicht fokussiert
-                          fontSize: 16,
-                          fontWeight: FontWeight.w400,
-                        ),
-                        floatingLabelStyle: const TextStyle(
-                          color: Color(0xFF7D9205), // fokussiert
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide:
-                              const BorderSide(color: Color(0xFF7D9205)),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.grey.shade400),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        isDense: true,
-                        filled: true,
-                        fillColor: Colors.white,
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(color: Color(0xFF7D9205)),
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      style: const TextStyle(
-                        fontSize: 16,
-                        color: Colors.black87,
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.grey.shade400),
+                        borderRadius: BorderRadius.circular(10),
                       ),
+                      isDense: true,
+                      filled: true,
+                      fillColor: Colors.white,
                     ),
-                    const SizedBox(height: 24),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        TextButton(
-                          style: TextButton.styleFrom(
-                            backgroundColor: const Color(0xFFE2E2E2),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 10),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                    style: TextStyle( // ⛔️ KEIN const
+                      fontSize: 16 * scaling,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        style: TextButton.styleFrom(
+                          backgroundColor: const Color(0xFFE2E2E2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Text(
-                            'Abbrechen',
-                            style: TextStyle(
-                                color: Color(0xFF5F5F5F), fontSize: 14),
-                          ),
-                          onPressed: () => Navigator.of(context).pop(),
                         ),
-                        const SizedBox(width: 12),
-                        TextButton(
-                          style: TextButton.styleFrom(
-                            backgroundColor: const Color(0xFFEF8D25),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 10),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                        child: Text( // ⛔️ KEIN const
+                          'Abbrechen',
+                          style: TextStyle(
+                            color: const Color(0xFF5F5F5F),
+                            fontSize: 14 * scaling,
                           ),
-                          child: const Text(
-                            'Hinzufügen',
-                            style: TextStyle(color: Colors.white, fontSize: 14),
-                          ),
-                          onPressed: () {
-                            if (groupNameController.text.trim().isNotEmpty) {
-                              _addProductGroupIfNotExists(
-                                  groupNameController.text.trim());
-                              Navigator.of(context).pop();
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Bitte Bezeichnung eingeben.'),
-                                  backgroundColor: Colors.red,
-                                ),
-                              );
-                            }
-                          },
                         ),
-                      ],
-                    )
-                  ],
-                ),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                      const SizedBox(width: 12),
+                      TextButton(
+                        style: TextButton.styleFrom(
+                          backgroundColor: const Color(0xFFEF8D25),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text( // ⛔️ KEIN const
+                          'Hinzufügen',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14 * scaling,
+                          ),
+                        ),
+                        onPressed: () {
+                          if (groupNameController.text.trim().isNotEmpty) {
+                            _addProductGroupIfNotExists(
+                                groupNameController.text.trim());
+                            Navigator.of(context).pop();
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Bitte Bezeichnung eingeben.'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    ],
+                  )
+                ],
               ),
             ),
           ),
-        );
-      },
-    );
-  }
+        ),
+      );
+    },
+  );
+}
+
 
   Future<void> _addProductGroupIfNotExists(String name) async {
     final existingGroup = await widget.productGroupService
@@ -585,12 +596,14 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
 
   @override
   Widget build(BuildContext context) {
+      final scaling = context.watch<FontScaling>().factor; 
     return Scaffold(
       appBar: AppBar(
         title: _isEditMode
             ? TextField(
                 controller: _storeNameController,
-                style: const TextStyle(color: Color.fromARGB(255, 35, 34, 34)),
+                style: const TextStyle(color: Color.fromARGB(255, 35, 34, 34),  fontSize: 26 
+                 ),
                 decoration: const InputDecoration(
                   hintText: "Ladenname bearbeiten",
                   hintStyle: TextStyle(color: Color.fromARGB(136, 160, 61, 61)),
@@ -600,7 +613,7 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
             : Text(storename,
                 style: const TextStyle(
                     color: Color.fromARGB(255, 26, 25, 25), fontSize: 26)),
-        backgroundColor: Color.fromARGB(255, 255, 255, 255),
+        backgroundColor: const Color.fromARGB(255, 255, 255, 255),
         actions: [
           IconButton(
             icon: const Icon(Icons.auto_awesome_motion,
@@ -623,10 +636,10 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
               children: [
                 Expanded(
                   child: _productGroups.isEmpty
-                      ? Center(
+                      ? const Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
-                            children: const [
+                            children: [
                               Icon(Icons.category_outlined,
                                   size: 72, color: Color(0xFFBDBDBD)),
                               SizedBox(height: 16),
@@ -674,9 +687,9 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
                                     horizontal: 35.0, vertical: 4),
                                 title: Text(
                                   group.name,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: Color.fromARGB(255, 31, 31, 31),
-                                    fontSize: 20,
+                                    fontSize: 20 * scaling,
                                   ),
                                 ),
                                 trailing: SizedBox(
@@ -717,10 +730,10 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
                           child: ElevatedButton.icon(
                             onPressed: _deleteStore,
                             icon: const Icon(Icons.delete, color: Colors.white),
-                            label: const Text(
+                            label: Text(
                               "Laden löschen",
                               style: TextStyle(
-                                fontSize: 17,
+                                fontSize: 17 * scaling,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -750,8 +763,8 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(32),
                               ),
-                              child: const Icon(Icons.add, size: 50),
                               tooltip: 'Warengruppe hinzufügen',
+                              child: const Icon(Icons.add, size: 50),
                             ),
                           ),
                         ),

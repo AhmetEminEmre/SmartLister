@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:isar/isar.dart';
-import 'package:flutter/foundation.dart';
 
 part 'itemlist.g.dart';
 

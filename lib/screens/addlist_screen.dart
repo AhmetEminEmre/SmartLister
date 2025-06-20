@@ -314,9 +314,9 @@ class _CreateListScreenState extends State<CreateListScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Neue Einkaufsliste erstellen"),
-        backgroundColor: Color.fromARGB(255, 255, 255, 255),
+        backgroundColor: const Color.fromARGB(255, 255, 255, 255),
       ),
-      backgroundColor: Color.fromARGB(255, 255, 255, 255),
+      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
      body: LayoutBuilder(
   builder: (context, constraints) {
     return SingleChildScrollView(
@@ -330,21 +330,25 @@ class _CreateListScreenState extends State<CreateListScreen> {
               children: <Widget>[
                 TextField(
                   controller: _listNameController,
-                  cursorColor: Color.fromARGB(255, 37, 37, 37),
+                  cursorColor: const Color.fromARGB(255, 37, 37, 37),
+                  
+                  textCapitalization: TextCapitalization.words,
                   decoration: InputDecoration(
                     label: RichText(
-                      text: TextSpan(
+                      text: const TextSpan(
                         text: 'Name',
-                        style: const TextStyle(
+                        
+                        style: TextStyle(
                           color: Color.fromARGB(255, 46, 46, 46),
                           fontSize: 16,
                         ),
-                        children: const [
+                        children: [
                           TextSpan(
                             text: ' *',
                             style: TextStyle(
                               color: Colors.red,
                               fontSize: 16,
+                              
                             ),
                           ),
                         ],
@@ -480,12 +484,12 @@ class _CreateListScreenState extends State<CreateListScreen> {
                 ),
 
                 const SizedBox(height: 20),
-                Row(
+                const Row(
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: Divider(color: Color(0xFFBDBDBD), thickness: 1),
                     ),
-                    const Padding(
+                    Padding(
                       padding: EdgeInsets.symmetric(horizontal: 8.0),
                       child: Text(
                         'ODER',
@@ -496,7 +500,7 @@ class _CreateListScreenState extends State<CreateListScreen> {
                         ),
                       ),
                     ),
-                    const Expanded(
+                    Expanded(
                       child: Divider(color: Color(0xFFBDBDBD), thickness: 1),
                     ),
                   ],
@@ -539,7 +543,7 @@ class _CreateListScreenState extends State<CreateListScreen> {
                   ),
                 ),
 
-                const Spacer(), // 👈 schiebt den Button ganz ans untere Ende
+              const SizedBox(height: 390),// 👈 schiebt den Button ganz ans untere Ende
 
                 SizedBox(
                   width: double.infinity,
@@ -548,35 +552,28 @@ class _CreateListScreenState extends State<CreateListScreen> {
                             _selectedImagePath != null)
                         ? _createList
                         : null,
-                    child: const Text(
-                      'Weiter',
-                      style: TextStyle(
-                        fontSize: 23,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
                     style: ButtonStyle(
                       backgroundColor:
-                          MaterialStateProperty.resolveWith<Color>(
-                        (Set<MaterialState> states) {
-                          if (states.contains(MaterialState.disabled)) {
+                          WidgetStateProperty.resolveWith<Color>(
+                        (Set<WidgetState> states) {
+                          if (states.contains(WidgetState.disabled)) {
                             return const Color.fromARGB(255, 255, 255, 255);
                           }
                           return Colors.white;
                         },
                       ),
                       foregroundColor:
-                          MaterialStateProperty.resolveWith<Color>(
-                        (Set<MaterialState> states) {
-                          if (states.contains(MaterialState.disabled)) {
+                          WidgetStateProperty.resolveWith<Color>(
+                        (Set<WidgetState> states) {
+                          if (states.contains(WidgetState.disabled)) {
                             return const Color.fromARGB(255, 249, 217, 169);
                           }
                           return const Color(0xFFE5A462);
                         },
                       ),
-                      side: MaterialStateProperty.resolveWith<BorderSide>(
-                        (Set<MaterialState> states) {
-                          if (states.contains(MaterialState.disabled)) {
+                      side: WidgetStateProperty.resolveWith<BorderSide>(
+                        (Set<WidgetState> states) {
+                          if (states.contains(WidgetState.disabled)) {
                             return const BorderSide(
                               color: Color.fromARGB(255, 255, 226, 182),
                               width: 3.0,
@@ -588,13 +585,20 @@ class _CreateListScreenState extends State<CreateListScreen> {
                           );
                         },
                       ),
-                      padding: MaterialStateProperty.all(
+                      padding: WidgetStateProperty.all(
                         const EdgeInsets.symmetric(vertical: 16.0),
                       ),
-                      shape: MaterialStateProperty.all(
+                      shape: WidgetStateProperty.all(
                         RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12.0),
                         ),
+                      ),
+                    ),
+                    child: const Text(
+                      'Weiter',
+                      style: TextStyle(
+                        fontSize: 23,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),

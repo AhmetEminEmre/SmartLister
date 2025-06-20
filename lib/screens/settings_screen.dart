@@ -45,14 +45,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         fontSize: 16,
                         fontWeight: FontWeight.w400,
                       ),
-                      floatingLabelStyle: TextStyle(
+                      floatingLabelStyle: const TextStyle(
                         // fokussierter Zustand
                         color: Color.fromARGB(255, 125, 146, 5),
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Color.fromARGB(255, 125, 146, 5)),
+                        borderSide: const BorderSide(color: Color.fromARGB(255, 125, 146, 5)),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       enabledBorder: OutlineInputBorder(
@@ -130,7 +130,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color.fromARGB(255, 255, 255, 255),
+      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
       appBar: AppBar(
         title: const Text('Einstellungen'),
         backgroundColor: const Color(0xFFEDF2D0),

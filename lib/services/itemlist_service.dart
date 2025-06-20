@@ -36,7 +36,7 @@ class ItemListService {
 
   Future<Itemlist?> fetchItemListById(int id) async {
     if (_fakeDb != null) {
-      return await _fakeDb!.getById(id);
+      return await _fakeDb.getById(id);
     }
     // coverage:ignore-start
     return await _isar!.itemlists.get(id);

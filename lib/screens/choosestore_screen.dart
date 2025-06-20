@@ -160,13 +160,13 @@ class _StoreScreenState extends State<StoreScreen> {
                   }).toList(),
                   decoration: InputDecoration(
                     label: RichText(
-                      text: TextSpan(
+                      text: const TextSpan(
                         text: 'Bitte auswählen...',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: Color.fromARGB(255, 46, 46, 46),
                           fontSize: 16,
                         ),
-                        children: const [
+                        children: [
                           TextSpan(
                             text: ' *',
                             style:
@@ -225,14 +225,6 @@ class _StoreScreenState extends State<StoreScreen> {
                         );
                       }
                     : null,
-                child: const Text(
-                  'Fertigstellen',
-                  style: TextStyle(
-                    fontSize: 23,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
                 style: ButtonStyle(
                   backgroundColor:
                       WidgetStateProperty.resolveWith<Color>(
@@ -253,6 +245,14 @@ class _StoreScreenState extends State<StoreScreen> {
                   ),
                   minimumSize:
                       WidgetStateProperty.all(const Size.fromHeight(56)),
+                ),
+                child: const Text(
+                  'Fertigstellen',
+                  style: TextStyle(
+                    fontSize: 23,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ),

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:isar/isar.dart';
 import '../objects/shop.dart';
 import '../services/shop_service.dart';
 
@@ -57,18 +56,19 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
             TextField(
               controller: _storeNameController,
               cursorColor: const Color.fromARGB(255, 37, 37, 37),
+              textCapitalization: TextCapitalization.words,
               onChanged: (value) {
                 setState(() {});
               },
               decoration: InputDecoration(
                 label: RichText(
-                  text: TextSpan(
+                  text: const TextSpan(
                     text: 'Name',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: Color.fromARGB(255, 46, 46, 46),
                       fontSize: 16,
                     ),
-                    children: const [
+                    children: [
                       TextSpan(
                         text: ' *',
                         style: TextStyle(
@@ -125,24 +125,25 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
                     name,
                     style: const TextStyle(
                       color: Color(0xFF212121),
+                      fontSize: 18, 
                     ),
                   ),
                 );
               }).toList(),
               decoration: InputDecoration(
                 label: RichText(
-                  text: TextSpan(
+                  text: const TextSpan(
                     text: 'Bild auswählen',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: Color.fromARGB(255, 52, 52, 52),
                       fontSize: 16,
                     ),
-                    children: const [
+                    children: [
                       TextSpan(
                         text: ' *',
                         style: TextStyle(
                           color: Colors.red,
-                          fontSize: 16,
+                          fontSize: 20,
                         ),
                       ),
                     ],
@@ -187,35 +188,35 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
                         _selectedImagePath != null)
                     ? _addStore
                     : null,
-                child: const Text(
-                  'Laden hinzufügen',
-                  style: TextStyle(
-                    fontSize: 23,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
                 style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.resolveWith<Color>(
-                    (Set<MaterialState> states) {
-                      if (states.contains(MaterialState.disabled)) {
+                  backgroundColor: WidgetStateProperty.resolveWith<Color>(
+                    (Set<WidgetState> states) {
+                      if (states.contains(WidgetState.disabled)) {
                         return const Color(0xFFFFD9B3);
                       }
                       return const Color.fromARGB(255, 239, 141, 37);
                     },
                   ),
                   foregroundColor:
-                      MaterialStateProperty.all(Colors.white), // Textfarbe
-                  padding: MaterialStateProperty.all(
+                      WidgetStateProperty.all(Colors.white), // Textfarbe
+                  padding: WidgetStateProperty.all(
                     const EdgeInsets.symmetric(vertical: 16),
                   ),
-                  shape: MaterialStateProperty.all(
+                  shape: WidgetStateProperty.all(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  minimumSize: MaterialStateProperty.all(
+                  minimumSize: WidgetStateProperty.all(
                     const Size.fromHeight(56),
+                  ),
+                ),
+                child: const Text(
+                  'Laden hinzufügen',
+                  style: TextStyle(
+                    fontSize: 23,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
                   ),
                 ),
               ),
