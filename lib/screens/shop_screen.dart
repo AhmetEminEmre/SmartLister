@@ -242,7 +242,7 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
     _updateProductGroupOrder();
   }
 
-  Future <void> _updateProductGroupOrder() async {
+  Future<void> _updateProductGroupOrder() async {
     for (int i = 0; i < _productGroups.length; i++) {
       _productGroups[i].order = i;
     }
@@ -398,7 +398,11 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
         backgroundColor: Colors.green,
       ));
 
-      Navigator.pop(context, productGroup);
+      //Navigator.pop(context, productGroup);
+
+      setState(() {
+        _productGroups.add(productGroup);
+      });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         content: Text('Warengruppe existiert bereits.'),
