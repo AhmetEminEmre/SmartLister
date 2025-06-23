@@ -49,6 +49,8 @@ class _ItemListScreenState extends State<ItemListScreen> {
       "Kein Shop gefunden"; // Fallback falls kein Shop existiert
   Set<String> expandedGroups = {};
   String? _lastSelectedGroupId;
+  String _excludedItemsRaw = '';
+  Set<String> _excludedItemsSet = {};
 
   String? _editingItemName;
   String? _editingGroupName;
@@ -191,29 +193,26 @@ class _ItemListScreenState extends State<ItemListScreen> {
       expandedGroups =
           oldExpanded.intersection(orderedGroupedItems.keys.toSet());
     });
-
-    _debugPrintState("AFTER loadItems");
   }
 
-  void _debugPrintState([String tag = "DEBUG"]) {
-    debugPrint("========== $tag ==========");
-    debugPrint("LIST NAME: ${widget.listName}");
-    debugPrint("SHOP ID: $_selectedShopId  |  SHOP NAME: $_selectedShopName");
-    debugPrint("INITIAL SHOP ID: ${widget.initialStoreId}");
-    debugPrint("ItemsByGroup:");
-    itemsByGroup.forEach((groupName, items) {
-      debugPrint("  -> $groupName:");
-      for (var item in items) {
-        debugPrint(
-            "     - ${item['name']} | isDone: ${item['isDone']} | groupId: ${item['groupId']}");
-      }
+  Future<void> loadExcludedItems() async {
+    if (_selectedShopId == null) return;
+
+    final shop =
+        await widget.shopService.fetchShopById(int.parse(_selectedShopId!));
+    final raw = shop?.excludedItems ?? '';
+
+    setState(() {
+      _excludedItemsRaw = raw;
+      _excludedItemsSet = raw
+          .split(',')
+          .map((e) => e.trim().toLowerCase())
+          .where((e) => e.isNotEmpty)
+          .toSet();
     });
-
-
-    debugPrint("=====================================");
   }
 
-  void loadShops() async {
+  Future<void> loadShops() async {
     final shops = await widget.shopService.fetchShops();
 
     final list = await widget.itemListService
@@ -234,7 +233,7 @@ class _ItemListScreenState extends State<ItemListScreen> {
     });
 
     await loadItems();
-    _debugPrintState("AFTER loadItems");
+    await loadExcludedItems();
   }
 
   void _updateShop(String newShopId) async {
@@ -289,7 +288,23 @@ class _ItemListScreenState extends State<ItemListScreen> {
       nameToGroup[g.name] = g;
     }
 
+    final excludedRaw = newShop.excludedItems ?? '';
+    final excludedSet = excludedRaw
+        .split(',')
+        .map((e) => e.trim().toLowerCase())
+        .where((e) => e.isNotEmpty)
+        .toSet();
+
+    List<Map<String, dynamic>> acceptedItems = [];
+    List<String> skippedItemNames = [];
+
     for (var item in currentItems) {
+      final itemName = item['name'].toString().toLowerCase();
+      if (excludedSet.contains(itemName)) {
+        skippedItemNames.add(item['name']);
+        continue;
+      }
+
       final originalName = allGroups
           .firstWhere(
             (g) => g.id.toString() == item['groupId'],
@@ -298,9 +313,10 @@ class _ItemListScreenState extends State<ItemListScreen> {
           )
           .name;
       item['groupId'] = nameToGroup[originalName]!.id.toString();
+      acceptedItems.add(item);
     }
 
-    list.setItems(currentItems);
+    list.setItems(acceptedItems);
     list.shopId = newShopId;
     await widget.itemListService.updateItemList(list);
 
@@ -311,7 +327,19 @@ class _ItemListScreenState extends State<ItemListScreen> {
     });
 
     await loadItems();
-    _debugPrintState("AFTER updateShop");
+    await loadExcludedItems();
+
+    if (skippedItemNames.isNotEmpty) {
+      final msg = skippedItemNames.length == 1
+          ? 'Der Artikel "${skippedItemNames.first}" wurde nicht übernommen, da er in diesem Laden nicht verfügbar ist.'
+          : '${skippedItemNames.length} Artikel wurden nicht übernommen, da sie in diesem Laden nicht verfügbar sind.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(msg),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   Future<void> toggleItemDone(String groupName, int itemIndex) async {
@@ -334,7 +362,6 @@ class _ItemListScreenState extends State<ItemListScreen> {
         list.setItems(currentItems);
 
         await widget.itemListService.updateItemList(list);
-        _debugPrintState("AFTER toggleItemDone");
       }
     }
   }
@@ -366,6 +393,7 @@ class _ItemListScreenState extends State<ItemListScreen> {
   void _showAddItemDialog() async {
     TextEditingController itemNameController = TextEditingController();
     String? selectedGroupId = _lastSelectedGroupId;
+    String? errorMessage;
 
     final productGroups = await widget.productGroupService
         .fetchProductGroupsByStoreIdSorted(_selectedShopId!);
@@ -431,6 +459,18 @@ class _ItemListScreenState extends State<ItemListScreen> {
                     ),
                     style: const TextStyle(color: Colors.black87),
                   ),
+                  if (errorMessage != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(
+                        errorMessage!,
+                        style: const TextStyle(
+                          color: Colors.red,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
                   const SizedBox(height: 20),
 
                   DropdownButtonFormField<String>(
@@ -476,24 +516,30 @@ class _ItemListScreenState extends State<ItemListScreen> {
                     alignment: Alignment.centerLeft,
                     child: TextButton(
                       onPressed: () async {
-                        final selectedShop = _availableShops.firstWhere(
-                          (shop) => shop.id.toString() == _selectedShopId!,
-                        );
+                        final selectedShop = await widget.shopService
+                            .fetchShopById(int.parse(_selectedShopId!));
 
-                        final neueGruppe = await Navigator.push(
+                        final result = await Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) => EditStoreScreen(
-                              storeId: selectedShop.id.toString(),
+                              storeId: selectedShop!.id.toString(),
                               storeName: selectedShop.name,
+                              excludedItems: selectedShop.excludedItems ?? '',
                               productGroupService: widget.productGroupService,
                               shopService: widget.shopService,
                               itemListService: widget.itemListService,
                             ),
                           ),
                         );
+                        
+                        await loadShops();
+                        await loadItems();
+                        await loadExcludedItems();
 
-                        if (neueGruppe != null && mounted) {
+                        if (result is Productgroup) {
+                          _availableShops =
+                              await widget.shopService.fetchShops();
                           final aktualisierteProductGroups = await widget
                               .productGroupService
                               .fetchProductGroupsByStoreIdSorted(
@@ -508,11 +554,12 @@ class _ItemListScreenState extends State<ItemListScreen> {
                               );
                             }).toList();
 
-                            selectedGroupId = neueGruppe.id.toString();
-                            _lastSelectedGroupId = neueGruppe.id.toString();
+                            selectedGroupId = result.id.toString();
+                            _lastSelectedGroupId = result.id.toString();
                           });
 
                           await loadItems();
+                          await loadExcludedItems();
                         }
                       },
                       child: const Text(
@@ -561,8 +608,18 @@ class _ItemListScreenState extends State<ItemListScreen> {
                         onPressed: () async {
                           if (itemNameController.text.isNotEmpty &&
                               selectedGroupId != null) {
-                            _addItemToList(
-                                itemNameController.text, selectedGroupId!);
+                            final newItemName =
+                                itemNameController.text.trim().toLowerCase();
+
+                            if (_excludedItemsSet.contains(newItemName)) {
+                              setState(() {
+                                errorMessage =
+                                    'Der Artikel "$newItemName" ist in diesem Laden nicht verfügbar.';
+                              });
+                              return;
+                            }
+
+                            _addItemToList(newItemName, selectedGroupId!);
                             Navigator.of(context).pop();
                           }
                         },

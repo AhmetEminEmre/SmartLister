@@ -17,13 +17,18 @@ const EinkaufsladenSchema = CollectionSchema(
   name: r'Einkaufsladen',
   id: 2745446697380321082,
   properties: {
-    r'imagePath': PropertySchema(
+    r'excludedItems': PropertySchema(
       id: 0,
+      name: r'excludedItems',
+      type: IsarType.string,
+    ),
+    r'imagePath': PropertySchema(
+      id: 1,
       name: r'imagePath',
       type: IsarType.string,
     ),
     r'name': PropertySchema(
-      id: 1,
+      id: 2,
       name: r'name',
       type: IsarType.string,
     )
@@ -49,6 +54,12 @@ int _einkaufsladenEstimateSize(
 ) {
   var bytesCount = offsets.last;
   {
+    final value = object.excludedItems;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
     final value = object.imagePath;
     if (value != null) {
       bytesCount += 3 + value.length * 3;
@@ -64,8 +75,9 @@ void _einkaufsladenSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeString(offsets[0], object.imagePath);
-  writer.writeString(offsets[1], object.name);
+  writer.writeString(offsets[0], object.excludedItems);
+  writer.writeString(offsets[1], object.imagePath);
+  writer.writeString(offsets[2], object.name);
 }
 
 Einkaufsladen _einkaufsladenDeserialize(
@@ -75,8 +87,9 @@ Einkaufsladen _einkaufsladenDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = Einkaufsladen(
-    imagePath: reader.readStringOrNull(offsets[0]),
-    name: reader.readString(offsets[1]),
+    excludedItems: reader.readStringOrNull(offsets[0]),
+    imagePath: reader.readStringOrNull(offsets[1]),
+    name: reader.readString(offsets[2]),
   );
   object.id = id;
   return object;
@@ -92,6 +105,8 @@ P _einkaufsladenDeserializeProp<P>(
     case 0:
       return (reader.readStringOrNull(offset)) as P;
     case 1:
+      return (reader.readStringOrNull(offset)) as P;
+    case 2:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -194,6 +209,160 @@ extension EinkaufsladenQueryWhere
 
 extension EinkaufsladenQueryFilter
     on QueryBuilder<Einkaufsladen, Einkaufsladen, QFilterCondition> {
+  QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterFilterCondition>
+      excludedItemsIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'excludedItems',
+      ));
+    });
+  }
+
+  QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterFilterCondition>
+      excludedItemsIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'excludedItems',
+      ));
+    });
+  }
+
+  QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterFilterCondition>
+      excludedItemsEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'excludedItems',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterFilterCondition>
+      excludedItemsGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'excludedItems',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterFilterCondition>
+      excludedItemsLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'excludedItems',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterFilterCondition>
+      excludedItemsBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'excludedItems',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterFilterCondition>
+      excludedItemsStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'excludedItems',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterFilterCondition>
+      excludedItemsEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'excludedItems',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterFilterCondition>
+      excludedItemsContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'excludedItems',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterFilterCondition>
+      excludedItemsMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'excludedItems',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterFilterCondition>
+      excludedItemsIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'excludedItems',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterFilterCondition>
+      excludedItemsIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'excludedItems',
+        value: '',
+      ));
+    });
+  }
+
   QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterFilterCondition> idEqualTo(
       Id value) {
     return QueryBuilder.apply(this, (query) {
@@ -546,6 +715,20 @@ extension EinkaufsladenQueryLinks
 
 extension EinkaufsladenQuerySortBy
     on QueryBuilder<Einkaufsladen, Einkaufsladen, QSortBy> {
+  QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterSortBy>
+      sortByExcludedItems() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'excludedItems', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterSortBy>
+      sortByExcludedItemsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'excludedItems', Sort.desc);
+    });
+  }
+
   QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterSortBy> sortByImagePath() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'imagePath', Sort.asc);
@@ -574,6 +757,20 @@ extension EinkaufsladenQuerySortBy
 
 extension EinkaufsladenQuerySortThenBy
     on QueryBuilder<Einkaufsladen, Einkaufsladen, QSortThenBy> {
+  QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterSortBy>
+      thenByExcludedItems() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'excludedItems', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterSortBy>
+      thenByExcludedItemsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'excludedItems', Sort.desc);
+    });
+  }
+
   QueryBuilder<Einkaufsladen, Einkaufsladen, QAfterSortBy> thenById() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.asc);
@@ -614,6 +811,14 @@ extension EinkaufsladenQuerySortThenBy
 
 extension EinkaufsladenQueryWhereDistinct
     on QueryBuilder<Einkaufsladen, Einkaufsladen, QDistinct> {
+  QueryBuilder<Einkaufsladen, Einkaufsladen, QDistinct> distinctByExcludedItems(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'excludedItems',
+          caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<Einkaufsladen, Einkaufsladen, QDistinct> distinctByImagePath(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -634,6 +839,13 @@ extension EinkaufsladenQueryProperty
   QueryBuilder<Einkaufsladen, int, QQueryOperations> idProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'id');
+    });
+  }
+
+  QueryBuilder<Einkaufsladen, String?, QQueryOperations>
+      excludedItemsProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'excludedItems');
     });
   }
 

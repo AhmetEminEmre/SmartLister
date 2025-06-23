@@ -35,4 +35,19 @@ class FakeShopDB {
     }
   }
 
+  Future<void> updateExcludedItems(int shopId, String excludedItems) async {
+  final index = _shops.indexWhere((s) => s.id == shopId);
+  if (index != -1) {
+    _shops[index].excludedItems = excludedItems;
+  }
+}
+
+  Future<void> updateShop(Einkaufsladen shop) async {
+    final index = _shops.indexWhere((s) => s.id == shop.id);
+    if (index != -1) {
+      _shops[index] = shop;
+    } 
+  }
+
+
 }

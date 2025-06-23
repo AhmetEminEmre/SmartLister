@@ -6,11 +6,11 @@ class ShopService {
   final Isar? _isar;
   final FakeShopDB? _fakeDb;
 
-    // coverage:ignore-start
+  // coverage:ignore-start
   ShopService(Isar isar)
       : _isar = isar,
         _fakeDb = null;
-    // coverage:ignore-end
+  // coverage:ignore-end
 
   ShopService.fake(FakeShopDB fakeDb)
       : _fakeDb = fakeDb,
@@ -28,7 +28,6 @@ class ShopService {
       await _fakeDb.add(shop);
       return shop.id;
     }
-
     // coverage:ignore-start
     final id = await _isar!.writeTxn(() async {
       return await _isar.einkaufsladens.put(shop);
@@ -42,7 +41,6 @@ class ShopService {
       await _fakeDb.delete(shopId);
       return;
     }
-
     // coverage:ignore-start
     await _isar!.writeTxn(() async {
       await _isar.einkaufsladens.delete(shopId);
@@ -64,7 +62,48 @@ class ShopService {
     // coverage:ignore-end
   }
 
-  // coverage:ignore-start  
+  Future<void> updateExcludedItemsById(int shopId, String rawItems) async {
+    final cleanItems = rawItems.contains(',')
+        ? rawItems
+            .split(',')
+            .map((e) => e.trim())
+            .where((e) => e.isNotEmpty)
+            .join(',')
+        : rawItems.trim();
+
+    final shop = await fetchShopById(shopId);
+    if (shop != null) {
+      shop.excludedItems = cleanItems;
+      await updateShop(shop);
+    } else {
+      print('not found');
+    }
+  }
+
+  Future<String?> getExcludedItemsById(int shopId) async {
+    if (_fakeDb != null) {
+      final shop = await _fakeDb.getById(shopId);
+      return shop?.excludedItems;
+    }
+    // coverage:ignore-start
+    final shop = await fetchShopById(shopId);
+    return shop?.excludedItems;
+    // coverage:ignore-end
+  }
+
+  Future<void> updateShop(Einkaufsladen shop) async {
+    if (_fakeDb != null) {
+      await _fakeDb.updateShop(shop);
+      return;
+    }
+    // coverage:ignore-start
+    await _isar!.writeTxn(() async {
+      await _isar.einkaufsladens.put(shop);
+    });
+    // coverage:ignore-end
+  }
+
+  // coverage:ignore-start
   Stream<void> watchShops() {
     return _isar!.einkaufsladens.watchLazy().asBroadcastStream();
   }
@@ -76,7 +115,6 @@ class ShopService {
 
     while (true) {
       final existingShop = await fetchShopByName(uniqueName);
-
       if (existingShop == null) {
         return uniqueName;
       } else {

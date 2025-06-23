@@ -5,6 +5,7 @@ import 'package:smart/services/shop_service.dart';
 import 'package:smart/services/itemlist_service.dart';
 import 'package:provider/provider.dart';
 import 'package:smart/font_scaling.dart';
+import 'package:flutter/services.dart';
 
 class EditStoreScreen extends StatefulWidget {
   final String storeId;
@@ -13,19 +14,53 @@ class EditStoreScreen extends StatefulWidget {
   final ProductGroupService productGroupService;
   final ShopService shopService;
   final ItemListService itemListService;
+  final String excludedItems;
 
-  const EditStoreScreen({
-    super.key,
-    required this.storeId,
-    required this.storeName,
-    this.isNewStore = false,
-    required this.productGroupService,
-    required this.shopService,
-    required this.itemListService,
-  });
+  const EditStoreScreen(
+      {super.key,
+      required this.storeId,
+      required this.storeName,
+      this.isNewStore = false,
+      required this.productGroupService,
+      required this.shopService,
+      required this.itemListService,
+      required this.excludedItems});
 
   @override
   _EditStoreScreenState createState() => _EditStoreScreenState();
+}
+
+class CommaSeparatedFormatter extends TextInputFormatter {
+  final RegExp allowed = RegExp(r'[a-zA-Z0-9, ]');
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final buffer = StringBuffer();
+    int selectionIndex = newValue.selection.baseOffset;
+    int removedCount = 0;
+
+    for (int i = 0; i < newValue.text.length; i++) {
+      final char = newValue.text[i];
+      if (allowed.hasMatch(char)) {
+        buffer.write(char);
+      } else {
+        if (i < selectionIndex) removedCount++;
+      }
+    }
+
+    final filtered = buffer.toString();
+    final newSelection = selectionIndex - removedCount;
+
+    return TextEditingValue(
+      text: filtered,
+      selection: TextSelection.collapsed(
+        offset: newSelection.clamp(0, filtered.length),
+      ),
+    );
+  }
 }
 
 class _EditStoreScreenState extends State<EditStoreScreen> {
@@ -34,6 +69,7 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
   bool _isEditMode = false;
   late TextEditingController _storeNameController;
   late String storename;
+  String _excludedItems = '';
 
   @override
   void initState() {
@@ -41,12 +77,22 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
     _storeNameController = TextEditingController(text: widget.storeName);
     storename = widget.storeName;
     _fetchProductGroups();
+    _loadExcludedItems();
+    _debugLogFullShop();
 
     if (widget.isNewStore) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _promptAddDefaultProductGroups();
       });
     }
+  }
+
+  Future<void> _loadExcludedItems() async {
+    final excluded = await widget.shopService
+        .getExcludedItemsById(int.parse(widget.storeId));
+    setState(() {
+      _excludedItems = excluded ?? '';
+    });
   }
 
   Future<void> _fetchProductGroups() async {
@@ -56,6 +102,20 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
       _productGroups = productGroups;
       _isLoading = false;
     });
+  }
+
+  Future<void> _debugLogFullShop() async {
+    final shop =
+        await widget.shopService.fetchShopById(int.parse(widget.storeId));
+    if (shop != null) {
+      print("🔎 FULL SHOP DEBUG:");
+      print("ID: ${shop.id}");
+      print("Name: ${shop.name}");
+      print("ImagePath: ${shop.imagePath}");
+      print("ExcludedItems: ${shop.excludedItems}");
+    } else {
+      print("❌ SHOP NOT FOUND");
+    }
   }
 
   Future<void> _addDefaultProductGroups() async {
@@ -99,7 +159,7 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
     showDialog(
       context: context,
       builder: (context) {
-        final scaling = context.watch<FontScaling>().factor; // ✅ HIER
+        final scaling = context.watch<FontScaling>().factor;
         return Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 360, minWidth: 300),
@@ -208,7 +268,7 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
     if (shop != null) {
       shop.name = newStoreName;
       storename = newStoreName;
-      await widget.shopService.addShop(shop);
+      await widget.shopService.updateShop(shop);
     }
 
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -259,7 +319,7 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        final scaling = context.watch<FontScaling>().factor; // ✅ HIER
+        final scaling = context.watch<FontScaling>().factor;
         return Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 360, minWidth: 300),
@@ -378,6 +438,162 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
     );
   }
 
+  void _showExcludedItemsDialog() async {
+    final scaling = context.read<FontScaling>().factor;
+    final currentExcluded = await widget.shopService
+            .getExcludedItemsById(int.parse(widget.storeId)) ??
+        '';
+
+    final controller = TextEditingController(text: currentExcluded);
+
+    String? errorMessage;
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 360, minWidth: 300),
+                child: Material(
+                  borderRadius: BorderRadius.circular(16),
+                  color: Colors.white,
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Nicht verfügbare Artikel',
+                          style: TextStyle(
+                            fontSize: 20 * scaling,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: controller,
+                          inputFormatters: [CommaSeparatedFormatter()],
+                          decoration: InputDecoration(
+                            hintText: 'Artikel kommasepariert eingeben',
+                            focusedBorder: OutlineInputBorder(
+                              borderSide:
+                                  const BorderSide(color: Color(0xFF7D9205)),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderSide:
+                                  BorderSide(color: Colors.grey.shade400),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            isDense: true,
+                            filled: true,
+                            fillColor: Colors.white,
+                            errorText: errorMessage,
+                          ),
+                          style: TextStyle(
+                            fontSize: 16 * scaling,
+                            color: Colors.black87,
+                          ),
+                          maxLines: null,
+                        ),
+                        const SizedBox(height: 24),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            TextButton(
+                              style: TextButton.styleFrom(
+                                backgroundColor: const Color(0xFFE2E2E2),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 10),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: Text(
+                                'Abbrechen',
+                                style: TextStyle(
+                                  color: const Color(0xFF5F5F5F),
+                                  fontSize: 14 * scaling,
+                                ),
+                              ),
+                              onPressed: () => Navigator.pop(context),
+                            ),
+                            const SizedBox(width: 12),
+                            TextButton(
+                              style: TextButton.styleFrom(
+                                backgroundColor: const Color(0xFFEF8D25),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 10),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: Text(
+                                'Speichern',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14 * scaling,
+                                ),
+                              ),
+                              onPressed: () async {
+                                final rawText = controller.text.trim();
+
+                                if (rawText.endsWith(',')) {
+                                  setState(() {
+                                    errorMessage = 'Bitte kein Komma am Ende.';
+                                  });
+                                  return;
+                                }
+
+                                final cleaned = rawText
+                                    .split(',')
+                                    .map((e) => e.trim())
+                                    .where((e) => e.isNotEmpty)
+                                    .join(', ');
+
+                                final currentRaw = currentExcluded.trim();
+
+                                if (rawText == currentRaw) {
+                                  Navigator.pop(context);
+                                  return;
+                                }
+
+                                await widget.shopService
+                                    .updateExcludedItemsById(
+                                  int.parse(widget.storeId),
+                                  cleaned,
+                                );
+
+                                Navigator.pop(
+                                    context, true);
+
+                                await _loadExcludedItems();
+
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text(
+                                          'Nicht verfügbare Artikel gespeichert')),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   Future<void> _addProductGroupIfNotExists(String name) async {
     final existingGroup = await widget.productGroupService
         .fetchByNameAndShop(name, widget.storeId);
@@ -397,8 +613,6 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
         content: Text('Warengruppe hinzugefügt.'),
         backgroundColor: Colors.green,
       ));
-
-      //Navigator.pop(context, productGroup);
 
       setState(() {
         _productGroups.add(productGroup);
@@ -557,7 +771,6 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
       return;
     }
 
-    // 🟢 Fall: Es gibt keine verknüpften Einkaufslisten
     final confirmDelete = await showDialog<bool>(
       context: context,
       builder: (context) => Center(
@@ -641,22 +854,64 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
     final scaling = context.watch<FontScaling>().factor;
     return Scaffold(
       appBar: AppBar(
-        title: _isEditMode
-            ? TextField(
-                controller: _storeNameController,
-                style: const TextStyle(
-                    color: Color.fromARGB(255, 35, 34, 34), fontSize: 26),
-                decoration: const InputDecoration(
-                  hintText: "Ladenname bearbeiten",
-                  hintStyle: TextStyle(color: Color.fromARGB(136, 160, 61, 61)),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _isEditMode
+                ? TextField(
+                    controller: _storeNameController,
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 26 * scaling,
+                    ),
+                    decoration: const InputDecoration(
+                      hintText: "Ladenname bearbeiten",
+                      border: InputBorder.none,
+                    ),
+                    onSubmitted: (_) => _toggleEditMode(),
+                  )
+                : Text(
+                    storename,
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 26 * scaling,
+                    ),
+                  ),
+            if (_excludedItems.trim().isNotEmpty)
+              SizedBox(
+                height: 20,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      Text(
+                        'N/A: ',
+                        style: TextStyle(
+                          color: Colors.red,
+                          fontSize: 12 * scaling,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        _excludedItems,
+                        style: TextStyle(
+                          color: Colors.red,
+                          fontSize: 12 * scaling,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                onSubmitted: (_) => _toggleEditMode(),
-              )
-            : Text(storename,
-                style: const TextStyle(
-                    color: Color.fromARGB(255, 26, 25, 25), fontSize: 26)),
+              ),
+          ],
+        ),
         backgroundColor: const Color.fromARGB(255, 255, 255, 255),
         actions: [
+          IconButton(
+            icon:
+                const Icon(Icons.block, color: Color.fromARGB(255, 30, 30, 30)),
+            onPressed: _showExcludedItemsDialog,
+          ),
           IconButton(
             icon: const Icon(Icons.auto_awesome_motion,
                 color: Color.fromARGB(255, 30, 30, 30)),
@@ -711,8 +966,6 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
                       : ReorderableListView(
                           onReorder: _onReorder,
                           children: _productGroups.map((group) {
-                            // …
-
                             return Container(
                               key: ValueKey(group.id),
                               decoration: const BoxDecoration(
@@ -735,7 +988,7 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
                                   ),
                                 ),
                                 trailing: SizedBox(
-                                  width: 30, // etwas mehr Platz nach rechts
+                                  width: 30,
                                   height: 40,
                                   child: Center(
                                     child: _isEditMode
@@ -762,13 +1015,10 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
                           }).toList(),
                         ),
                 ),
-                // PLUS- UND LÖSCHEN-BUTTON FEST UNTEN RECHTS
-                // PLUS- UND LÖSCHEN-BUTTON FEST UNTEN RECHTS
                 Padding(
                   padding: const EdgeInsets.only(right: 20.0, bottom: 20.0),
                   child: _isEditMode
                       ? Center(
-                          // 🟥 NUR der Delete-Button soll zentriert sein
                           child: ElevatedButton.icon(
                             onPressed: _deleteStore,
                             icon: const Icon(Icons.delete, color: Colors.white),
@@ -791,7 +1041,6 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
                           ),
                         )
                       : Align(
-                          // 🟧 Plus-Button bleibt rechts
                           alignment: Alignment.bottomRight,
                           child: SizedBox(
                             width: 74,

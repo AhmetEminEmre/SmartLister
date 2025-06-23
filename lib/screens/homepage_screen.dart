@@ -251,7 +251,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<List<String>> getAllProductGroups(String shopId) async {
-    final groups = await widget.productGroupService.fetchProductGroupsByStoreIdSorted(shopId);
+    final groups = await widget.productGroupService
+        .fetchProductGroupsByStoreIdSorted(shopId);
     return groups.map((group) => group.name.trim()).toList();
   }
 
@@ -307,8 +308,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-
- final scaling = context.watch<FontScaling>().factor;
+    final scaling = context.watch<FontScaling>().factor;
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
@@ -418,7 +418,7 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
 
-             Padding(
+            Padding(
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               child: Text(
                 'Meine Lieblingseinkaufsläden',
@@ -466,6 +466,7 @@ class _HomePageState extends State<HomePage> {
                           builder: (context) => EditStoreScreen(
                             storeId: createdShop.id.toString(),
                             storeName: createdShop.name,
+                            excludedItems: createdShop.excludedItems ?? '',
                             isNewStore: true,
                             shopService: widget.shopService,
                             itemListService: widget.itemListService,
@@ -516,6 +517,7 @@ class _HomePageState extends State<HomePage> {
               builder: (context) => EditStoreScreen(
                   storeId: shop.id.toString(),
                   storeName: shop.name,
+                  excludedItems: shop.excludedItems ?? '',
                   shopService: widget.shopService,
                   itemListService: widget.itemListService,
                   productGroupService: widget.productGroupService),
@@ -560,7 +562,7 @@ class _HomePageState extends State<HomePage> {
 
 // LISTEN CARDS
   Widget _buildListCard(Itemlist itemlist) {
-     final scaling = context.watch<FontScaling>().factor; 
+    final scaling = context.watch<FontScaling>().factor;
     String imagePath = itemlist.imagePath ?? 'lib/img/default_image.png';
 
     List<Map<String, dynamic>> items = itemlist.getItems();
@@ -622,38 +624,39 @@ class _HomePageState extends State<HomePage> {
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 8),
-                       Row(
-  children: [
-    _buildTag(
-      '${items.length} Artikel',
-      const Color(0xFFF9F2BF),
-      const Color(0xFF908536),
-      scaling, // ✅ HIER
-    ),
-    const SizedBox(width: 5),
-    FutureBuilder<String>(
-      future: getShopName(itemlist.shopId),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
-          return _buildTag(
-            snapshot.data!,
-            const Color(0xFFF2E4D9),
-            const Color(0xFF986224),
-            scaling, // ✅ HIER
-          );
-        } else {
-          return _buildTag(
-            "Unbekannt",
-            const Color(0xFFF2E4D9),
-            const Color(0xFF986224),
-            scaling, // ✅ HIER
-          );
-        }
-      },
-    ),
-  ],
-),
-
+                        Row(
+                          children: [
+                            _buildTag(
+                              '${items.length} Artikel',
+                              const Color(0xFFF9F2BF),
+                              const Color(0xFF908536),
+                              scaling, // ✅ HIER
+                            ),
+                            const SizedBox(width: 5),
+                            FutureBuilder<String>(
+                              future: getShopName(itemlist.shopId),
+                              builder: (context, snapshot) {
+                                if (snapshot.connectionState ==
+                                        ConnectionState.done &&
+                                    snapshot.hasData) {
+                                  return _buildTag(
+                                    snapshot.data!,
+                                    const Color(0xFFF2E4D9),
+                                    const Color(0xFF986224),
+                                    scaling, // ✅ HIER
+                                  );
+                                } else {
+                                  return _buildTag(
+                                    "Unbekannt",
+                                    const Color(0xFFF2E4D9),
+                                    const Color(0xFF986224),
+                                    scaling, // ✅ HIER
+                                  );
+                                }
+                              },
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                     // Drei Punkte: Etwas weiter rechts und höher positionieren
@@ -680,7 +683,8 @@ class _HomePageState extends State<HomePage> {
   }
 
 // TAG-WIDGET: Dynamische Farben und Schriftart
-  Widget _buildTag(String label, Color backgroundColor, Color textColor, double scaling) {
+  Widget _buildTag(
+      String label, Color backgroundColor, Color textColor, double scaling) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
