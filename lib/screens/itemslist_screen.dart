@@ -532,34 +532,39 @@ class _ItemListScreenState extends State<ItemListScreen> {
                             ),
                           ),
                         );
-                        
+
                         await loadShops();
                         await loadItems();
                         await loadExcludedItems();
 
-                        if (result is Productgroup) {
-                          _availableShops =
-                              await widget.shopService.fetchShops();
-                          final aktualisierteProductGroups = await widget
+                        if (result != null && result is List<Productgroup>) {
+                          final aktualisierteGroups = await widget
                               .productGroupService
                               .fetchProductGroupsByStoreIdSorted(
                                   _selectedShopId!);
 
+                          final existingIds =
+                              aktualisierteGroups.map((g) => g.id).toSet();
+                          final neueGroups = result
+                              .where((g) => !existingIds.contains(g.id))
+                              .toList();
+
                           setState(() {
-                            groupItems =
-                                aktualisierteProductGroups.map((group) {
+                            groupItems = aktualisierteGroups.map((group) {
                               return DropdownMenuItem<String>(
                                 value: group.id.toString(),
                                 child: Text(group.name),
                               );
                             }).toList();
 
-                            selectedGroupId = result.id.toString();
-                            _lastSelectedGroupId = result.id.toString();
+                            if (neueGroups.isNotEmpty) {
+                              final neueGroup = neueGroups.first;
+                              selectedGroupId = neueGroup.id.toString();
+                              _lastSelectedGroupId = neueGroup.id.toString();
+                            }
                           });
 
                           await loadItems();
-                          await loadExcludedItems();
                         }
                       },
                       child: const Text(

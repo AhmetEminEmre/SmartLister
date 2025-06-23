@@ -1,7 +1,6 @@
 plugins {
     id "com.android.application"
     id "kotlin-android"
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id "dev.flutter.flutter-gradle-plugin"
 }
 
@@ -23,28 +22,25 @@ if (flutterVersionName == null) {
     flutterVersionName = "1.0"
 }
 
+
 android {
-    namespace = "com.example.smart"
-    compileSdk = 34  // Setze das compileSdk explizit auf 34
-    ndkVersion = flutter.ndkVersion
+    compileSdk = 34
+
+    defaultConfig {
+        applicationId = "com.example.smart"
+        minSdk = 21
+        targetSdk = 34
+        versionCode = flutterVersionCode.toInteger()
+        versionName = flutterVersionName
+    }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
 
-    defaultConfig {
-        applicationId = "com.example.smart"
-        minSdk = 21  // Empfohlenes Minimum, um die neuesten AndroidX-Funktionen zu unterstützen
-        targetSdk = 34  // Setze das targetSdk explizit auf 34
-        versionCode = flutterVersionCode.toInteger()
-        versionName = flutterVersionName
-    }
-
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.debug
         }
     }

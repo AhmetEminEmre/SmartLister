@@ -70,6 +70,8 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
   late TextEditingController _storeNameController;
   late String storename;
   String _excludedItems = '';
+  bool _hasChanges = false;
+  List<Productgroup> _newlyAddedGroups = [];
 
   @override
   void initState() {
@@ -411,11 +413,12 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
                               fontSize: 14 * scaling,
                             ),
                           ),
-                          onPressed: () {
+                          onPressed: () async {
                             if (groupNameController.text.trim().isNotEmpty) {
-                              _addProductGroupIfNotExists(
-                                  groupNameController.text.trim());
-                              Navigator.of(context).pop();
+                              final addedGroup =
+                                  await _addProductGroupIfNotExists(
+                                      groupNameController.text.trim());
+                              Navigator.pop(context, addedGroup);
                             } else {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
@@ -567,9 +570,8 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
                                   int.parse(widget.storeId),
                                   cleaned,
                                 );
-
-                                Navigator.pop(
-                                    context, true);
+                                _hasChanges = true;
+                                Navigator.pop(context, true);
 
                                 await _loadExcludedItems();
 
@@ -594,7 +596,7 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
     );
   }
 
-  Future<void> _addProductGroupIfNotExists(String name) async {
+  Future<Productgroup?> _addProductGroupIfNotExists(String name) async {
     final existingGroup = await widget.productGroupService
         .fetchByNameAndShop(name, widget.storeId);
 
@@ -609,19 +611,26 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
           await widget.productGroupService.addProductGroup(productGroup);
       productGroup.id = newGroupId;
 
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Warengruppe hinzugefügt.'),
-        backgroundColor: Colors.green,
-      ));
-
       setState(() {
         _productGroups.add(productGroup);
+        _newlyAddedGroups.add(productGroup);
+        _hasChanges = true;
       });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Warengruppe hinzugefügt.'),
+            backgroundColor: Colors.green),
+      );
+
+      return productGroup;
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Warengruppe existiert bereits.'),
-        backgroundColor: Colors.red,
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Warengruppe existiert bereits.'),
+            backgroundColor: Colors.red),
+      );
+      return existingGroup;
     }
   }
 
@@ -854,6 +863,12 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
     final scaling = context.watch<FontScaling>().factor;
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(context, _newlyAddedGroups);
+          },
+        ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
