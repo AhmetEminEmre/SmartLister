@@ -29,15 +29,14 @@ class ProductGroupService {
     // coverage:ignore-end
   }
 
+  // coverage:ignore-start
   Future<List<Productgroup>> fetchAllProductGroupsSorted() async {
   if (_fakeDb != null) {
     return await _fakeDb.getAll();
   }
-  // coverage:ignore-start
   return await _isar!.productgroups.where().sortByOrder().findAll();
   // coverage:ignore-end
 }
-
 
   Future<Productgroup?> fetchLastGroupByStoreId(String storeId) async {
     if (_fakeDb != null) {

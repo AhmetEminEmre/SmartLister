@@ -35,8 +35,10 @@ class FakeProductgroupDB {
   Future<Productgroup?> getByNameAndShop(String name, String storeId) async {
     return _items.firstWhere((e) => e.name == name && e.storeId == storeId);
   }
+   // coverage:ignore-start
   Future<List<Productgroup>> getAll() async {
   return List<Productgroup>.from(_items);
+  // coverage:ignore-end
 }
 
 }

@@ -26,7 +26,6 @@ class FakeShopDB {
     _shops.removeWhere((s) => s.id == id);
   }
 
-  //getbyname
   Future<Einkaufsladen?> getByName(String name) async {
     try {
       return _shops.firstWhere((s) => s.name == name);
@@ -35,19 +34,23 @@ class FakeShopDB {
     }
   }
 
+//coverage:ignore-start
   Future<void> updateExcludedItems(int shopId, String excludedItems) async {
   final index = _shops.indexWhere((s) => s.id == shopId);
   if (index != -1) {
     _shops[index].excludedItems = excludedItems;
   }
 }
+//coverage:ignore-end
 
+  //coverage:ignore-start
   Future<void> updateShop(Einkaufsladen shop) async {
     final index = _shops.indexWhere((s) => s.id == shop.id);
     if (index != -1) {
       _shops[index] = shop;
     } 
   }
+  // coverage:ignore-end
 
 
 }

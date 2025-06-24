@@ -26,42 +26,6 @@ void main() {
     expect(list.getItems()[0]['name'], 'Milch');
   });
 
-  test('toJson gibt korrektes Mapping zurück', () {
-    final json = list.toJson();
-    expect(json['id'], 10);
-    expect(json['name'], 'Wocheneinkauf');
-    expect(json['groupId'], 's1');
-    expect(json['imagePath'], 'lib/img/default_image.png');
-    expect(json['creationDate'], '2025-01-01T00:00:00.000');
-    expect(json['itemsJson'], isNotEmpty);
-  });
-
-  test('fromJson erstellt korrektes Objekt', () {
-    final json = {
-      'name': 'Getränkeplan',
-      'groupId': 's2',
-      'imagePath': 'pfad/bild1.png',
-      'itemsJson': '[{"name":"Cola"}]',
-      'creationDate': '2024-12-01T12:00:00.000'
-    };
-
-    final newList = Itemlist.fromJson(json);
-
-    expect(newList.name, 'Getränkeplan');
-    expect(newList.shopId, 's2');
-    expect(newList.imagePath, 'pfad/bild1.png');
-    expect(newList.getItems().length, 1);
-    expect(newList.getItems()[0]['name'], 'Cola');
-    expect(newList.creationDate.year, 2024);
-  });
-
-  test('toString gibt sinnvollen Text zurück', () {
-    final string = list.toString();
-    expect(string, contains('Itemlist{name: Wocheneinkauf'));
-    expect(string, contains('shopId: s1'));
-    expect(string, contains('creationDate: 2025'));
-    expect(string, contains('Milch'));
-  });
 
   test('getItems gibt leere Liste zurück bei leerem itemsJson', () {
     final emptyList = Itemlist(

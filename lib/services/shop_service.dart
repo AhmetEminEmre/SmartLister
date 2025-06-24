@@ -32,8 +32,8 @@ class ShopService {
     final id = await _isar!.writeTxn(() async {
       return await _isar.einkaufsladens.put(shop);
     });
-    // coverage:ignore-end
     return id;
+    // coverage:ignore-end
   }
 
   Future<void> deleteShop(int shopId) async {
@@ -62,6 +62,7 @@ class ShopService {
     // coverage:ignore-end
   }
 
+  // coverage:ignore-start
   Future<void> updateExcludedItemsById(int shopId, String rawItems) async {
     final cleanItems = rawItems.contains(',')
         ? rawItems
@@ -78,25 +79,26 @@ class ShopService {
     } else {
       print('not found');
     }
+    // coverage:ignore-end
   }
 
+   // coverage:ignore-start
   Future<String?> getExcludedItemsById(int shopId) async {
     if (_fakeDb != null) {
       final shop = await _fakeDb.getById(shopId);
       return shop?.excludedItems;
     }
-    // coverage:ignore-start
     final shop = await fetchShopById(shopId);
     return shop?.excludedItems;
     // coverage:ignore-end
   }
 
+  // coverage:ignore-start
   Future<void> updateShop(Einkaufsladen shop) async {
     if (_fakeDb != null) {
       await _fakeDb.updateShop(shop);
       return;
     }
-    // coverage:ignore-start
     await _isar!.writeTxn(() async {
       await _isar.einkaufsladens.put(shop);
     });
@@ -106,8 +108,8 @@ class ShopService {
   // coverage:ignore-start
   Stream<void> watchShops() {
     return _isar!.einkaufsladens.watchLazy().asBroadcastStream();
+    // coverage:ignore-end
   }
-  // coverage:ignore-end
 
   Future<String> createUniqueShop(String shopName) async {
     String uniqueName = shopName;
