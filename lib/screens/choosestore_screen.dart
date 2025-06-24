@@ -5,6 +5,8 @@ import '../screens/itemslist_screen.dart';
 import '../services/itemlist_service.dart';
 import '../services/shop_service.dart';
 import '../services/productgroup_service.dart';
+import 'package:provider/provider.dart';
+import 'package:smart/font_scaling.dart';
 
 class StoreScreen extends StatefulWidget {
   final String listId;
@@ -76,13 +78,15 @@ class _StoreScreenState extends State<StoreScreen> {
 
   @override
   Widget build(BuildContext context) {
+     final scaling = context.watch<FontScaling>().factor;
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
+        title:  Text(
           "Einkaufsladen zuordnen",
-          style: TextStyle(
-            color: Colors.black,
-          ),
+            style: TextStyle(
+          color: Colors.black,
+          fontSize: 22 * scaling, // 👈 SCALING HINZUFÜGEN!
+        ),
         ),
         backgroundColor: Colors.white,
         iconTheme: const IconThemeData(
@@ -97,7 +101,7 @@ class _StoreScreenState extends State<StoreScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Padding(
-              padding: EdgeInsets.only(left: 12.0, bottom: 8.0),
+              padding: EdgeInsets.only(left: 12.0, bottom: 18.0),
               child: Text(
                 'Wähle den Laden aus, in dem du einkaufen möchtest.',
                 style: TextStyle(
@@ -153,18 +157,18 @@ class _StoreScreenState extends State<StoreScreen> {
                         child: Text(
                           store.name,
                           style:
-                              const TextStyle(color: Color(0xFF212121)),
+                               TextStyle(color: Color(0xFF212121),  fontSize: 16 * scaling,),
                         ),
                       ),
                     );
                   }).toList(),
                   decoration: InputDecoration(
                     label: RichText(
-                      text: const TextSpan(
+                      text:  TextSpan(
                         text: 'Bitte auswählen...',
                         style: TextStyle(
                           color: Color.fromARGB(255, 46, 46, 46),
-                          fontSize: 16,
+                          fontSize: 16 * scaling,
                         ),
                         children: [
                           TextSpan(
@@ -202,29 +206,28 @@ class _StoreScreenState extends State<StoreScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: _selectedStoreId != null
-                    ? () async {
-                        final items =
-                            await _fetchItemsForList(widget.listId);
-                        widget.onStoreSelected(_selectedStoreId!);
+  onPressed: _selectedStoreId != null
+      ? () async {
+          // ✅ 1. Speichere Shop-Id sicher in Liste
+          await widget.onStoreSelected(_selectedStoreId!);
 
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ItemListScreen(
-                              listName: widget.listName,
-                              shoppingListId: widget.listId,
-                              items: items,
-                              initialStoreId: _selectedStoreId!,
-                              itemListService: widget.itemListService,
-                              productGroupService:
-                                  widget.productGroupService,
-                              shopService: widget.shopService,
-                            ),
-                          ),
-                        );
-                      }
-                    : null,
+          // ✅ 2. Navigiere erst NACH erfolgreichem Speichern
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ItemListScreen(
+                listName: widget.listName,
+                shoppingListId: widget.listId,
+                // 🚫 KEIN `items` mehr übergeben — immer selbst laden!
+                initialStoreId: _selectedStoreId!,
+                itemListService: widget.itemListService,
+                productGroupService: widget.productGroupService,
+                shopService: widget.shopService,
+              ),
+            ),
+          );
+      }
+      : null,
                 style: ButtonStyle(
                   backgroundColor:
                       WidgetStateProperty.resolveWith<Color>(

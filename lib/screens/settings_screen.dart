@@ -36,12 +36,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   const SizedBox(height: 16),
                   TextField(
-                    controller: controller, // Hier wird der Controller verwendet
+                    controller:
+                        controller, // Hier wird der Controller verwendet
                     decoration: InputDecoration(
                       labelText: 'Neuer Nickname',
                       labelStyle: TextStyle(
                         // nicht-fokussierter Zustand
-                        color: Colors.black.withOpacity(0.5), // wirkt heller als reines Grau
+                        color: Colors.black
+                            .withOpacity(0.5), // wirkt heller als reines Grau
                         fontSize: 16,
                         fontWeight: FontWeight.w400,
                       ),
@@ -52,7 +54,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         fontWeight: FontWeight.w500,
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(color: Color.fromARGB(255, 125, 146, 5)),
+                        borderSide: const BorderSide(
+                            color: Color.fromARGB(255, 125, 146, 5)),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       enabledBorder: OutlineInputBorder(
@@ -75,14 +78,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       TextButton(
                         style: TextButton.styleFrom(
                           backgroundColor: const Color(0xFFE2E2E2),
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 10),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
                         child: const Text(
                           'Abbrechen',
-                          style: TextStyle(color: Color(0xFF5F5F5F), fontSize: 14),
+                          style:
+                              TextStyle(color: Color(0xFF5F5F5F), fontSize: 14),
                         ),
                         onPressed: () => Navigator.pop(context),
                       ),
@@ -90,7 +95,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       TextButton(
                         style: TextButton.styleFrom(
                           backgroundColor: const Color(0xFFEF8D25),
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 10),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -101,7 +107,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                         onPressed: () async {
                           final newName = controller.text.trim();
-                          print("Eingegebener Nickname: $newName"); // Debug-Ausgabe
+                          print(
+                              "Eingegebener Nickname: $newName"); // Debug-Ausgabe
                           if (newName.isNotEmpty) {
                             await widget.nicknameService.setNickname(newName);
                             if (context.mounted) {
@@ -109,7 +116,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                   content: Text('Nickname gespeichert!'),
-                                  backgroundColor: Color(0xFF79C267), // Helles Grün
+                                  backgroundColor:
+                                      Color(0xFF79C267), // Helles Grün
                                 ),
                               );
                             }
@@ -129,10 +137,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final scaling = context.watch<FontScaling>().factor;
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 255, 255, 255),
       appBar: AppBar(
-        title: const Text('Einstellungen'),
+        title: Text(
+          'Einstellungen',
+          style: TextStyle(fontSize: 22 * scaling), // z.B. 22 als Basisgröße
+        ),
         backgroundColor: const Color(0xFFEDF2D0),
         foregroundColor: const Color(0xFF222222),
       ),
@@ -141,18 +153,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           ListTile(
             leading: const Icon(Icons.person),
-            title: const Text('Nickname ändern'),
-            subtitle: const Text('Setze deinen Anzeigennamen neu'),
+            title: Text(
+              'Nickname ändern',
+              style: TextStyle(fontSize: 18 * scaling),
+            ),
+            subtitle: Text(
+              'Setze deinen Anzeigennamen neu',
+              style: TextStyle(fontSize: 14 * scaling),
+            ),
             onTap: () => _showNicknameDialog(context),
           ),
           Consumer<FontScaling>(builder: (context, fontScaling, _) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const ListTile(
+                ListTile(
                   leading: Icon(Icons.format_size),
-                  title: Text('Schriftgröße'),
-                  subtitle: Text('Passe die Textgröße in der App an'),
+                  title: Text(
+                    'Schriftgröße',
+                    style: TextStyle(fontSize: 18 * scaling),
+                  ),
+                  subtitle: Text(
+                    'Passe die Textgröße in der App an',
+                    style: TextStyle(fontSize: 14 * scaling),
+                  ),
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -170,10 +194,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ],
             );
           }),
-          const ListTile(
+          ListTile(
             leading: Icon(Icons.info_outline),
-            title: Text('Über die App'),
-            subtitle: Text('Version, Entwickler, Impressum'),
+            title: Text(
+              'Über die App',
+              style: TextStyle(fontSize: 18 * scaling),
+            ),
+            subtitle: Text(
+              'Version, Entwickler, Impressum',
+              style: TextStyle(fontSize: 14 * scaling),
+            ),
           ),
         ],
       ),

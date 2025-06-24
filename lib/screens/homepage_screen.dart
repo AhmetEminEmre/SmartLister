@@ -576,15 +576,14 @@ class _HomePageState extends State<HomePage> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => ItemListScreen(
-                  listName: itemlist.name,
-                  shoppingListId: itemlist.id.toString(),
-                  items: [itemlist],
-                  initialStoreId: itemlist.shopId,
-                  itemListService: widget.itemListService,
-                  productGroupService: widget.productGroupService,
-                  shopService: widget.shopService,
-                ),
+               builder: (context) => ItemListScreen(
+  listName: itemlist.name,
+  shoppingListId: itemlist.id.toString(),
+  initialStoreId: itemlist.shopId,
+  itemListService: widget.itemListService,
+  productGroupService: widget.productGroupService,
+  shopService: widget.shopService,
+),
               ),
             );
           },
@@ -703,6 +702,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildOptionsMenu(Itemlist itemlist) {
+
+     final scaling = context.watch<FontScaling>().factor; 
     return PopupMenuButton<String>(
       onSelected: (value) {
         switch (value) {
@@ -721,22 +722,34 @@ class _HomePageState extends State<HomePage> {
         }
       },
       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-        const PopupMenuItem<String>(
-          value: 'rename',
-          child: Text('Liste umbenennen'),
+       PopupMenuItem<String>(
+        value: 'rename',
+        child: Text(
+          'Liste umbenennen',
+          style: TextStyle(fontSize: 16 * scaling), // ✅ Skalierung
         ),
-        const PopupMenuItem<String>(
-          value: 'delete',
-          child: Text('Liste löschen'),
+      ),
+         PopupMenuItem<String>(
+        value: 'delete',
+        child: Text(
+          'Liste löschen',
+          style: TextStyle(fontSize: 16 * scaling), // ✅ Skalierung
         ),
-        const PopupMenuItem<String>(
-          value: 'saveAsTemplate',
-          child: Text('Liste als Vorlage speichern'),
+      ),
+      PopupMenuItem<String>(
+        value: 'saveAsTemplate',
+        child: Text(
+          'Liste als Vorlage speichern',
+          style: TextStyle(fontSize: 16 * scaling), // ✅ Skalierung
         ),
-        const PopupMenuItem<String>(
-          value: 'exportCsv',
-          child: Text('Liste exportieren'),
+      ),
+      PopupMenuItem<String>(
+        value: 'exportCsv',
+        child: Text(
+          'Liste exportieren',
+          style: TextStyle(fontSize: 16 * scaling), // ✅ Skalierung
         ),
+      ),
       ],
       icon: const Icon(Icons.more_vert, color: Colors.white),
       offset: const Offset(0, 40), // nach unten verschoben

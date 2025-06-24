@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../objects/shop.dart';
 import '../services/shop_service.dart';
+import 'package:provider/provider.dart';
+import 'package:smart/font_scaling.dart';
 
 class AddStoreScreen extends StatefulWidget {
   final ShopService shopService;
@@ -18,7 +20,6 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
   final TextEditingController _storeNameController = TextEditingController();
   String? _selectedImagePath;
 
-  // Map für die Bilder in img2
   final Map<String, String> imageNameToPath = {
     'Obst & Gemüse': 'lib/img2/Img1.png',
     'Backwaren': 'lib/img2/Img2.png',
@@ -37,11 +38,16 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final scaling = context.watch<FontScaling>().factor;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           "Neuen Einkaufsladen erstellen",
-          style: TextStyle(color: Color.fromARGB(255, 38, 38, 38)),
+          style: TextStyle(
+            color: Color.fromARGB(255, 38, 38, 38),
+            fontSize: 22 * scaling,
+          ),
         ),
         backgroundColor: Colors.white,
         iconTheme: const IconThemeData(color: Color.fromARGB(255, 40, 40, 40)),
@@ -62,18 +68,18 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
               },
               decoration: InputDecoration(
                 label: RichText(
-                  text: const TextSpan(
+                  text: TextSpan(
                     text: 'Name',
                     style: TextStyle(
                       color: Color.fromARGB(255, 46, 46, 46),
-                      fontSize: 16,
+                      fontSize: 16 * scaling,
                     ),
                     children: [
                       TextSpan(
                         text: ' *',
                         style: TextStyle(
                           color: Colors.red,
-                          fontSize: 16,
+                          fontSize: 16 * scaling,
                         ),
                       ),
                     ],
@@ -103,19 +109,18 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
                   ),
                 ),
               ),
-              style: const TextStyle(
+              style: TextStyle(
                 color: Color.fromARGB(255, 26, 26, 26),
+                fontSize: 16 * scaling,
               ),
             ),
 
-            // Dropdown für die Bildauswahl
             const SizedBox(height: 20),
             DropdownButtonFormField<String>(
               value: _selectedImagePath,
               onChanged: (value) {
                 setState(() {
                   _selectedImagePath = value;
-                  print('Selected Image Path DROPDOWN: $_selectedImagePath');
                 });
               },
               items: imageNameToPath.keys.map((name) {
@@ -123,27 +128,27 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
                   value: imageNameToPath[name],
                   child: Text(
                     name,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: Color(0xFF212121),
-                      fontSize: 18, 
+                      fontSize: 16 * scaling,
                     ),
                   ),
                 );
               }).toList(),
               decoration: InputDecoration(
                 label: RichText(
-                  text: const TextSpan(
+                  text: TextSpan(
                     text: 'Bild auswählen',
                     style: TextStyle(
                       color: Color.fromARGB(255, 52, 52, 52),
-                      fontSize: 16,
+                      fontSize: 16 * scaling,
                     ),
                     children: [
                       TextSpan(
                         text: ' *',
                         style: TextStyle(
                           color: Colors.red,
-                          fontSize: 20,
+                          fontSize: 16 * scaling,
                         ),
                       ),
                     ],
@@ -174,12 +179,12 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
                 ),
               ),
               dropdownColor: Colors.white,
-              style: const TextStyle(
+              style: TextStyle(
                 color: Color(0xFF212121),
+                fontSize: 16 * scaling,
               ),
             ),
 
-            // BUTTON LADEN HINZUFÜGEN
             const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
@@ -214,7 +219,7 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
                 child: const Text(
                   'Laden hinzufügen',
                   style: TextStyle(
-                    fontSize: 23,
+                    fontSize: 23, // bleibt fix!
                     fontWeight: FontWeight.w600,
                     color: Colors.white,
                   ),

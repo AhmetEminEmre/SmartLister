@@ -9,11 +9,12 @@ import 'dart:io';
 import 'package:smart/objects/productgroup.dart';
 import '../objects/shop.dart';
 import 'dart:convert';
-
 import 'package:smart/services/itemlist_service.dart';
 import 'package:smart/services/productgroup_service.dart';
 import 'package:smart/services/shop_service.dart';
 import 'package:smart/services/template_service.dart';
+import 'package:provider/provider.dart';
+import 'package:smart/font_scaling.dart';
 
 class CreateListScreen extends StatefulWidget {
   final ItemListService itemListService;
@@ -91,59 +92,63 @@ class _CreateListScreenState extends State<CreateListScreen> {
   }
 
   Future<void> _createList() async {
-    if (_listNameController.text.trim().length < 3 ||
-        _selectedImagePath == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Bitte Namen (mind. 3 Zeichen) und Bild wählen.'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    final newList = Itemlist(
-      name: _listNameController.text.trim(),
-      shopId: '',
-      imagePath: _selectedImagePath!,
-      items: _items,
-      creationDate: DateTime.now(),
-    );
-
-    await widget.itemListService.addItemList(newList);
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => StoreScreen(
-          listId: newList.id.toString(),
-          listName: newList.name,
-          itemListService: widget.itemListService,
-          shopService: widget.shopService,
-          productGroupService: widget.productGroupService,
-          onStoreSelected: (selectedStoreId) async {
-            newList.shopId = selectedStoreId;
-            await widget.itemListService.updateItemList(newList);
-
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ItemListScreen(
-                  listName: newList.name,
-                  shoppingListId: newList.id.toString(),
-                  items: [newList],
-                  initialStoreId: selectedStoreId,
-                  itemListService: widget.itemListService,
-                  shopService: widget.shopService,
-                  productGroupService: widget.productGroupService,
-                ),
-              ),
-            );
-          },
-        ),
+  if (_listNameController.text.trim().length < 3 || _selectedImagePath == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Bitte Namen (mind. 3 Zeichen) und Bild wählen.'),
+        backgroundColor: Colors.red,
       ),
     );
+    return;
   }
+
+  final newList = Itemlist(
+    name: _listNameController.text.trim(),
+    shopId: '',
+    imagePath: _selectedImagePath!,
+    items: _items,
+    creationDate: DateTime.now(),
+  );
+
+  // ✅ 1. Liste ohne Shop speichern
+  await widget.itemListService.addItemList(newList);
+
+  // ✅ 2. Gehe zu StoreScreen → dieser ruft `onStoreSelected` auf → 
+  // dort wird der Shop gespeichert und danach erst die Liste upgedatet.
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => StoreScreen(
+        listId: newList.id.toString(),
+        listName: newList.name,
+        itemListService: widget.itemListService,
+        shopService: widget.shopService,
+        productGroupService: widget.productGroupService,
+        onStoreSelected: (selectedStoreId) async {
+          // ✅ Shop speichern
+          newList.shopId = selectedStoreId;
+          await widget.itemListService.updateItemList(newList);
+
+          // ✅ Danach weiter zu ItemListScreen → OHNE items!
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ItemListScreen(
+                listName: newList.name,
+                shoppingListId: newList.id.toString(),
+                initialStoreId: selectedStoreId,
+                itemListService: widget.itemListService,
+                shopService: widget.shopService,
+                productGroupService: widget.productGroupService,
+              ),
+            ),
+          );
+        },
+      ),
+    ),
+  );
+}
+
 
   Future<void> importList(String csvContent) async {
     List<String> lines = csvContent.split('\n');
@@ -311,306 +316,313 @@ class _CreateListScreenState extends State<CreateListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final scaling = context.watch<FontScaling>().factor;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Neue Einkaufsliste erstellen"),
+        title: Text("Neue Einkaufsliste erstellen",
+          style: TextStyle(
+      fontSize: 22 * scaling, // 👈 Passe hier die Größe an 
+      color: const Color(0xFF212121), // optional: Farbe falls du magst
+    ),),
         backgroundColor: const Color.fromARGB(255, 255, 255, 255),
       ),
       backgroundColor: const Color.fromARGB(255, 255, 255, 255),
-     body: LayoutBuilder(
-  builder: (context, constraints) {
-    return SingleChildScrollView(
-      child: ConstrainedBox(
-        constraints: BoxConstraints(minHeight: constraints.maxHeight),
-        child: IntrinsicHeight(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                TextField(
-                  controller: _listNameController,
-                  cursorColor: const Color.fromARGB(255, 37, 37, 37),
-                  
-                  textCapitalization: TextCapitalization.words,
-                  decoration: InputDecoration(
-                    label: RichText(
-                      text: const TextSpan(
-                        text: 'Name',
-                        
-                        style: TextStyle(
-                          color: Color.fromARGB(255, 46, 46, 46),
-                          fontSize: 16,
-                        ),
-                        children: [
-                          TextSpan(
-                            text: ' *',
-                            style: TextStyle(
-                              color: Colors.red,
-                              fontSize: 16,
-                              
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: IntrinsicHeight(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      TextField(
+                        controller: _listNameController,
+                        cursorColor: const Color.fromARGB(255, 37, 37, 37),
+                        textCapitalization: TextCapitalization.words,
+                        decoration: InputDecoration(
+                          label: RichText(
+                            text: TextSpan(
+                              text: 'Name',
+                              style: TextStyle(
+                                color: Color.fromARGB(255, 46, 46, 46),
+                                fontSize: 16 * scaling, // Label skaliert!
+                              ),
+                              children: [
+                                TextSpan(
+                                  text: ' *',
+                                  style: TextStyle(
+                                    color: Colors.red,
+                                    fontSize: 16 * scaling,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ],
+                          filled: true,
+                          fillColor: Colors.white,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(
+                                color: Color(0xFFBDBDBD), width: 1),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(
+                                color: Color(0xFFBDBDBD), width: 2),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(
+                                color: Color(0xFFE5A462), width: 2),
+                          ),
+                        ),
+                        style: TextStyle(
+                          // DAS IST FÜR DIE EINGABE
+                          color: const Color.fromARGB(255, 26, 26, 26),
+                          fontSize: 16 * scaling,
+                        ),
                       ),
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(
-                        color: Color(0xFFBDBDBD),
-                        width: 1,
-                      ),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(
-                        color: Color(0xFFBDBDBD),
-                        width: 2,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(
-                        color: Color(0xFFE5A462),
-                        width: 2,
-                      ),
-                    ),
-                  ),
-                  style: const TextStyle(
-                    color: Color.fromARGB(255, 26, 26, 26),
-                  ),
-                ),
 
-                const SizedBox(height: 20),
-                DropdownButtonFormField<String>(
-                  value: _selectedImagePath,
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedImagePath = value;
-                    });
-                  },
-                  items: imageNameToPath.keys.map((name) {
-                    return DropdownMenuItem<String>(
-                      value: imageNameToPath[name],
-                      child: Text(
-                        name,
+                      const SizedBox(height: 20),
+                      DropdownButtonFormField<String>(
+                        value: _selectedImagePath,
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedImagePath = value;
+                          });
+                        },
+                        items: imageNameToPath.keys.map((name) {
+                          return DropdownMenuItem<String>(
+                            value: imageNameToPath[name],
+                            child: Text(
+                              name,
+                              style: TextStyle(
+                                color: Color(0xFF212121),
+                                fontSize: 16 * scaling,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                        decoration: InputDecoration(
+                          label: RichText(
+                            text: TextSpan(
+                              text: 'Bild auswählen',
+                              style: TextStyle(
+                                color: Color.fromARGB(255, 52, 52, 52),
+                                fontSize: 16 * scaling,
+                              ),
+                              children: [
+                                TextSpan(
+                                  text: ' *',
+                                  style: TextStyle(
+                                    color: Colors.red,
+                                    fontSize: 16 * scaling,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          filled: true,
+                          fillColor: Colors.white,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(
+                                color: Color(0xFFBDBDBD), width: 1),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(
+                                color: Color(0xFFBDBDBD), width: 2),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(
+                                color: Color(0xFFE5A462), width: 2),
+                          ),
+                        ),
+                        dropdownColor: Colors.white,
                         style: const TextStyle(color: Color(0xFF212121)),
                       ),
-                    );
-                  }).toList(),
-                  decoration: InputDecoration(
-                    label: RichText(
-                      text: const TextSpan(
-                        text: 'Bild auswählen',
-                        style: TextStyle(
-                          color: Color.fromARGB(255, 52, 52, 52),
-                          fontSize: 16,
-                        ),
-                        children: [
-                          TextSpan(
-                            text: ' *',
-                            style: TextStyle(
-                              color: Colors.red,
-                              fontSize: 16,
+
+                      const SizedBox(height: 20),
+                      DropdownButtonFormField<String>(
+                        value: _selectedTemplateId,
+                        onChanged: (value) {
+                          if (value != null) _applyTemplate(value);
+                        },
+                        items: _templateItems,
+                        decoration: InputDecoration(
+                          label: RichText(
+                            text: TextSpan(
+                              text: 'Vorlage auswählen',
+                              style: TextStyle(
+                                color: Color.fromARGB(255, 58, 58, 58),
+                                fontSize: 16 * scaling,
+                              ),
                             ),
+                          ),
+                          filled: true,
+                          fillColor: Colors.white,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(
+                                color: Color(0xFFBDBDBD), width: 1),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(
+                                color: Color(0xFFBDBDBD), width: 2),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(
+                                color: Color(0xFFE5A462), width: 2),
+                          ),
+                        ),
+                        dropdownColor: Colors.white,
+                        style: TextStyle(
+                          color: Color(0xFF212121),
+                          fontSize: 16 * scaling,
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+                      const Row(
+                        children: [
+                          Expanded(
+                            child:
+                                Divider(color: Color(0xFFBDBDBD), thickness: 1),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 8.0),
+                            child: Text(
+                              'ODER',
+                              style: TextStyle(
+                                color: Color.fromARGB(255, 109, 108, 108),
+                                fontSize: 22,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child:
+                                Divider(color: Color(0xFFBDBDBD), thickness: 1),
                           ),
                         ],
                       ),
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide:
-                          const BorderSide(color: Color(0xFFBDBDBD), width: 1),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide:
-                          const BorderSide(color: Color(0xFFBDBDBD), width: 2),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide:
-                          const BorderSide(color: Color(0xFFE5A462), width: 2),
-                    ),
-                  ),
-                  dropdownColor: Colors.white,
-                  style: const TextStyle(color: Color(0xFF212121)),
-                ),
+                      const SizedBox(height: 20),
 
-                const SizedBox(height: 20),
-                DropdownButtonFormField<String>(
-                  value: _selectedTemplateId,
-                  onChanged: (value) {
-                    if (value != null) _applyTemplate(value);
-                  },
-                  items: _templateItems,
-                  decoration: InputDecoration(
-                    label: RichText(
-                      text: const TextSpan(
-                        text: 'Vorlage auswählen',
-                        style: TextStyle(
-                          color: Color.fromARGB(255, 58, 58, 58),
-                          fontSize: 16,
+                      Center(
+                        child: ElevatedButton.icon(
+                          onPressed: () async {
+                            final result =
+                                await FilePicker.platform.pickFiles();
+                            if (result != null) {
+                              final file = File(result.files.single.path!);
+                              try {
+                                final csvContent =
+                                    await file.readAsString(encoding: utf8);
+                                await importList(csvContent);
+                              } catch (e) {
+                                debugPrint("UTF-8 decoding failed $e");
+                              }
+                            }
+                          },
+                          icon: const Icon(Icons.upload_file),
+                          label: const Text(
+                            'Liste importieren',
+                            style: TextStyle(
+                              fontSize: 23,
+                              color: Color.fromARGB(255, 105, 105, 105),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFD3D3D3),
+                            foregroundColor: const Color(0xFF4A4A4A),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            minimumSize: const Size.fromHeight(56),
+                          ),
                         ),
                       ),
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide:
-                          const BorderSide(color: Color(0xFFBDBDBD), width: 1),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide:
-                          const BorderSide(color: Color(0xFFBDBDBD), width: 2),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide:
-                          const BorderSide(color: Color(0xFFE5A462), width: 2),
-                    ),
-                  ),
-                  dropdownColor: Colors.white,
-                  style: const TextStyle(
-                    color: Color(0xFF212121),
-                    fontSize: 16,
-                  ),
-                ),
 
-                const SizedBox(height: 20),
-                const Row(
-                  children: [
-                    Expanded(
-                      child: Divider(color: Color(0xFFBDBDBD), thickness: 1),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 8.0),
-                      child: Text(
-                        'ODER',
-                        style: TextStyle(
-                          color: Color.fromARGB(255, 109, 108, 108),
-                          fontSize: 22,
-                          fontWeight: FontWeight.w500,
+                      const SizedBox(height:24), // 👈 schiebt den Button ganz ans untere Ende
+
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: (_listNameController.text.isNotEmpty &&
+                                  _selectedImagePath != null)
+                              ? _createList
+                              : null,
+                          style: ButtonStyle(
+                            backgroundColor:
+                                WidgetStateProperty.resolveWith<Color>(
+                              (Set<WidgetState> states) {
+                                if (states.contains(WidgetState.disabled)) {
+                                  return const Color.fromARGB(
+                                      255, 255, 255, 255);
+                                }
+                                return Colors.white;
+                              },
+                            ),
+                            foregroundColor:
+                                WidgetStateProperty.resolveWith<Color>(
+                              (Set<WidgetState> states) {
+                                if (states.contains(WidgetState.disabled)) {
+                                  return const Color.fromARGB(
+                                      255, 249, 217, 169);
+                                }
+                                return const Color(0xFFE5A462);
+                              },
+                            ),
+                            side: WidgetStateProperty.resolveWith<BorderSide>(
+                              (Set<WidgetState> states) {
+                                if (states.contains(WidgetState.disabled)) {
+                                  return const BorderSide(
+                                    color: Color.fromARGB(255, 255, 226, 182),
+                                    width: 3.0,
+                                  );
+                                }
+                                return const BorderSide(
+                                  color: Color(0xFFE5A462),
+                                  width: 3.0,
+                                );
+                              },
+                            ),
+                            padding: WidgetStateProperty.all(
+                              const EdgeInsets.symmetric(vertical: 16.0),
+                            ),
+                            shape: WidgetStateProperty.all(
+                              RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12.0),
+                              ),
+                            ),
+                          ),
+                          child: const Text(
+                            'Weiter',
+                            style: TextStyle(
+                              fontSize: 23,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                    Expanded(
-                      child: Divider(color: Color(0xFFBDBDBD), thickness: 1),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-
-                Center(
-                  child: ElevatedButton.icon(
-                    onPressed: () async {
-                      final result = await FilePicker.platform.pickFiles();
-                      if (result != null) {
-                        final file = File(result.files.single.path!);
-                        try {
-                          final csvContent =
-                              await file.readAsString(encoding: utf8);
-                          await importList(csvContent);
-                        } catch (e) {
-                          debugPrint("UTF-8 decoding failed $e");
-                        }
-                      }
-                    },
-                    icon: const Icon(Icons.upload_file),
-                    label: const Text(
-                      'Liste importieren',
-                      style: TextStyle(
-                        fontSize: 23,
-                        color: Color.fromARGB(255, 105, 105, 105),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFD3D3D3),
-                      foregroundColor: const Color(0xFF4A4A4A),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      minimumSize: const Size.fromHeight(56),
-                    ),
+                    ],
                   ),
                 ),
-
-              const SizedBox(height: 390),// 👈 schiebt den Button ganz ans untere Ende
-
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: (_listNameController.text.isNotEmpty &&
-                            _selectedImagePath != null)
-                        ? _createList
-                        : null,
-                    style: ButtonStyle(
-                      backgroundColor:
-                          WidgetStateProperty.resolveWith<Color>(
-                        (Set<WidgetState> states) {
-                          if (states.contains(WidgetState.disabled)) {
-                            return const Color.fromARGB(255, 255, 255, 255);
-                          }
-                          return Colors.white;
-                        },
-                      ),
-                      foregroundColor:
-                          WidgetStateProperty.resolveWith<Color>(
-                        (Set<WidgetState> states) {
-                          if (states.contains(WidgetState.disabled)) {
-                            return const Color.fromARGB(255, 249, 217, 169);
-                          }
-                          return const Color(0xFFE5A462);
-                        },
-                      ),
-                      side: WidgetStateProperty.resolveWith<BorderSide>(
-                        (Set<WidgetState> states) {
-                          if (states.contains(WidgetState.disabled)) {
-                            return const BorderSide(
-                              color: Color.fromARGB(255, 255, 226, 182),
-                              width: 3.0,
-                            );
-                          }
-                          return const BorderSide(
-                            color: Color(0xFFE5A462),
-                            width: 3.0,
-                          );
-                        },
-                      ),
-                      padding: WidgetStateProperty.all(
-                        const EdgeInsets.symmetric(vertical: 16.0),
-                      ),
-                      shape: WidgetStateProperty.all(
-                        RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12.0),
-                        ),
-                      ),
-                    ),
-                    child: const Text(
-                      'Weiter',
-                      style: TextStyle(
-                        fontSize: 23,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
-               ),
-      ),
-    );
-  },
-), // LayoutBuilder
-); // Scaffold
-} 
+          );
+        },
+      ), // LayoutBuilder
+    ); // Scaffold
+  }
 } // 👈 FEHLT bei dir: schließt die build-Methode

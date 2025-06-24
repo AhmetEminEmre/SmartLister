@@ -11,12 +11,13 @@ import '../services/itemlist_service.dart';
 import '../services/productgroup_service.dart';
 import '../services/shop_service.dart';
 import 'package:smart/screens/shop_screen.dart';
+import 'package:provider/provider.dart';
+import 'package:smart/font_scaling.dart';
 
 class ItemListScreen extends StatefulWidget {
   final String listName;
   final String shoppingListId;
-  final List<Itemlist>? items;
-  final String? initialStoreId;
+  final String? initialStoreId; // passt!
   final ItemListService itemListService;
   final ProductGroupService productGroupService;
   final ShopService shopService;
@@ -25,7 +26,6 @@ class ItemListScreen extends StatefulWidget {
     super.key,
     required this.listName,
     required this.shoppingListId,
-    this.items,
     this.initialStoreId,
     required this.itemListService,
     required this.productGroupService,
@@ -41,12 +41,10 @@ class _ItemListScreenState extends State<ItemListScreen> {
   bool _isDeleteMode = false;
   Set<String> selectedItems = {};
   Set<String> selectedGroups = {};
-  List<Itemlist> items = [];
   String? currentStoreId;
-  List<Einkaufsladen> _availableShops = []; // Liste aller Shops
-  String? _selectedShopId; // Die aktuell gewählte Shop-ID
-  String _selectedShopName =
-      "Kein Shop gefunden"; // Fallback falls kein Shop existiert
+  List<Einkaufsladen> _availableShops = [];
+  String? _selectedShopId;
+  String _selectedShopName = "Kein Shop gefunden";
   Set<String> expandedGroups = {};
   String? _lastSelectedGroupId;
   String _excludedItemsRaw = '';
@@ -57,11 +55,11 @@ class _ItemListScreenState extends State<ItemListScreen> {
   final TextEditingController _editController = TextEditingController();
 
   @override
-  void initState() {
-    super.initState();
-    items = widget.items ?? [];
-    loadShops();
-  }
+void initState() {
+  super.initState();
+  // ✅ Kein altes `items = widget.items`
+  loadShops();
+}
 
   void toggleDeleteMode() {
     setState(() {
@@ -74,88 +72,162 @@ class _ItemListScreenState extends State<ItemListScreen> {
   }
 
   void deleteProductGroup(String groupName) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Warengruppe löschen?'),
-        content: Text(
-          'Möchtest du die Warengruppe "$groupName" und alle enthaltenen Artikel wirklich löschen?',
+  final scaling = context.read<FontScaling>().factor;
+
+  final confirm = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      backgroundColor: Colors.white,
+      title: Text(
+        'Warengruppe löschen?',
+        style: TextStyle(
+          fontSize: 20 * scaling,
+          fontWeight: FontWeight.w500,
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Abbrechen'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Löschen'),
-          ),
-        ],
       ),
-    );
+      content: Text(
+        'Möchtest du die Warengruppe "$groupName" und alle enthaltenen Artikel wirklich löschen?',
+        style: TextStyle(fontSize: 16 * scaling),
+      ),
+     actions: [
+  Row(
+    mainAxisAlignment: MainAxisAlignment.end,
+    children: [
+      TextButton(
+        style: TextButton.styleFrom(
+          backgroundColor: const Color(0xFFE2E2E2),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        onPressed: () => Navigator.of(context).pop(false),
+        child: Text(
+          'Abbrechen',
+          style: TextStyle(color: const Color(0xFF5F5F5F), fontSize: 14 * scaling),
+        ),
+      ),
+      const SizedBox(width: 8), // kleinerer Abstand statt 12
+      TextButton(
+        style: TextButton.styleFrom(
+          backgroundColor: const Color(0xFFEF8D25),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        onPressed: () => Navigator.of(context).pop(true),
+        child: Text(
+          'Löschen',
+          style: TextStyle(color: Colors.white, fontSize: 14 * scaling),
+        ),
+      ),
+    ],
+  ),
+],
 
-    if (confirm != true) return;
+    ),
+  );
 
-    final list = await widget.itemListService
-        .fetchItemListById(int.parse(widget.shoppingListId));
-    if (list == null) return;
+  if (confirm != true) return;
 
-    final currentItems = list.getItems();
-    final remainingItems = currentItems.where((item) {
-      final group = itemsByGroup[groupName];
-      return group == null ||
-          !group.any((element) => element['name'] == item['name']);
-    }).toList();
+  final list = await widget.itemListService
+      .fetchItemListById(int.parse(widget.shoppingListId));
+  if (list == null) return;
 
-    list.setItems(remainingItems);
-    await widget.itemListService.updateItemList(list);
+  final currentItems = list.getItems();
+  final remainingItems = currentItems.where((item) {
+    final group = itemsByGroup[groupName];
+    return group == null || !group.any((element) => element['name'] == item['name']);
+  }).toList();
 
-    setState(() {
-      itemsByGroup.remove(groupName);
-    });
-  }
+  list.setItems(remainingItems);
+  await widget.itemListService.updateItemList(list);
+
+  setState(() {
+    itemsByGroup.remove(groupName);
+  });
+}
+
 
   void deleteItem(String groupName, String itemName) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Artikel löschen?'),
-        content: Text(
-          'Möchtest du den Artikel "$itemName" wirklich löschen?',
+  final scaling = context.read<FontScaling>().factor;
+
+  final confirm = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      backgroundColor: Colors.white,
+      title: Text(
+        'Artikel löschen?',
+        style: TextStyle(
+          fontSize: 20 * scaling,
+          fontWeight: FontWeight.w500,
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Abbrechen'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Löschen'),
-          ),
-        ],
       ),
-    );
+      content: Text(
+        'Möchtest du den Artikel "$itemName" wirklich löschen?',
+        style: TextStyle(fontSize: 16 * scaling),
+      ),
+     actions: [
+  Row(
+    mainAxisAlignment: MainAxisAlignment.end,
+    children: [
+      TextButton(
+        style: TextButton.styleFrom(
+          backgroundColor: const Color(0xFFE2E2E2),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        onPressed: () => Navigator.of(context).pop(false),
+        child: Text(
+          'Abbrechen',
+          style: TextStyle(color: const Color(0xFF5F5F5F), fontSize: 14 * scaling),
+        ),
+      ),
+      const SizedBox(width: 8), // kleinerer Abstand statt 12
+      TextButton(
+        style: TextButton.styleFrom(
+          backgroundColor: const Color(0xFFEF8D25),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        onPressed: () => Navigator.of(context).pop(true),
+        child: Text(
+          'Löschen',
+          style: TextStyle(color: Colors.white, fontSize: 14 * scaling),
+        ),
+      ),
+    ],
+  ),
+],
 
-    if (confirm != true) return;
+    ),
+  );
 
-    final list = await widget.itemListService
-        .fetchItemListById(int.parse(widget.shoppingListId));
-    if (list == null) return;
+  if (confirm != true) return;
 
-    final currentItems = list.getItems();
-    final updatedItems =
-        currentItems.where((item) => item['name'] != itemName).toList();
+  final list = await widget.itemListService
+      .fetchItemListById(int.parse(widget.shoppingListId));
+  if (list == null) return;
 
-    list.setItems(updatedItems);
-    await widget.itemListService.updateItemList(list);
+  final currentItems = list.getItems();
+  final updatedItems = currentItems.where((item) => item['name'] != itemName).toList();
 
-    setState(() {
-      itemsByGroup[groupName]?.removeWhere((item) => item['name'] == itemName);
-      if (itemsByGroup[groupName]?.isEmpty ?? false) {
-        itemsByGroup.remove(groupName);
-      }
-    });
-  }
+  list.setItems(updatedItems);
+  await widget.itemListService.updateItemList(list);
+
+  setState(() {
+    itemsByGroup[groupName]?.removeWhere((item) => item['name'] == itemName);
+    if (itemsByGroup[groupName]?.isEmpty ?? false) {
+      itemsByGroup.remove(groupName);
+    }
+  });
+}
+
 
   Future<void> loadItems() async {
     if (_selectedShopId == null) return;
@@ -413,15 +485,19 @@ class _ItemListScreenState extends State<ItemListScreen> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
+        // 🔑 Hole scaling HIER!
+        final scaling = context.read<FontScaling>().factor;
+
         return StatefulBuilder(builder: (context, setState) {
           return AlertDialog(
             backgroundColor: Colors.white,
-            title: const Text(
+            title: Text(
               'Artikel hinzufügen',
               style: TextStyle(
-                  color: Color(0xFF161616),
-                  fontSize: 20,
-                  fontWeight: FontWeight.w500),
+                color: const Color(0xFF161616),
+                fontSize: 20 * scaling,
+                fontWeight: FontWeight.w500,
+              ),
             ),
             content: SizedBox(
               width: 400,
@@ -431,16 +507,18 @@ class _ItemListScreenState extends State<ItemListScreen> {
                 children: [
                   TextField(
                     controller: itemNameController,
+                    textCapitalization:
+                        TextCapitalization.sentences, // 👈 1. Buchstabe groß
                     decoration: InputDecoration(
                       labelText: 'Artikelname',
                       labelStyle: TextStyle(
                         color: Colors.black.withOpacity(0.5),
-                        fontSize: 16,
+                        fontSize: 16 * scaling,
                         fontWeight: FontWeight.w400,
                       ),
-                      floatingLabelStyle: const TextStyle(
-                        color: Color(0xFF7D9205),
-                        fontSize: 16,
+                      floatingLabelStyle: TextStyle(
+                        color: const Color(0xFF7D9205),
+                        fontSize: 16 * scaling,
                         fontWeight: FontWeight.w500,
                       ),
                       focusedBorder: OutlineInputBorder(
@@ -457,22 +535,24 @@ class _ItemListScreenState extends State<ItemListScreen> {
                       fillColor: Colors.white,
                       isDense: true,
                     ),
-                    style: const TextStyle(color: Colors.black87),
+                    style: TextStyle(
+                      color: Colors.black87,
+                      fontSize: 16 * scaling,
+                    ),
                   ),
                   if (errorMessage != null)
                     Padding(
                       padding: const EdgeInsets.only(top: 8),
                       child: Text(
                         errorMessage!,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: Colors.red,
-                          fontSize: 14,
+                          fontSize: 14 * scaling,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
                     ),
                   const SizedBox(height: 20),
-
                   DropdownButtonFormField<String>(
                     value: selectedGroupId,
                     onChanged: (newValue) {
@@ -483,7 +563,6 @@ class _ItemListScreenState extends State<ItemListScreen> {
                     },
                     items: groupItems,
                     isExpanded: true,
-                    //   icon: const SizedBox.shrink(),
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: Colors.white,
@@ -503,15 +582,16 @@ class _ItemListScreenState extends State<ItemListScreen> {
                       ),
                     ),
                     dropdownColor: Colors.white,
-                    style:
-                        const TextStyle(color: Color(0xFF212121), fontSize: 16),
-                    hint: const Text(
+                    style: TextStyle(
+                        color: const Color(0xFF212121), fontSize: 16 * scaling),
+                    hint: Text(
                       'Warengruppe wählen',
-                      style: TextStyle(color: Color(0xFF363636), fontSize: 16),
+                      style: TextStyle(
+                          color: const Color(0xFF363636),
+                          fontSize: 16 * scaling),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-
                   Align(
                     alignment: Alignment.centerLeft,
                     child: TextButton(
@@ -520,7 +600,7 @@ class _ItemListScreenState extends State<ItemListScreen> {
                             .fetchShopById(int.parse(_selectedShopId!));
 
                         final result = await Navigator.push(
-                          context,
+                          this.context, // ← outer context für push!
                           MaterialPageRoute(
                             builder: (context) => EditStoreScreen(
                               storeId: selectedShop!.id.toString(),
@@ -533,56 +613,48 @@ class _ItemListScreenState extends State<ItemListScreen> {
                           ),
                         );
 
-                        await loadShops();
+                        // Nach Rückkehr: alles neu laden
+                        final aktualisierteGroups = await widget
+                            .productGroupService
+                            .fetchProductGroupsByStoreIdSorted(
+                                _selectedShopId!);
+
+                        setState(() {
+                          // 1️⃣ Dropdown-Items neu bauen
+                          groupItems = aktualisierteGroups.map((group) {
+                            return DropdownMenuItem<String>(
+                              value: group.id.toString(),
+                              child: Text(group.name),
+                            );
+                          }).toList();
+
+                          // 2️⃣ Wenn neue Gruppe zurückgegeben wurde → diese direkt auswählen
+                          if (result != null &&
+                              result is List<Productgroup> &&
+                              result.isNotEmpty) {
+                            final neueGroup =
+                                result.last; // nehme die letzte zurückgegebene
+                            selectedGroupId = neueGroup.id.toString();
+                            _lastSelectedGroupId = neueGroup.id.toString();
+                          }
+                        });
+
                         await loadItems();
                         await loadExcludedItems();
-
-                        if (result != null && result is List<Productgroup>) {
-                          final aktualisierteGroups = await widget
-                              .productGroupService
-                              .fetchProductGroupsByStoreIdSorted(
-                                  _selectedShopId!);
-
-                          final existingIds =
-                              aktualisierteGroups.map((g) => g.id).toSet();
-                          final neueGroups = result
-                              .where((g) => !existingIds.contains(g.id))
-                              .toList();
-
-                          setState(() {
-                            groupItems = aktualisierteGroups.map((group) {
-                              return DropdownMenuItem<String>(
-                                value: group.id.toString(),
-                                child: Text(group.name),
-                              );
-                            }).toList();
-
-                            if (neueGroups.isNotEmpty) {
-                              final neueGroup = neueGroups.first;
-                              selectedGroupId = neueGroup.id.toString();
-                              _lastSelectedGroupId = neueGroup.id.toString();
-                            }
-                          });
-
-                          await loadItems();
-                        }
                       },
-                      child: const Text(
+                      child: Text(
                         '+ Neue Warengruppe hinzufügen',
                         style: TextStyle(
-                          color: Color(0xFF7D9205),
-                          fontSize: 14,
+                          color: const Color(0xFF7D9205),
+                          fontSize: 14 * scaling,
                           fontWeight: FontWeight.w500,
                           decoration: TextDecoration.underline,
-                          decorationColor: Color(0xFF7D9205),
+                          decorationColor: const Color(0xFF7D9205),
                         ),
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 24),
-
-                  // Buttons
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
@@ -595,10 +667,11 @@ class _ItemListScreenState extends State<ItemListScreen> {
                               borderRadius: BorderRadius.circular(12)),
                         ),
                         onPressed: () => Navigator.of(context).pop(),
-                        child: const Text(
+                        child: Text(
                           'Abbrechen',
-                          style:
-                              TextStyle(color: Color(0xFF5F5F5F), fontSize: 14),
+                          style: TextStyle(
+                              color: const Color(0xFF5F5F5F),
+                              fontSize: 14 * scaling),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -614,7 +687,7 @@ class _ItemListScreenState extends State<ItemListScreen> {
                           if (itemNameController.text.isNotEmpty &&
                               selectedGroupId != null) {
                             final newItemName =
-                                itemNameController.text.trim().toLowerCase();
+                               itemNameController.text.trim();
 
                             if (_excludedItemsSet.contains(newItemName)) {
                               setState(() {
@@ -628,9 +701,10 @@ class _ItemListScreenState extends State<ItemListScreen> {
                             Navigator.of(context).pop();
                           }
                         },
-                        child: const Text(
+                        child: Text(
                           'Hinzufügen',
-                          style: TextStyle(color: Colors.white, fontSize: 14),
+                          style: TextStyle(
+                              color: Colors.white, fontSize: 14 * scaling),
                         ),
                       ),
                     ],
@@ -665,7 +739,7 @@ class _ItemListScreenState extends State<ItemListScreen> {
                           fontSize: 18, fontWeight: pdf_wd.FontWeight.bold)),
                   ...entry.value.map((item) {
                     return pdf_wd.Text(item['name'] ?? 'Unnamed Item',
-                        style: const pdf_wd.TextStyle(fontSize: 14));
+                        style: const pdf_wd.TextStyle(fontSize: 14 ));
                   }),
                 ],
               );
@@ -681,6 +755,7 @@ class _ItemListScreenState extends State<ItemListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final scaling = context.watch<FontScaling>().factor;
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(110),
@@ -699,8 +774,8 @@ class _ItemListScreenState extends State<ItemListScreen> {
                     -12, 0), // 👈 verschiebt nur den Titel nach links
                 child: Text(
                   widget.listName,
-                  style: const TextStyle(
-                    fontSize: 26,
+                  style: TextStyle(
+                    fontSize: 26 * scaling,
                     fontWeight: FontWeight.w500,
                     color: Colors.black,
                   ),
@@ -743,8 +818,8 @@ class _ItemListScreenState extends State<ItemListScreen> {
                       dropdownColor: Colors.white,
                       // 👇 Entfernt den standardmäßigen Dropdown-Pfeil
                       icon: const SizedBox.shrink(),
-                      style: const TextStyle(
-                        fontSize: 17,
+                      style: TextStyle(
+                        fontSize: 17 * scaling,
                         fontWeight: FontWeight.w700,
                         color: Color(0xFF986224),
                       ),
@@ -799,7 +874,7 @@ class _ItemListScreenState extends State<ItemListScreen> {
                 heightFactor: 0.82, // Höhe des Platzes, den die Mitte einnimmt
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
+                  children: [
                     Image(
                       image: AssetImage('lib/img3/Karotte.png'),
                       width: 70,
@@ -809,7 +884,7 @@ class _ItemListScreenState extends State<ItemListScreen> {
                     Text(
                       'Noch keine Artikel',
                       style: TextStyle(
-                        fontSize: 20,
+                        fontSize: 20 * scaling,
                         fontWeight: FontWeight.w600,
                         color: Color.fromARGB(255, 74, 69, 69),
                       ),
@@ -820,7 +895,7 @@ class _ItemListScreenState extends State<ItemListScreen> {
                       child: Text(
                         'Tippe auf das Plus-Symbol, um \ndeinen ersten Artikel hinzuzufügen.',
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: 16 * scaling,
                           color: Color.fromARGB(255, 57, 57, 57),
                         ),
                         textAlign: TextAlign.center,
@@ -864,8 +939,8 @@ class _ItemListScreenState extends State<ItemListScreen> {
                       Expanded(
                         child: Text(
                           groupId,
-                          style: const TextStyle(
-                            fontSize: 16,
+                          style:  TextStyle(
+                            fontSize: 16 * scaling,
                             fontWeight: FontWeight.w400,
                             color: Color.fromARGB(255, 148, 146, 146),
                           ),
@@ -969,7 +1044,7 @@ class _ItemListScreenState extends State<ItemListScreen> {
                                       : Text(
                                           item['name'],
                                           style: TextStyle(
-                                            fontSize: 18,
+                                            fontSize: 18 * scaling,
                                             fontWeight: FontWeight.w500,
                                             decoration: item['isDone'] == true
                                                 ? TextDecoration.lineThrough
