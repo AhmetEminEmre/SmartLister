@@ -21,124 +21,143 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final TextEditingController controller = TextEditingController();
 
   void _showNicknameDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (_) => Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 360, minWidth: 300),
-          child: Material(
-            borderRadius: BorderRadius.circular(16),
-            color: Colors.white,
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Nickname ändern',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
+  final scaling = context.read<FontScaling>().factor;
+
+  showDialog(
+    context: context,
+    builder: (_) => Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 360, minWidth: 300),
+        child: Material(
+          borderRadius: BorderRadius.circular(16),
+          color: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Nickname ändern',
+                  style: TextStyle(
+                    fontSize: 20 * scaling,
+                    fontWeight: FontWeight.w500,
                   ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller:
-                        controller, // Hier wird der Controller verwendet
-                    decoration: InputDecoration(
-                      labelText: 'Neuer Nickname',
-                      labelStyle: TextStyle(
-                        // nicht-fokussierter Zustand
-                        color: Colors.black
-                            .withOpacity(0.5), // wirkt heller als reines Grau
-                        fontSize: 16,
-                        fontWeight: FontWeight.w400,
-                      ),
-                      floatingLabelStyle: const TextStyle(
-                        // fokussierter Zustand
+                ),
+                SizedBox(height: 16 * scaling),
+                TextField(
+                  controller: controller,
+                  decoration: InputDecoration(
+                    labelText: 'Neuer Nickname',
+                    labelStyle: TextStyle(
+                      color: Colors.black.withOpacity(0.5),
+                      fontSize: 16 * scaling,
+                      fontWeight: FontWeight.w400,
+                    ),
+                    floatingLabelStyle: TextStyle(
+                      color: const Color.fromARGB(255, 125, 146, 5),
+                      fontSize: 16 * scaling,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: const BorderSide(
                         color: Color.fromARGB(255, 125, 146, 5),
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
                       ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(
-                            color: Color.fromARGB(255, 125, 146, 5)),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.grey.shade400),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      isDense: true,
-                      fillColor: Colors.white,
-                      filled: true,
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    style: const TextStyle(
-                      fontSize: 16,
-                      color: Colors.black87,
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.grey.shade400),
+                      borderRadius: BorderRadius.circular(10),
                     ),
+                    isDense: true,
+                    fillColor: Colors.white,
+                    filled: true,
                   ),
-                  const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      TextButton(
-                        style: TextButton.styleFrom(
-                          backgroundColor: const Color(0xFFE2E2E2),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 10),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                  style: TextStyle(
+                    fontSize: 16 * scaling,
+                    color: Colors.black87,
+                  ),
+                ),
+                SizedBox(height: 24 * scaling),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      style: TextButton.styleFrom(
+                        backgroundColor: const Color(0xFFE2E2E2),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 16 * scaling,
+                          vertical: 10 * scaling,
                         ),
-                        child: const Text(
-                          'Abbrechen',
-                          style:
-                              TextStyle(color: Color(0xFF5F5F5F), fontSize: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        onPressed: () => Navigator.pop(context),
                       ),
-                      const SizedBox(width: 12),
-                      TextButton(
-                        style: TextButton.styleFrom(
-                          backgroundColor: const Color(0xFFEF8D25),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 10),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                      child: Text(
+                        'Abbrechen',
+                        style: TextStyle(
+                          color: const Color(0xFF5F5F5F),
+                          fontSize: 14 * scaling,
                         ),
-                        child: const Text(
-                          'Speichern',
-                          style: TextStyle(color: Colors.white, fontSize: 14),
+                      ),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                    SizedBox(width: 12 * scaling),
+                    TextButton(
+                      style: TextButton.styleFrom(
+                        backgroundColor: const Color(0xFFEF8D25),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 16 * scaling,
+                          vertical: 10 * scaling,
                         ),
-                        onPressed: () async {
-                          final newName = controller.text.trim();
-                          print(
-                              "Eingegebener Nickname: $newName"); // Debug-Ausgabe
-                          if (newName.isNotEmpty) {
-                            await widget.nicknameService.setNickname(newName);
-                            if (context.mounted) {
-                              Navigator.pop(context);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Nickname gespeichert!'),
-                                  backgroundColor:
-                                      Color(0xFF79C267), // Helles Grün
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        'Speichern',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14 * scaling,
+                        ),
+                      ),
+                      onPressed: () async {
+                        final newName = controller.text.trim();
+                        print("Eingegebener Nickname: $newName");
+                        if (newName.isNotEmpty) {
+                          await widget.nicknameService.setNickname(newName);
+                          if (context.mounted) {
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'Nickname gespeichert!',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18 * scaling,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
-                              );
-                            }
+                                backgroundColor: const Color(0xFF79C267),
+                                behavior: SnackBarBehavior.floating,
+                                duration: const Duration(seconds: 4),
+                              ),
+                            );
                           }
-                        },
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
+
 
   @override
   Widget build(BuildContext context) {
