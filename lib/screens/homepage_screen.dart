@@ -20,6 +20,8 @@ import 'package:smart/screens/settings_screen.dart';
 
 import 'package:provider/provider.dart';
 import 'package:smart/font_scaling.dart';
+import 'package:share_plus/share_plus.dart';
+
 
 class HomePage extends StatefulWidget {
   final ItemListService itemListService;
@@ -799,29 +801,30 @@ ScaffoldMessenger.of(context).showSnackBar(
     );
   }
 
-  Future<Directory> _getDownloadDirectory() async {
-    Directory? directory;
-    if (Platform.isAndroid) {
-      directory = await getExternalStorageDirectory();
-      String newPath = "";
-      List<String> folders = directory!.path.split("/");
-      for (int x = 1; x < folders.length; x++) {
-        String folder = folders[x];
-        if (folder != "Android") {
-          newPath += "/$folder";
-        } else {
-          break;
-        }
+ Future<Directory> _getDownloadDirectory() async {
+  Directory? directory;
+  if (Platform.isAndroid) {
+    directory = await getExternalStorageDirectory();
+    String newPath = "";
+    List<String> folders = directory!.path.split("/");
+    for (int x = 1; x < folders.length; x++) {
+      String folder = folders[x];
+      if (folder != "Android") {
+        newPath += "/$folder";
+      } else {
+        break;
       }
-      newPath = "$newPath/Download";
-      directory = Directory(newPath);
-    } else if (Platform.isIOS) {
-      directory = await getApplicationDocumentsDirectory();
-      directory = Directory('${directory.path}/Downloads');
     }
-
-    return directory!;
+    newPath = "$newPath/Download";
+    directory = Directory(newPath);
+  } else if (Platform.isIOS) {
+    // iOS: Einfach den Documents-Ordner verwenden!
+    directory = await getApplicationDocumentsDirectory();
+    // KEIN "/Downloads"
   }
+  return directory!;
+}
+
 
   Future<void> exportCsv(
       String fileName, List<Map<String, dynamic>> items) async {
@@ -859,59 +862,71 @@ ScaffoldMessenger.of(context).showSnackBar(
     ));
   }
 
-  Future<void> exportCsvWithFilePicker(Itemlist itemlist) async {
-    StringBuffer csvBuffer = StringBuffer();
+Future<void> exportCsvWithFilePicker(Itemlist itemlist) async {
+  StringBuffer csvBuffer = StringBuffer();
 
-    String escapeCsvString(String input) {
-      return utf8.decode(utf8.encode(input.trim()));
-    }
+  String escapeCsvString(String input) {
+    return utf8.decode(utf8.encode(input.trim()));
+  }
 
-    String shopName = escapeCsvString(await getShopName(itemlist.shopId));
-    List<String> productGroupNames =
-        (await getAllProductGroups(itemlist.shopId))
-            .map((groupName) => escapeCsvString(groupName))
-            .toList();
+  String shopName = escapeCsvString(await getShopName(itemlist.shopId));
+  List<String> productGroupNames =
+      (await getAllProductGroups(itemlist.shopId))
+          .map((groupName) => escapeCsvString(groupName))
+          .toList();
 
-    final listname = itemlist.name;
-    final imagePath = itemlist.imagePath;
-    csvBuffer.writeln(
-        '$listname;$imagePath;$shopName;${productGroupNames.join(";")};');
+  final listname = itemlist.name;
+  final imagePath = itemlist.imagePath;
+  csvBuffer.writeln(
+      '$listname;$imagePath;$shopName;${productGroupNames.join(";")};');
 
-    final List<dynamic> items = json.decode(itemlist.itemsJson);
-    for (var item in items) {
-      String groupName = escapeCsvString(await getGroupName(item['groupId']));
-      String itemName = escapeCsvString(item['name']);
-      String itemStatus = escapeCsvString(item['isDone'].toString());
+  final List<dynamic> items = json.decode(itemlist.itemsJson);
+  for (var item in items) {
+    String groupName = escapeCsvString(await getGroupName(item['groupId']));
+    String itemName = escapeCsvString(item['name']);
+    String itemStatus = escapeCsvString(item['isDone'].toString());
 
-      final line = '$groupName;$itemName;$itemStatus';
-      print(line);
-      csvBuffer.writeln(line);
-    }
+    final line = '$groupName;$itemName;$itemStatus';
+    csvBuffer.writeln(line);
+  }
 
-    final fileName = '${itemlist.name}.csv';
+  final fileName = '${itemlist.name}.csv';
+
+  if (Platform.isIOS) {
+    // 👉 iOS: Speichere in Documents und teile direkt
+    final docs = await getApplicationDocumentsDirectory();
+    final filePath = '${docs.path}/$fileName';
+    final file = File(filePath);
+    await file.writeAsBytes(utf8.encode(csvBuffer.toString()), flush: true);
+
+    // 📤 Direkt teilen:
+    await Share.shareXFiles([XFile(filePath)], text: 'Hier ist deine exportierte Liste.');
+
+  } else {
+    // 👉 Android: Speichere in Downloads & zeige Snackbar
     final directory = await _getDownloadDirectory();
     final filePath = '${directory.path}/$fileName';
     final file = File(filePath);
-
     await file.writeAsBytes(utf8.encode(csvBuffer.toString()), flush: true);
 
- ScaffoldMessenger.of(context).removeCurrentSnackBar();
-ScaffoldMessenger.of(context).showSnackBar(
-  SnackBar(
-    content: Text(
-      'Datei erfolgreich im Downloads-Ordner gespeichert.',
-      style: const TextStyle(
-        color: Colors.white, // weiße Schrift
-        fontSize: 18,        // größer
-        fontWeight: FontWeight.w600,
+    ScaffoldMessenger.of(context).removeCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Datei erfolgreich im Downloads-Ordner gespeichert.',
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 4),
       ),
-    ),
-    backgroundColor: Colors.green, // grün
-    behavior: SnackBarBehavior.floating, // schwebend
-    duration: const Duration(seconds: 4),
-  
-  ),
-);
-
+    );
   }
+}
+
+
 }

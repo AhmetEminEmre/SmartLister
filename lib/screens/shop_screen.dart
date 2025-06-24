@@ -634,59 +634,107 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
     }
   }
 
-  void _deleteProductGroup(Productgroup group) async {
-    final itemLists = await widget.itemListService.fetchAllItemLists();
-    final listsUsingGroup = itemLists.where((list) {
-      final items = list.getItems();
-      return items.any((item) => item['groupId'] == group.id.toString());
-    }).toList();
+ void _deleteProductGroup(Productgroup group) async {
+  final scaling = context.read<FontScaling>().factor;
 
-    if (listsUsingGroup.isNotEmpty) {
-      final confirm = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text('Warengruppe löschen?'),
-          content: Text(
-            'Die Warengruppe "${group.name}" wird in ${listsUsingGroup.length} Einkaufsliste(n) verwendet.\n'
-            'Möchtest du diese wirklich löschen?',
+  final itemLists = await widget.itemListService.fetchAllItemLists();
+  final listsUsingGroup = itemLists.where((list) {
+    final items = list.getItems();
+    return items.any((item) => item['groupId'] == group.id.toString());
+  }).toList();
+
+  if (listsUsingGroup.isNotEmpty) {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          'Warengruppe löschen?',
+          style: TextStyle(
+            fontSize: 20 * scaling,
+            fontWeight: FontWeight.w600,
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Abbrechen'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Löschen'),
-            ),
-          ],
         ),
-      );
+        content: Text(
+          'Die Warengruppe "${group.name}" wird in ${listsUsingGroup.length} Einkaufsliste(n) verwendet.\n'
+          'Möchtest du diese wirklich löschen?',
+          style: TextStyle(fontSize: 16 * scaling),
+        ),
+        actions: [
+          TextButton(
+            style: TextButton.styleFrom(
+              backgroundColor: const Color(0xFFE2E2E2),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: Text(
+              'Abbrechen',
+              style: TextStyle(
+                  color: const Color(0xFF5F5F5F), fontSize: 14 * scaling),
+            ),
+            onPressed: () => Navigator.of(context).pop(false),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(
+              backgroundColor: const Color(0xFFEF8D25),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: Text(
+              'Löschen',
+              style: TextStyle(color: Colors.white, fontSize: 14 * scaling),
+            ),
+            onPressed: () => Navigator.of(context).pop(true),
+          ),
+        ],
+      ),
+    );
 
-      if (confirm != true) return;
+    if (confirm != true) return;
 
-      for (final list in listsUsingGroup) {
-        final updatedItems = list
-            .getItems()
-            .where((item) => item['groupId'] != group.id.toString())
-            .toList();
-        list.setItems(updatedItems);
-        await widget.itemListService.updateItemList(list);
-      }
+    for (final list in listsUsingGroup) {
+      final updatedItems = list
+          .getItems()
+          .where((item) => item['groupId'] != group.id.toString())
+          .toList();
+      list.setItems(updatedItems);
+      await widget.itemListService.updateItemList(list);
     }
-
-    await widget.productGroupService.deleteProductGroup(group.id);
-
-    setState(() {
-      _productGroups.removeWhere((g) => g.id == group.id);
-    });
-    await _updateProductGroupOrder();
-
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-      content: Text('Warengruppe gelöscht. Reihenfolge aktualisiert.'),
-      backgroundColor: Colors.green,
-    ));
   }
+
+  await widget.productGroupService.deleteProductGroup(group.id);
+
+  setState(() {
+    _productGroups.removeWhere((g) => g.id == group.id);
+  });
+  await _updateProductGroupOrder();
+
+  ScaffoldMessenger.of(context).removeCurrentSnackBar();
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(
+        'Warengruppe gelöscht. Reihenfolge aktualisiert.',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 18 * scaling,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      backgroundColor: Colors.green,
+      behavior: SnackBarBehavior.floating,
+      duration: const Duration(seconds: 4),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+    ),
+  );
+}
+
 
   Future<void> _deleteStore() async {
     final storeId = widget.storeId;
