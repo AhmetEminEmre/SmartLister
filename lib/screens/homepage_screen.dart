@@ -124,123 +124,127 @@ class _HomePageState extends State<HomePage> {
     return valid.take(5).toList();
   }
 
-  void _renameList(Itemlist itemlist) {
-    TextEditingController nameController =
-        TextEditingController(text: itemlist.name);
-    showDialog(
-      context: context,
-      builder: (context) {
-        return Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 360, minWidth: 300),
-            child: Material(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Listennamen ändern',
-                      style: TextStyle(
-                        fontSize: 20,
+ void _renameList(Itemlist itemlist) {
+  final scaling = context.read<FontScaling>().factor;
+  TextEditingController nameController =
+      TextEditingController(text: itemlist.name);
+  showDialog(
+    context: context,
+    builder: (context) {
+      return Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 360, minWidth: 300),
+          child: Material(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Listennamen ändern',
+                    style: TextStyle(
+                      fontSize: 20 * scaling,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: nameController,
+                    decoration: InputDecoration(
+                      labelText: 'Listenname',
+                      labelStyle: TextStyle(
+                        color: Colors.black.withOpacity(0.5),
+                        fontSize: 16 * scaling,
+                        fontWeight: FontWeight.w400,
+                      ),
+                      floatingLabelStyle: TextStyle(
+                        color: const Color(0xFF7D9205),
+                        fontSize: 16 * scaling,
                         fontWeight: FontWeight.w500,
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: nameController,
-                      decoration: InputDecoration(
-                        labelText: 'Listenname',
-                        labelStyle: TextStyle(
-                          color: Colors.black.withOpacity(0.5),
-                          fontSize: 16,
-                          fontWeight: FontWeight.w400,
-                        ),
-                        floatingLabelStyle: const TextStyle(
-                          color: Color(0xFF7D9205),
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide:
-                              const BorderSide(color: Color(0xFF7D9205)),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.grey.shade400),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        isDense: true,
-                        filled: true,
-                        fillColor: Colors.white,
+                      focusedBorder: OutlineInputBorder(
+                        borderSide:
+                            const BorderSide(color: Color(0xFF7D9205)),
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      style: const TextStyle(
-                        fontSize: 16,
-                        color: Colors.black87,
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.grey.shade400),
+                        borderRadius: BorderRadius.circular(10),
                       ),
+                      isDense: true,
+                      filled: true,
+                      fillColor: Colors.white,
                     ),
-                    const SizedBox(height: 24),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        TextButton(
-                          style: TextButton.styleFrom(
-                            backgroundColor: const Color(0xFFE2E2E2),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 10),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: const Text(
-                            'Abbrechen',
-                            style: TextStyle(
-                                color: Color(0xFF5F5F5F), fontSize: 14),
-                          ),
-                          onPressed: () => Navigator.of(context).pop(),
-                        ),
-                        const SizedBox(width: 12),
-                        TextButton(
-                          style: TextButton.styleFrom(
-                            backgroundColor: const Color(0xFFEF8D25),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 10),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: const Text(
-                            'Speichern',
-                            style: TextStyle(color: Colors.white, fontSize: 14),
-                          ),
-                          onPressed: () async {
-                            if (nameController.text.trim().isNotEmpty) {
-                              itemlist.name = nameController.text.trim();
-                              final navigator = Navigator.of(context);
-                              await widget.itemListService
-                                  .updateItemList(itemlist);
-                              if (!mounted) return;
-                              navigator.pop();
-                              setState(() {
-                                _fetchLatestItemLists();
-                              });
-                            }
-                          },
-                        ),
-                      ],
+                    style: TextStyle(
+                      fontSize: 16 * scaling,
+                      color: Colors.black87,
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        style: TextButton.styleFrom(
+                          backgroundColor: const Color(0xFFE2E2E2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          'Abbrechen',
+                          style: TextStyle(
+                              color: const Color(0xFF5F5F5F),
+                              fontSize: 14 * scaling),
+                        ),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                      const SizedBox(width: 12),
+                      TextButton(
+                        style: TextButton.styleFrom(
+                          backgroundColor: const Color(0xFFEF8D25),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          'Speichern',
+                          style: TextStyle(
+                              color: Colors.white, fontSize: 14 * scaling),
+                        ),
+                        onPressed: () async {
+                          if (nameController.text.trim().isNotEmpty) {
+                            itemlist.name = nameController.text.trim();
+                            final navigator = Navigator.of(context);
+                            await widget.itemListService
+                                .updateItemList(itemlist);
+                            if (!mounted) return;
+                            navigator.pop();
+                            setState(() {
+                              _fetchLatestItemLists();
+                            });
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ),
-        );
-      },
-    );
-  }
+        ),
+      );
+    },
+  );
+}
+
 
   void _deleteList(Itemlist itemlist) async {
     await widget.itemListService.deleteItemList(itemlist.id);
@@ -272,20 +276,54 @@ class _HomePageState extends State<HomePage> {
     return shop?.name ?? "Unbekannt";
   }
 
-  void _saveListAsTemplate(Itemlist itemlist) async {
-    final newTemplate = Template(
-      name: itemlist.name,
-      items: itemlist.getItems(),
-      imagePath: itemlist.imagePath!,
-      storeId: itemlist.shopId,
-    );
+ void _saveListAsTemplate(Itemlist itemlist) async {
+  final groups = await widget.productGroupService
+      .fetchProductGroupsByStoreIdSorted(itemlist.shopId);
+  final idToName = {
+    for (var g in groups) g.id.toString(): g.name.trim()
+  };
 
-    await widget.templateService.addTemplate(newTemplate);
+  final itemsWithName = itemlist.getItems().map((item) {
+    return {
+      'groupName': idToName[item['groupId']] ?? 'Unbekannt',
+      'name': item['name'],
+      'isDone': item['isDone'],
+    };
+  }).toList();
 
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-      content: Text('Liste als Vorlage gespeichert!'),
-    ));
-  }
+  final newTemplate = Template(
+    name: itemlist.name,
+    items: itemsWithName,
+    imagePath: itemlist.imagePath!,
+    storeId: itemlist.shopId,
+  );
+
+  await widget.templateService.addTemplate(newTemplate);
+
+  // 📌 Snackbar sicher anzeigen
+  if (!mounted) return; // Safety check
+
+ScaffoldMessenger.of(context).removeCurrentSnackBar();
+ScaffoldMessenger.of(context).showSnackBar(
+  SnackBar(
+    content: Text(
+      'Liste erfolgreich als Vorlage gespeichert! 🎉',
+      style: const TextStyle(
+        color: Colors.white, // Schriftfarbe
+        fontSize: 18,        // 👈 größer
+        fontWeight: FontWeight.w600,
+      ),
+    ),
+    backgroundColor: Colors.green, // 👈 grün
+   behavior: SnackBarBehavior.floating, // optional: schwebend
+    duration: const Duration(seconds: 4),
+  ),
+);
+}
+
+
+
+
 
   void _createListDialog(BuildContext context) async {
     final result = await Navigator.push(
@@ -319,7 +357,7 @@ class _HomePageState extends State<HomePage> {
               child: Text(
                 _nickname.isNotEmpty ? 'Guten Tag $_nickname!' : 'Loading...',
                 style: const TextStyle(
-                  fontSize: 30,
+                  fontSize: 35,
                   color: Color(0xFF222222),
                   fontWeight: FontWeight.w600,
                 ),
@@ -339,6 +377,7 @@ class _HomePageState extends State<HomePage> {
                 MaterialPageRoute(
                   builder: (context) => SettingsScreen(
                     nicknameService: widget.userinfoService,
+                      templateService: widget.templateService,
                   ),
                 ),
               );
@@ -856,9 +895,23 @@ class _HomePageState extends State<HomePage> {
 
     await file.writeAsBytes(utf8.encode(csvBuffer.toString()), flush: true);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-          content: Text('Datei erfolgreich im Downloads-Ordner gespeichert.')),
-    );
+ ScaffoldMessenger.of(context).removeCurrentSnackBar();
+ScaffoldMessenger.of(context).showSnackBar(
+  SnackBar(
+    content: Text(
+      'Datei erfolgreich im Downloads-Ordner gespeichert.',
+      style: const TextStyle(
+        color: Colors.white, // weiße Schrift
+        fontSize: 18,        // größer
+        fontWeight: FontWeight.w600,
+      ),
+    ),
+    backgroundColor: Colors.green, // grün
+    behavior: SnackBarBehavior.floating, // schwebend
+    duration: const Duration(seconds: 4),
+  
+  ),
+);
+
   }
 }

@@ -78,18 +78,18 @@ class _CreateListScreenState extends State<CreateListScreen> {
     });
   }
 
-  Future<void> _applyTemplate(String templateId) async {
-    final template =
-        await widget.templateService.fetchTemplateById(int.parse(templateId));
-    if (template != null) {
-      setState(() {
-        _listNameController.text = template.name;
-        _selectedImagePath = template.imagePath;
-        _items = template.getItems();
-        _selectedTemplateId = templateId;
-      });
-    }
+ Future<void> _applyTemplate(String templateId) async {
+  final template = await widget.templateService.fetchTemplateById(int.parse(templateId));
+  if (template != null) {
+    setState(() {
+      _listNameController.text = template.name;
+      _selectedImagePath = template.imagePath;
+      _items = template.getItems(); // enthält nur groupName!
+      _selectedTemplateId = templateId;
+    });
   }
+}
+
 
   Future<void> _createList() async {
   if (_listNameController.text.trim().length < 3 || _selectedImagePath == null) {
@@ -102,19 +102,18 @@ class _CreateListScreenState extends State<CreateListScreen> {
     return;
   }
 
+  // ✅ Erstelle Liste OHNE Items
   final newList = Itemlist(
     name: _listNameController.text.trim(),
     shopId: '',
     imagePath: _selectedImagePath!,
-    items: _items,
+    items: [], // Wichtig: erst leer, damit du später `setItems` nutzt!
     creationDate: DateTime.now(),
   );
 
-  // ✅ 1. Liste ohne Shop speichern
+  // ✅ Speichere Liste erstmal ohne Items
   await widget.itemListService.addItemList(newList);
 
-  // ✅ 2. Gehe zu StoreScreen → dieser ruft `onStoreSelected` auf → 
-  // dort wird der Shop gespeichert und danach erst die Liste upgedatet.
   Navigator.push(
     context,
     MaterialPageRoute(
@@ -124,30 +123,109 @@ class _CreateListScreenState extends State<CreateListScreen> {
         itemListService: widget.itemListService,
         shopService: widget.shopService,
         productGroupService: widget.productGroupService,
-        onStoreSelected: (selectedStoreId) async {
-          // ✅ Shop speichern
-          newList.shopId = selectedStoreId;
-          await widget.itemListService.updateItemList(newList);
 
-          // ✅ Danach weiter zu ItemListScreen → OHNE items!
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ItemListScreen(
-                listName: newList.name,
-                shoppingListId: newList.id.toString(),
-                initialStoreId: selectedStoreId,
-                itemListService: widget.itemListService,
-                shopService: widget.shopService,
-                productGroupService: widget.productGroupService,
-              ),
-            ),
-          );
-        },
+ onStoreSelected: (selectedStoreId) async {
+  newList.shopId = selectedStoreId;
+
+  // 1️⃣ Hole alle existierenden Gruppen:
+  final groups = await widget.productGroupService
+      .fetchProductGroupsByStoreIdSorted(selectedStoreId);
+  final nameToId = {
+    for (var g in groups) g.name.trim().toLowerCase(): g.id.toString()
+  };
+  int groupCount = groups.length;
+
+  String? unknownGroupId;
+
+  Future<String> getUnknownGroupId() async {
+    if (unknownGroupId != null) return unknownGroupId!;
+    final existingUnknown = groups.firstWhere(
+      (g) => g.name.trim().toLowerCase() == 'unbekannt',
+      orElse: () => Productgroup(name: '', storeId: '', order: -1),
+    );
+    if (existingUnknown.id != null && existingUnknown.id != 0) {
+      unknownGroupId = existingUnknown.id.toString();
+    } else {
+      final newUnknown = Productgroup(
+        name: 'Unbekannt',
+        storeId: selectedStoreId,
+        order: groupCount,
+      );
+      final newId = await widget.productGroupService.addProductGroup(newUnknown);
+      unknownGroupId = newId.toString();
+      nameToId['unbekannt'] = newId.toString();
+      groups.add(newUnknown);
+      groupCount++;
+    }
+    return unknownGroupId!;
+  }
+
+  List<Map<String, dynamic>> remappedItems = [];
+
+  for (var item in _items) {
+    final groupName = (item['groupName'] ?? '').trim();
+    final key = groupName.toLowerCase();
+
+    String? groupId = nameToId[key];
+
+    // 2️⃣ Wenn nicht gefunden: Fuzzy-Versuch
+    if (groupId == null && groupName.isNotEmpty) {
+      final fuzzy = nameToId.entries.firstWhere(
+        (entry) => entry.key.contains(key) || key.contains(entry.key),
+        orElse: () => MapEntry('', ''),
+      );
+      if (fuzzy.key.isNotEmpty) {
+        groupId = fuzzy.value;
+      } else {
+        // 3️⃣ Immer noch nichts? Neu anlegen
+        final newGroup = Productgroup(
+          name: groupName,
+          storeId: selectedStoreId,
+          order: groupCount,
+        );
+        final newGroupId = await widget.productGroupService.addProductGroup(newGroup);
+        nameToId[key] = newGroupId.toString();
+        groups.add(newGroup);
+        groupCount++;
+        groupId = newGroupId.toString();
+      }
+    } else if (groupId == null) {
+      // 4️⃣ Leerer Gruppenname → Fallback Unbekannt
+      groupId = await getUnknownGroupId();
+    }
+
+    remappedItems.add({
+      'groupId': groupId,
+      'name': item['name'],
+      'isDone': item['isDone'],
+    });
+  }
+
+  newList.setItems(remappedItems);
+  await widget.itemListService.updateItemList(newList);
+
+  Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(
+      builder: (context) => ItemListScreen(
+        listName: newList.name,
+        shoppingListId: newList.id.toString(),
+        initialStoreId: selectedStoreId,
+        itemListService: widget.itemListService,
+        shopService: widget.shopService,
+        productGroupService: widget.productGroupService,
+      ),
+    ),
+  );
+},
+
+
+
       ),
     ),
   );
 }
+
 
 
   Future<void> importList(String csvContent) async {

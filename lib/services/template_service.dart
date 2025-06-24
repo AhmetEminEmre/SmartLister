@@ -13,7 +13,7 @@ class TemplateService {
 
   Future<List<Template>> fetchAllTemplates() async {
     if (_fakeDb != null) return await _fakeDb.getAll();
-    // coverage:ignore-start
+    // coverage:ignore-start 
     return await _isar!.templates.where().findAll();
     // coverage:ignore-end
   }
