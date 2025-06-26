@@ -359,7 +359,7 @@ ScaffoldMessenger.of(context).showSnackBar(
               child: Text(
                 _nickname.isNotEmpty ? 'Guten Tag $_nickname!' : 'Loading...',
                 style: const TextStyle(
-                  fontSize: 35,
+                  fontSize: 20,
                   color: Color(0xFF222222),
                   fontWeight: FontWeight.w600,
                 ),
